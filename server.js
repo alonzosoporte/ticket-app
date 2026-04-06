@@ -28,7 +28,7 @@ app.post('/ticket', (req, res) => {
 
     if (!t.numero) return max
 
-    if (t.numero.startsWith(`Ticket-${año}-${mes}`)) {
+    if (t.numero.startsWith(Ticket-${año}-${mes})) {
       const partes = t.numero.split("-")
       const n = parseInt(partes[3]) || 0
       return n > max ? n : max
@@ -100,7 +100,10 @@ app.delete('/ticket/:numero', (req, res) => {
   res.json({ ok: true })
 })
 
-// 🚀 SERVIDOR
-http.listen(3000, () => {
-  console.log('🚀 Servidor en http://localhost:3000')
+
+// 🚀 🔥 IMPORTANTE PARA RENDER
+const PORT = process.env.PORT || 3000
+
+http.listen(PORT, () => {
+  console.log('🚀 Servidor corriendo en puerto ' + PORT)
 })
