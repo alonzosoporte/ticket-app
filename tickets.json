@@ -1,0 +1,67 @@
+[
+  {
+    "numero": "T-2026-0001",
+    "nombre": "julian",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "PROBANDO PC SE TRANCA ",
+    "fecha": "27/3/2026, 4:39:46 p. m.",
+    "estado": "reparado",
+    "precio": "1200",
+    "detalle": "REPARADO"
+  },
+  {
+    "numero": "T-2026-0003",
+    "nombre": "julian",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "asdasdadasd",
+    "fecha": "27/3/2026, 4:49:27 p. m.",
+    "estado": "reparado"
+  },
+  {
+    "numero": "T-2026-0003",
+    "nombre": "julian alonzo",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "asasassassa",
+    "fecha": "3/4/2026, 11:03:48 a. m.",
+    "estado": "reparado"
+  },
+  {
+    "numero": "T-2026-0004",
+    "nombre": "julian alonzo",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "sadasdsadasda",
+    "fecha": "3/4/2026, 11:19:17 a. m.",
+    "estado": "reparado"
+  },
+  {
+    "numero": "T-2026-0005",
+    "nombre": "julian",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "098555861",
+    "problema": "sdasad",
+    "fecha": "3/4/2026, 11:21:51 a. m.",
+    "estado": "reparado"
+  },
+  {
+    "numero": "T-2026-0006",
+    "nombre": "julian",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "sdadasdd",
+    "fecha": "3/4/2026, 8:42:43 p. m.",
+    "estado": "reparado"
+  },
+  {
+    "numero": "T-2026-0007",
+    "nombre": "prueba",
+    "email": "alonzosoporte@gmail.com",
+    "telefono": "09855861",
+    "problema": "asasasas",
+    "fecha": "3/4/2026, 8:51:11 p. m.",
+    "estado": "reparado"
+  }
+]

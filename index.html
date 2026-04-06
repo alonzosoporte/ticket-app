@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear Ticket</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+
+    .form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="form">
+  <h2>🛠 Crear Ticket</h2>
+
+  <input type="text" id="nombre" placeholder="Nombre" required>
+  <input type="text" id="telefono" placeholder="Teléfono" required>
+  <textarea id="problema" placeholder="Problema"></textarea>
+
+  <button onclick="crearTicket()">Crear Ticket</button>
+</div>
+
+<script>
+async function crearTicket() {
+
+  const nombre = document.getElementById("nombre").value
+  let telefono = document.getElementById("telefono").value
+  const problema = document.getElementById("problema").value
+
+  if (!nombre || !telefono) {
+    alert("Completar datos")
+    return
+  }
+
+  // 🔥 CREAR TICKET
+  const res = await fetch('/ticket', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, telefono, problema })
+  })
+
+  const data = await res.json()
+
+  // 🔥 NORMALIZAR TEL
+  telefono = telefono.replace(/\D/g, '')
+
+  if (!telefono.startsWith("598")) {
+    telefono = "598" + telefono
+  }
+
+  // 🔥 MENSAJE PRO CON TICKET
+  const mensaje = `Hola ${nombre},
+
+  Su solicitud ha sido procesada correctamente.
+
+  Ticket: ${data.numero}
+
+  En breve, un técnico se comunicará con usted.`
+
+  const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje)
+
+  // 🔥 REDIRECCIÓN A WHATSAPP
+  window.location.href = url
+}
+</script>
+
+</body>
+</html>

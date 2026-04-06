@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin</title>
+
+  <style>
+    .ticket {
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0;
+  color: #333;
+  font-weight: 500;
+}
+
+/* ESTADOS */
+.pendiente {
+  background: #fff3cd;
+  border-left: 6px solid #ffc107;
+}
+
+.proceso {
+  background: #d1ecf1;
+  border-left: 6px solid #17a2b8;
+}
+
+.reparado {
+  background: #d4edda;
+  border-left: 6px solid #28a745;
+}
+    .activo {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  opacity: 1 !important;
+}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .btn-pendientes {
+      background: #ff9800;
+      color: white;
+    }
+
+    .btn-todos {
+      background: #2196f3;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    #stats {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    #lista div {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🛠 Panel de Tickets</h2>
+
+<div class="top-bar">
+  <button id="btnPendientes" class="btn-pendientes">📌 Pendientes</button>
+  <button id="btnTodos" class="btn-todos">📋 Todos</button>
+</div>
+
+<div id="stats"></div>
+
+<div id="lista"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="admin.js"></script>
+
+</body>
+</html>

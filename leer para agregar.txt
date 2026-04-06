@@ -1,0 +1,12 @@
+modificar el formulario del cliente el index.html  , dejarlo pro con buen estilo 
+mostrarme los tickets mas nuevos primero 
+preciso editar en los ticket los campos de precio y detalle realizado , y ademas un icono de borrar ticket si quisiera.
+me gustaria enviar todo por whatsap al cliente  
+
+
+otra etapa 
+al abrir admin siempre me traiga los pendientes y arriba un menu para las nuevas funciones , tipo ventas etc  
+una parte nueva seria ventas , que ingrese el cliente , cel , fecha que se estampe automatico y ganancia , esta ganancia que se sume al mes que corresponda.
+
+otra parte seria cotizacion , tiene Cliente ,Cel, Producto , Proveedor , Fotos para subir del producto ,Precio Proveedor , Cotizacion al cliente , detalle pero este campo no es obligatorio.
+  
