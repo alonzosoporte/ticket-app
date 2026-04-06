@@ -28,7 +28,7 @@ app.post('/ticket', (req, res) => {
 
     if (!t.numero) return max
 
-    if (t.numero.startsWith(Ticket-${año}-${mes})) {
+    if (t.numero.startsWith(`Ticket-${año}-${mes}`)) {
       const partes = t.numero.split("-")
       const n = parseInt(partes[3]) || 0
       return n > max ? n : max
