@@ -88,13 +88,13 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     /* 💻 MODO PC */
-@media (min-width: 768px) {
-
-.container {
-  width: 100%;
-  max-width: 900px;
+@media (min-width: 900px) {
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
 }
-
   .filtros {
     justify-content: center;
     max-width: 900px;
