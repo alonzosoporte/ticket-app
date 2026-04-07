@@ -1,72 +1,115 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Crear Ticket</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f4f6f9;
-      padding: 20px;
-    }
+<title>Crear Ticket</title>
 
-    .form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+<style>
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
-    input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f1f3f6;
+}
 
-    button {
-      background: #28a745;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-    }
+/* HEADER */
+.header {
+  background: #0d6efd;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
 
-    button:hover {
-      opacity: 0.9;
-    }
-  </style>
+/* CONTENEDOR */
+.container {
+  padding: 15px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* INPUTS */
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+/* BOTÓN */
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: #28a745;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* 💻 PC */
+@media (min-width: 768px) {
+  .container {
+    max-width: 500px;
+    margin: auto;
+  }
+
+  .header {
+    font-size: 22px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-<div class="form">
-  <h2>🛠 Crear Ticket</h2>
+<div class="header">🛠 Crear Ticket</div>
 
-  <input type="text" id="nombre" placeholder="Nombre" required>
-  <input type="text" id="telefono" placeholder="Teléfono" required>
-  <textarea id="problema" placeholder="Problema"></textarea>
+<div class="container">
+  <div class="card">
 
-  <button onclick="crearTicket()">Crear Ticket</button>
+    <input id="nombre" placeholder="Nombre">
+    <input id="telefono" placeholder="Teléfono">
+    <textarea id="problema" placeholder="Describe el problema"></textarea>
+
+    <button onclick="crearTicket()">Enviar solicitud</button>
+
+  </div>
 </div>
 
 <script>
 async function crearTicket() {
 
   const nombre = document.getElementById("nombre").value
-  let telefono = document.getElementById("telefono").value
+  const telefono = document.getElementById("telefono").value
   const problema = document.getElementById("problema").value
 
-  if (!nombre || !telefono) {
-    alert("Completar datos")
+  if (!nombre || !telefono || !problema) {
+    alert("Completar todos los campos")
     return
   }
 
-  // 🔥 CREAR TICKET
   const res = await fetch('/ticket', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -75,26 +118,16 @@ async function crearTicket() {
 
   const data = await res.json()
 
-  // 🔥 NORMALIZAR TEL
-  telefono = telefono.replace(/\D/g, '')
+  // 📲 WhatsApp automático
+  let tel = telefono.replace(/\D/g, '')
+  if (!tel.startsWith("598")) tel = "598" + tel
 
-  if (!telefono.startsWith("598")) {
-    telefono = "598" + telefono
-  }
+  const mensaje = `Hola ${nombre}, su solicitud ha sido procesada.
+Ticket: ${data.numero}
+El técnico se comunicará a la brevedad.`
 
-  // 🔥 MENSAJE PRO CON TICKET
-  const mensaje = `Hola ${nombre},
-
-  Su solicitud ha sido procesada correctamente.
-
-  Ticket: ${data.numero}
-
-  En breve, un técnico se comunicará con usted.`
-
-  const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje)
-
-  // 🔥 REDIRECCIÓN A WHATSAPP
-  window.location.href = url
+  window.location.href =
+    "https://wa.me/" + tel + "?text=" + encodeURIComponent(mensaje)
 }
 </script>
 
