@@ -150,8 +150,10 @@ window.whatsapp = function(telefono, nombre, numero) {
   let tel = telefono.replace(/\D/g, '')
   if (!tel.startsWith("598")) tel = "598" + tel
 
-  const mensaje = `Hola ${nombre}, su equipo está listo.
-Ticket: ${numero}`
+  const mensaje = `Hola ${nombre}, su servicio fue realizado y esta listo para retirar.
+  Puede abonar por transferencia en BROU CA Pesos CA 001120656-00002.
+  O cuando levante el equipo.
+  Ticket: ${numero}`
 
   window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(mensaje))
 }
