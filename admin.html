@@ -1,100 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Panel Admin</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    .ticket {
-  border-radius: 10px;
+<title>Admin Tickets</title>
+
+<style>
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f1f3f6;
+}
+
+/* HEADER */
+.header {
+  position: sticky;
+  top: 0;
+  background: #0d6efd;
+  color: white;
   padding: 15px;
-  margin: 10px 0;
-  color: #333;
-  font-weight: 500;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  z-index: 10;
+}
+
+/* BOTONES FILTRO */
+.filtros {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: white;
+  position: sticky;
+  top: 50px;
+  z-index: 9;
+}
+
+.filtros button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  background: #e9ecef;
+  cursor: pointer;
+}
+
+.filtros button.activo {
+  background: #0d6efd;
+  color: white;
+}
+
+/* CONTENEDOR */
+.container {
+  padding: 10px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* ESTADOS */
-.pendiente {
-  background: #fff3cd;
-  border-left: 6px solid #ffc107;
+.pendiente { border-left: 5px solid orange; }
+.proceso { border-left: 5px solid blue; }
+.reparado { border-left: 5px solid green; }
+
+/* INPUTS */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
-.proceso {
-  background: #d1ecf1;
-  border-left: 6px solid #17a2b8;
-}
-
-.reparado {
-  background: #d4edda;
-  border-left: 6px solid #28a745;
-}
-    .activo {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  opacity: 1 !important;
-}
-   body {
+/* BOTONES ACCIONES */
+.acciones {
   display: flex;
-  justify-content: center;
+  gap: 5px;
+  margin-top: 10px;
 }
 
+.acciones button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
 
-    h2 {
-      margin-bottom: 20px;
-    }
+.btn-verde { background: #28a745; }
+.btn-rojo { background: #dc3545; }
+.btn-azul { background: #007bff; }
 
-    .top-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+/* 💻 PC */
+@media (min-width: 768px) {
 
-    button {
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-
-    .btn-pendientes {
-      background: #ff9800;
-      color: white;
-    }
-
-    .btn-todos {
-      background: #2196f3;
-      color: white;
-    }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    #stats {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    #lista div {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    /* 💻 MODO PC */
-@media (min-width: 900px) {
   .container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    max-width: 900px;
+    margin: auto;
   }
-}
+
   .filtros {
     justify-content: center;
     max-width: 900px;
@@ -108,30 +126,29 @@
   .card {
     padding: 20px;
   }
+}
 
-  input, select {
-    font-size: 15px;
-  }
-
-  .acciones button {
-    font-size: 15px;
+/* 🖥 GRID PC PRO */
+@media (min-width: 900px) {
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
   }
 }
-  </style>
+</style>
 </head>
 
 <body>
 
-<h2>🛠 Panel de Tickets</h2>
+<div class="header">📋 Panel de Tickets</div>
 
-<div class="top-bar">
-  <button id="btnPendientes" class="btn-pendientes">📌 Pendientes</button>
-  <button id="btnTodos" class="btn-todos">📋 Todos</button>
+<div class="filtros">
+  <button id="btnPendientes">Pendientes</button>
+  <button id="btnTodos">Todos</button>
 </div>
 
-<div id="stats"></div>
-
-<div id="lista"></div>
+<div class="container" id="lista"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="admin.js"></script>
