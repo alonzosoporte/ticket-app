@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Admin Tickets</title>
 
 <style>
-* {
-  -webkit-tap-highlight-color: transparent;
-}
+* { -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -16,7 +15,6 @@ body {
   background: #f1f3f6;
 }
 
-/* HEADER */
 .header {
   position: sticky;
   top: 0;
@@ -25,11 +23,8 @@ body {
   padding: 15px;
   text-align: center;
   font-weight: bold;
-  font-size: 18px;
-  z-index: 10;
 }
 
-/* BOTONES FILTRO */
 .filtros {
   display: flex;
   gap: 10px;
@@ -37,30 +32,26 @@ body {
   background: white;
   position: sticky;
   top: 50px;
-  z-index: 9;
 }
 
 .filtros button {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
   border: none;
+  background: #ddd;
   font-weight: bold;
-  background: #e9ecef;
-  cursor: pointer;
 }
 
-.filtros button.activo {
+.filtros .activo {
   background: #0d6efd;
   color: white;
 }
 
-/* CONTENEDOR */
 .container {
   padding: 10px;
 }
 
-/* CARD */
 .card {
   background: white;
   border-radius: 12px;
@@ -69,21 +60,18 @@ body {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* ESTADOS */
 .pendiente { border-left: 5px solid orange; }
 .proceso { border-left: 5px solid blue; }
 .reparado { border-left: 5px solid green; }
 
-/* INPUTS */
 input, select {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   margin-top: 5px;
   border-radius: 8px;
   border: 1px solid #ccc;
 }
 
-/* BOTONES ACCIONES */
 .acciones {
   display: flex;
   gap: 5px;
@@ -96,43 +84,16 @@ input, select {
   border: none;
   border-radius: 8px;
   color: white;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 .btn-verde { background: #28a745; }
 .btn-rojo { background: #dc3545; }
 .btn-azul { background: #007bff; }
 
-/* 💻 PC */
 @media (min-width: 768px) {
-
   .container {
     max-width: 900px;
     margin: auto;
-  }
-
-  .filtros {
-    justify-content: center;
-    max-width: 900px;
-    margin: auto;
-  }
-
-  .header {
-    font-size: 22px;
-  }
-
-  .card {
-    padding: 20px;
-  }
-}
-
-/* 🖥 GRID PC PRO */
-@media (min-width: 900px) {
-  .container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
   }
 }
 </style>

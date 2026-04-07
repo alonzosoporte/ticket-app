@@ -4,135 +4,95 @@ const socket = io()
 
 let modo = "pendientes"
 
-// 🎯 BOTÓN ACTIVO
-function actualizarBotones() {
-  const btnPendientes = document.getElementById("btnPendientes")
-  const btnTodos = document.getElementById("btnTodos")
-
-  if (!btnPendientes || !btnTodos) return
-
-  btnPendientes.classList.remove("activo")
-  btnTodos.classList.remove("activo")
-
-  if (modo === "pendientes") {
-    btnPendientes.classList.add("activo")
-  } else {
-    btnTodos.classList.add("activo")
-  }
-}
-
-// 🚀 INICIO
+// 🎯 BOTONES
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM listo")
 
   const btnPendientes = document.getElementById("btnPendientes")
   const btnTodos = document.getElementById("btnTodos")
 
-  if (btnPendientes) {
-    btnPendientes.onclick = () => {
-      console.log("CLICK pendientes")
-      modo = "pendientes"
-      actualizarBotones()
-      cargar()
-    }
+  btnPendientes.onclick = () => {
+    modo = "pendientes"
+    actualizarBotones()
+    cargar()
   }
 
-  if (btnTodos) {
-    btnTodos.onclick = () => {
-      console.log("CLICK todos")
-      modo = "todos"
-      actualizarBotones()
-      cargar()
-    }
+  btnTodos.onclick = () => {
+    modo = "todos"
+    actualizarBotones()
+    cargar()
   }
 
   actualizarBotones()
   cargar()
 })
 
+// 🎨 BOTÓN ACTIVO
+function actualizarBotones() {
+  const btnPendientes = document.getElementById("btnPendientes")
+  const btnTodos = document.getElementById("btnTodos")
+
+  btnPendientes.classList.remove("activo")
+  btnTodos.classList.remove("activo")
+
+  if (modo === "pendientes") btnPendientes.classList.add("activo")
+  else btnTodos.classList.add("activo")
+}
+
 // 🚀 CARGAR
 async function cargar() {
-  try {
 
-    let res = await fetch('/tickets')
-    let tickets = await res.json()
+  const res = await fetch('/tickets')
+  let tickets = await res.json()
 
-    console.log("DATOS:", tickets)
+  const lista = document.getElementById("lista")
+  lista.innerHTML = ""
 
-    const lista = document.getElementById("lista")
+  // 🔥 NUEVOS ARRIBA
+  tickets.reverse()
 
-    if (!lista) {
-      console.error("❌ No existe #lista")
-      return
-    }
+  tickets.forEach(t => {
 
-    lista.innerHTML = ""
-    tickets.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-    tickets.reverse()
+    const estado = (t.estado || "").toLowerCase()
 
-    // 🔥 PENDIENTES = TODO LO QUE NO ESTÁ REPARADO
-    if (modo === "pendientes") {
-      tickets = tickets.filter(t => {
-        const estado = (t.estado || "").toLowerCase().trim()
-        return !estado.includes("reparado")
-      })
-    }
+    if (modo === "pendientes" && estado.includes("reparado")) return
 
-    // 🔥 ORDEN (últimos arriba)
-    tickets.reverse()
+    const estadoClass =
+      estado.includes("reparado") ? "reparado" :
+      estado.includes("proceso") ? "proceso" :
+      "pendiente"
 
-    // 🔥 RENDER
-    tickets.forEach(t => {
+    lista.innerHTML += `
+      <div class="card ${estadoClass}">
+        
+        <b>${t.nombre}</b><br>
+        🧾 ${t.numero}<br>
+        📞 ${t.telefono}<br>
+        🛠 ${t.problema}
 
-      const estado = (t.estado || "").toLowerCase()
-      let icono = "🟡"
+        <br><br>
 
-      if (estado.includes("reparado")) {
-        icono = "🟢"
-      } else if (estado.includes("proceso")) {
-        icono = "🔵"
-      }
-      let clase = "pendiente"
+        💲 Precio
+        <input type="number" id="precio-${t.numero}" value="${t.precio || ''}">
 
-      if (estado.includes("reparado")) {
-        clase = "reparado"
-      } else if (estado.includes("proceso")) {
-        clase = "proceso"
-      }
+        🧾 Detalle
+        <input type="text" id="detalle-${t.numero}" value="${t.detalle || ''}">
 
-      lista.innerHTML += `
-        <div class="ticket ${clase}">
-          
-          <b>${icono} <b>${t.nombre}</b> (${t.numero})<br>
-          📞 ${t.telefono}<br>
-          🛠 ${t.problema}<br><br>
+        📌 Estado
+        <select id="estado-${t.numero}">
+          <option ${estado.includes("pendiente")?"selected":""}>pendiente</option>
+          <option ${estado.includes("proceso")?"selected":""}>en proceso</option>
+          <option ${estado.includes("reparado")?"selected":""}>reparado</option>
+        </select>
 
-          💲 Precio:
-          <input type="number" id="precio-${t.numero}" value="${t.precio || ''}"><br>
-
-          🧾 Detalle:
-          <input type="text" id="detalle-${t.numero}" value="${t.detalle || ''}"><br>
-
-          📌 Estado:
-          <select id="estado-${t.numero}">
-            <option ${estado.includes("pendiente")?"selected":""}>pendiente</option>
-            <option ${estado.includes("proceso")?"selected":""}>en proceso</option>
-            <option ${estado.includes("reparado")?"selected":""}>reparado</option>
-          </select>
-
-          <br><br>
-
-          <button onclick="guardar('${t.numero}', '${t.telefono}', '${t.nombre}')">💾 Guardar</button>
-          <button onclick="borrar('${t.numero}')">🗑 Borrar</button>
-          <button onclick="whatsapp('${t.telefono}', '${t.nombre}', '${t.numero}')">📲 WhatsApp</button>
-
+        <div class="acciones">
+          <button class="btn-verde" onclick="guardar('${t.numero}','${t.telefono}','${t.nombre}')">💾</button>
+          <button class="btn-rojo" onclick="borrar('${t.numero}')">🗑</button>
+          <button class="btn-azul" onclick="whatsapp('${t.telefono}','${t.nombre}','${t.numero}')">📲</button>
         </div>
-      `
-    })
 
-  } catch (error) {
-    console.error("ERROR:", error)
-  }
+      </div>
+    `
+  })
 }
 
 // 💾 GUARDAR
@@ -148,75 +108,52 @@ window.guardar = async function(numero, telefono, nombre) {
     body: JSON.stringify({ estado, precio, detalle })
   })
 
-  console.log("Guardado:", estado)
-
-  // 🔥 SI ES REPARADO → WHATSAPP
+  // 📲 SI REPARADO
   if (estado.toLowerCase().includes("reparado")) {
 
-    telefono = telefono.replace(/\D/g, '')
-
-    if (!telefono.startsWith("598")) {
-      telefono = "598" + telefono
-    }
+    let tel = telefono.replace(/\D/g, '')
+    if (!tel.startsWith("598")) tel = "598" + tel
 
     const mensaje = `Hola ${nombre},
+Su equipo está reparado y listo para retirar.
 
-Su equipo ya está reparado.
+Ticket: ${numero}`
 
-Ticket: ${numero}
+    const url = "https://wa.me/" + tel + "?text=" + encodeURIComponent(mensaje)
 
-Precio: ${precio || "A confirmar"}
-
-Detalle: ${detalle || "Sin detalle"}
-
-Favor coordinar para levantar su equipo.`
-
-    const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje)
-
-    window.open(url, "_blank")
-  }
-
-  if (estado.toLowerCase().includes("reparado")) {
-    modo = "pendientes"
+    setTimeout(() => {
+      if (confirm("¿Enviar WhatsApp?")) {
+        window.open(url, "_blank")
+      }
+    }, 300)
   }
 
   setTimeout(() => {
-    actualizarBotones()
     cargar()
-  }, 150)
+  }, 200)
 }
 
 // 🗑 BORRAR
 window.borrar = async function(numero) {
-
   if (!confirm("¿Seguro borrar?")) return
 
-  await fetch('/ticket/' + numero, {
-    method: 'DELETE'
-  })
-
+  await fetch('/ticket/' + numero, { method: 'DELETE' })
   cargar()
 }
 
 // 📲 WHATSAPP
 window.whatsapp = function(telefono, nombre, numero) {
 
-  telefono = telefono.replace(/\D/g, '')
+  let tel = telefono.replace(/\D/g, '')
+  if (!tel.startsWith("598")) tel = "598" + tel
 
-  if (!telefono.startsWith("598")) {
-    telefono = "598" + telefono
-  }
+  const mensaje = `Hola ${nombre}, su equipo está listo.
+Ticket: ${numero}`
 
-  const mensaje = `Hola ${nombre}, su equipo está listo. Ticket: ${numero}`
-
-  window.location.href =
-    "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje)
+  window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(mensaje))
 }
 
 // 🔄 TIEMPO REAL
 socket.on('actualizar', () => {
-  console.log("🔄 Sync servidor")
-  setTimeout(() => {
-    cargar()
-  }, 100)
+  cargar()
 })
