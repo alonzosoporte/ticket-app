@@ -1,6 +1,4 @@
-modificar el formulario del cliente el index.html  , dejarlo pro con buen estilo 
 mostrarme los tickets mas nuevos primero 
-preciso editar en los ticket los campos de precio y detalle realizado , y ademas un icono de borrar ticket si quisiera.
 me gustaria enviar todo por whatsap al cliente  
 
 

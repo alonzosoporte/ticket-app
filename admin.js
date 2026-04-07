@@ -67,6 +67,8 @@ async function cargar() {
     }
 
     lista.innerHTML = ""
+    tickets.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    tickets.reverse()
 
     // 🔥 PENDIENTES = TODO LO QUE NO ESTÁ REPARADO
     if (modo === "pendientes") {
