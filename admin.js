@@ -115,7 +115,10 @@ window.guardar = async function(numero, telefono, nombre) {
     if (!tel.startsWith("598")) tel = "598" + tel
 
     const mensaje = `Hola ${nombre},
-Su equipo está reparado y listo para retirar.
+  Su servicio fue realizado y esta listo para retirar.
+  Puede abonar por transferencia en BROU CA Pesos CA 001120656-00002.
+  O cuando levante el equipo.
+  
 
 Ticket: ${numero}`
 
