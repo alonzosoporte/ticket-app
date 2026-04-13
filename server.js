@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const express = require('express')
 const app = express()
 const http = require('http').createServer(app)
@@ -6,102 +7,167 @@ const io = require('socket.io')(http)
 app.use(express.json())
 app.use(express.static(__dirname))
 
-let tickets = []
+// 🔁 MODO (true = Mongo / false = local)
+const usarMongo = true
+
+// 🌍 CONEXIÓN MONGO
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/tickets'
+
+if (usarMongo) {
+  mongoose.connect(MONGO_URL)
+    .then(() => console.log("✅ Mongo conectado"))
+    .catch(err => console.log("❌ Error Mongo:", err))
+}
+
+// 🟢 STORAGE LOCAL
+let ticketsLocal = []
+
+// 📦 MODELO
+const Ticket = usarMongo ? mongoose.model('Ticket', {
+  numero: String,
+  nombre: String,
+  telefono: String,
+  problema: String,
+  estado: String,
+  precio: String,
+  ganancia: String,
+  detalle: String,
+  fecha: String,
+  entregado: String,
+}) : null
 
 // 🔌 SOCKET
-io.on('connection', (socket) => {
+io.on('connection', () => {
   console.log('🟢 Cliente conectado')
 })
 
 // 📥 CREAR TICKET
-app.post('/ticket', (req, res) => {
+app.post('/ticket', async (req, res) => {
+  try {
+    const { nombre, telefono, problema } = req.body
 
-  const { nombre, telefono, problema } = req.body
+    const ahora = new Date()
+    const año = ahora.getFullYear()
+    const mes = (ahora.getMonth() + 1).toString().padStart(2, '0')
 
-  const ahora = new Date()
+    let lista = usarMongo ? await Ticket.find() : ticketsLocal
 
-  const año = ahora.getFullYear()
-  const mes = (ahora.getMonth() + 1).toString().padStart(2, '0')
+    let ultimo = lista.reduce((max, t) => {
+      if (!t.numero) return max
 
-  // 🔢 BUSCAR ÚLTIMO DEL MES
-  let ultimo = tickets.reduce((max, t) => {
+      if (t.numero.startsWith(`Ticket-${año}-${mes}`)) {
+        const partes = t.numero.split("-")
+        const n = parseInt(partes[3]) || 0
+        return n > max ? n : max
+      }
 
-    if (!t.numero) return max
+      return max
+    }, 0)
 
-    if (t.numero.startsWith(`Ticket-${año}-${mes}`)) {
-      const partes = t.numero.split("-")
-      const n = parseInt(partes[3]) || 0
-      return n > max ? n : max
+    const numero = `Ticket-${año}-${mes}-${(ultimo + 1).toString().padStart(3, '0')}`
+
+    const nuevo = {
+      numero,
+      nombre,
+      telefono,
+      problema,
+      estado: "pendiente",
+      precio: "",
+      ganancia: "",
+      detalle: "",
+      fecha: ahora.toISOString(),
+      entregado: "no"
     }
 
-    return max
+    if (usarMongo) {
+      await new Ticket(nuevo).save()
+    } else {
+      ticketsLocal.push(nuevo)
+    }
 
-  }, 0)
+    io.emit('actualizar')
 
-  const numero = `Ticket-${año}-${mes}-${(ultimo + 1).toString().padStart(3, '0')}`
+    res.json({ ok: true, numero })
 
-  const nuevo = {
-    numero,
-    nombre,
-    telefono,
-    problema,
-    estado: "pendiente",
-    precio: "",
-    detalle: "",
-    fecha: ahora.toLocaleDateString()
+  } catch (err) {
+    console.log("❌ Error crear:", err)
+    res.status(500).json({ error: "Error al crear" })
   }
-
-  tickets.push(nuevo)
-
-  console.log("📄 Nuevo ticket:", numero)
-
-  io.emit('actualizar')
-
-  res.json({ ok: true, numero })
 })
 
 // 📤 OBTENER TICKETS
-app.get('/tickets', (req, res) => {
-  res.json(tickets)
+
+app.get('/tickets', async (req, res) => {
+  try {
+
+    if (usarMongo) {
+      const datos = await Ticket.find().sort({ fecha: -1 })
+      res.json(datos)
+    } else {
+      res.json(ticketsLocal.slice().reverse())
+    }
+
+  } catch (err) {
+    console.log("❌ Error obtener:", err)
+    res.status(500).json([])
+  }
 })
 
 // ✏️ ACTUALIZAR
-app.put('/ticket/:numero', (req, res) => {
+app.put('/ticket/:numero', async (req, res) => {
+  try {
 
-  const { numero } = req.params
-  const { estado, precio, detalle } = req.body
+    const numero = req.params.numero
+    const update = req.body
 
-  let t = tickets.find(x => x.numero == numero)
-
-  if (t) {
-    t.estado = (estado || "").toLowerCase().trim()
-    t.precio = precio
-    t.detalle = detalle
-
-    console.log("✏️ Actualizado:", numero, t.estado)
+    if (usarMongo) {
+      await Ticket.updateOne({ numero }, update)
+    } else {
+      ticketsLocal = ticketsLocal.map(t =>
+        t.numero === numero ? { ...t, ...update } : t
+      )
+    }
 
     io.emit('actualizar')
-  }
 
-  res.json({ ok: true })
+    res.json({ ok: true })
+
+  } catch (err) {
+    console.log("❌ Error actualizar:", err)
+    res.status(500).json({ error: "Error al actualizar" })
+  }
 })
 
 // 🗑 BORRAR
-app.delete('/ticket/:numero', (req, res) => {
+app.delete('/ticket/:numero', async (req, res) => {
 
-  const { numero } = req.params
+  try {
 
-  tickets = tickets.filter(t => t.numero != numero)
+    const { numero } = req.params
 
-  console.log("🗑 Eliminado:", numero)
+    if (usarMongo) {
+      await Ticket.deleteOne({ numero })
+    } else {
+      ticketsLocal = ticketsLocal.filter(t => t.numero !== numero)
+    }
 
-  io.emit('actualizar')
+    io.emit('actualizar')
 
-  res.json({ ok: true })
+    res.json({ ok: true })
+
+  } catch (err) {
+    console.log("❌ Error borrar:", err)
+    res.status(500).json({ error: "Error al borrar" })
+  }
+})
+// 📡 MODO ACTUAL
+app.get('/modo', (req, res) => {
+  res.json({
+    modo: usarMongo ? "MONGO 🌍" : "LOCAL 🟢"
+  })
 })
 
-
-// 🚀 🔥 IMPORTANTE PARA RENDER
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000
 
 http.listen(PORT, () => {

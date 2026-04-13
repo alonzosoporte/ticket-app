@@ -3,115 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Admin Tickets</title>
+<title>Admin PRO</title>
 
 <style>
-* { -webkit-tap-highlight-color: transparent; }
-
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #f1f3f6;
+body { 
+  font-family: Arial; 
+  background:#f4f6f9; 
+  margin:0; 
 }
 
-.header {
-  position: sticky;
-  top: 0;
-  background: #0d6efd;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  font-weight: bold;
+header {
+  background: linear-gradient(135deg,#1e3c72,#2a5298);
+  color:white;
+  padding:20px;
+  text-align:center;
 }
 
-.filtros {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: white;
-  position: sticky;
-  top: 50px;
-}
-
-.filtros button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #ddd;
-  font-weight: bold;
-}
-
-.filtros .activo {
-  background: #0d6efd;
-  color: white;
+.menu button {
+  margin:5px;
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:white;
+  font-weight:bold;
 }
 
 .container {
-  padding: 10px;
+  max-width:900px;
+  margin:auto;
+  padding:15px;
 }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.ticket {
+  background:#fff;
+  padding:15px;
+  margin-bottom:12px;
+  border-radius:12px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
-.pendiente { border-left: 5px solid orange; }
-.proceso { border-left: 5px solid blue; }
-.reparado { border-left: 5px solid green; }
-
-input, select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+.botones {
+  margin-top:10px;
 }
 
-.acciones {
-  display: flex;
-  gap: 5px;
-  margin-top: 10px;
+.botones button {
+  margin:3px;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  color:white;
+  cursor:pointer;
 }
 
-.acciones button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  color: white;
-}
+.btn-guardar { background:#007bff; }
+.btn-reparado { background:#28a745; }
+.btn-wsp { background:#25d366; }
+.btn-entregado { background:#6c757d; }
+.btn-borrar { background:#dc3545; }
 
-.btn-verde { background: #28a745; }
-.btn-rojo { background: #dc3545; }
-.btn-azul { background: #007bff; }
-
-@media (min-width: 768px) {
-  .container {
-    max-width: 900px;
-    margin: auto;
-  }
+input, textarea {
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">📋 Panel de Tickets</div>
+<header>
+  <h2>📊 Panel Admin</h2>
 
-<div class="filtros">
-  <button id="btnPendientes">Pendientes</button>
-  <button id="btnTodos">Todos</button>
+  <div class="menu">
+    <button onclick="verSeccion('tickets')">📋 Tickets</button>
+    <button onclick="irCotizaciones()">💰 Cotizaciones</button>
+  </div>
+</header>
+
+<div class="container">
+
+<div id="seccionTickets">
+  <h3>Tickets</h3>
+  <div id="lista"></div>
 </div>
 
-<div class="container" id="lista"></div>
+</div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="admin.js"></script>
+<script>
+
+// IR A COTIZACIONES
+function irCotizaciones(){
+  window.location.href = "/cotizaciones.html"
+}
+
+// CARGAR TICKETS
+async function cargar(){
+
+  const res = await fetch("/tickets")
+  const data = await res.json()
+
+  const div = document.getElementById("lista")
+  div.innerHTML = ""
+
+  data.forEach(t => {
+
+    div.innerHTML += `
+      <div class="ticket">
+
+        <b>${t.numero}</b><br>
+        ${t.nombre} - ${t.telefono}<br>
+        ${t.problema || ""}<br>
+
+        <input id="precio-${t.numero}" placeholder="Precio" value="${t.precio||""}">
+        <input id="ganancia-${t.numero}" placeholder="Ganancia" value="${t.ganancia||""}">
+        <input id="estado-${t.numero}" placeholder="Estado" value="${t.estado||""}">
+        <textarea id="detalle-${t.numero}" placeholder="Detalle">${t.detalle||""}</textarea>
+
+        <div class="botones">
+          <button class="btn-guardar" onclick="guardar('${t.numero}')">💾 Guardar</button>
+          <button class="btn-reparado" onclick="reparado('${t.numero}','${t.telefono}','${t.nombre}')">🔧 Reparado</button>
+          <button class="btn-wsp" onclick="wsp('${t.numero}','${t.telefono}','${t.nombre}')">💬 WhatsApp</button>
+          <button class="btn-entregado" onclick="entregado('${t.numero}')">📦 Entregado</button>
+          <button class="btn-borrar" onclick="borrar('${t.numero}')">🗑</button>
+        </div>
+
+      </div>
+    `
+  })
+}
+
+// GUARDAR
+async function guardar(numero){
+
+  const precio = document.getElementById("precio-"+numero).value
+  const ganancia = document.getElementById("ganancia-"+numero).value
+  const estado = document.getElementById("estado-"+numero).value
+  const detalle = document.getElementById("detalle-"+numero).value
+
+  await fetch("/ticket/"+numero,{
+    method:"PUT",
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({precio,ganancia,estado,detalle})
+  })
+
+  alert("Guardado")
+}
+
+// REPARADO
+async function reparado(numero,tel,nombre){
+
+  await fetch("/ticket/"+numero,{
+    method:"PUT",
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({estado:"reparado"})
+  })
+
+  wsp(numero,tel,nombre)
+}
+
+// WHATSAPP
+function wsp(numero,tel,nombre){
+
+  const precio = document.getElementById("precio-"+numero).value
+  const detalle = document.getElementById("detalle-"+numero).value
+
+  const telefono = tel.replace(/\D/g,"")
+
+  const msg = `Hola ${nombre}, su equipo está reparado.
+Ticket: ${numero}
+Detalle: ${detalle}
+Precio: $${precio}`
+
+  window.open("https://wa.me/598"+telefono+"?text="+encodeURIComponent(msg))
+}
+
+// ENTREGADO
+async function entregado(numero){
+
+  await fetch("/ticket/"+numero,{
+    method:"PUT",
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({entregado:"si"})
+  })
+
+  cargar()
+}
+
+// BORRAR
+async function borrar(numero){
+
+  if(!confirm("¿Borrar ticket?")) return
+
+  await fetch("/ticket/"+numero,{method:"DELETE"})
+
+  cargar()
+}
+
+// INICIO
+cargar()
+
+</script>
 
 </body>
 </html>

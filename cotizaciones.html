@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotizaciones PRO</title>
+
+<style>
+body {
+  font-family: Arial;
+  background:#f4f6f9;
+  margin:0;
+}
+
+header {
+  background:#222;
+  color:white;
+  padding:15px;
+  text-align:center;
+}
+
+.container {
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+}
+
+.card {
+  background:#fff;
+  padding:15px;
+  margin-bottom:10px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+input {
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+button {
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+.btn-guardar { background:#007bff; }
+.btn-borrar { background:#dc3545; }
+.btn-volver { background:#6c757d; }
+.btn-toggle { background:#28a745; margin-bottom:10px; }
+
+.oculto { display:none; }
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>💰 Cotizaciones</h2>
+  <button class="btn-volver" onclick="volver()">⬅ Volver a Tickets</button>
+</header>
+
+<div class="container">
+
+<!-- BOTON MOSTRAR FORM -->
+<button class="btn-toggle" onclick="toggleForm()">➕ Nueva Cotización</button>
+
+<!-- FORM OCULTO -->
+<div id="formulario" class="card oculto">
+
+  <input id="nombre" placeholder="Nombre *">
+  <input id="cel" placeholder="Celular *">
+  <input id="producto" placeholder="Producto">
+  <input id="proveedor" placeholder="Proveedor">
+  <input id="precio" placeholder="Precio *">
+
+  <button class="btn-guardar" onclick="guardar()">💾 Guardar</button>
+
+</div>
+
+<!-- BUSCADOR -->
+<input id="buscador" placeholder="🔍 Buscar cliente, producto o celular...">
+
+<!-- LISTA -->
+<div id="lista"></div>
+
+</div>
+
+<script>
+
+// VOLVER
+function volver(){
+  window.location.href = "/admin.html"
+}
+
+// MOSTRAR / OCULTAR FORM
+function toggleForm(){
+  const f = document.getElementById("formulario")
+  f.classList.toggle("oculto")
+}
+
+// GUARDAR
+function guardar(){
+
+  const nombre = document.getElementById("nombre").value
+  const cel = document.getElementById("cel").value
+  const precio = document.getElementById("precio").value
+
+  if(!nombre || !cel || !precio){
+    alert("Completar nombre, celular y precio")
+    return
+  }
+
+  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
+
+  const data = {
+    nombre,
+    cel,
+    producto: document.getElementById("producto").value,
+    proveedor: document.getElementById("proveedor").value,
+    precio,
+    fecha: new Date().toISOString() // 🔥 CLAVE
+  }
+
+  lista.push(data)
+
+  localStorage.setItem("cotizaciones", JSON.stringify(lista))
+
+  limpiar()
+  cargar()
+}
+
+// LIMPIAR
+function limpiar(){
+  document.getElementById("nombre").value = ""
+  document.getElementById("cel").value = ""
+  document.getElementById("producto").value = ""
+  document.getElementById("proveedor").value = ""
+  document.getElementById("precio").value = ""
+}
+
+// CARGAR + ORDEN + BUSCAR
+function cargar(){
+
+  const texto = document.getElementById("buscador").value.toLowerCase()
+
+  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
+
+  // 🔥 ORDEN POR FECHA (MAS NUEVO ARRIBA)
+  lista.sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
+
+  // 🔍 BUSCADOR
+  lista = lista.filter(c =>
+    (c.nombre || "").toLowerCase().includes(texto) ||
+    (c.cel || "").includes(texto) ||
+    (c.producto || "").toLowerCase().includes(texto)
+  )
+
+  const div = document.getElementById("lista")
+  div.innerHTML = ""
+
+  lista.forEach((c, index) => {
+
+    div.innerHTML += `
+      <div class="card">
+        <b>${c.nombre}</b> - ${c.cel}<br>
+        ${c.producto || ""}<br>
+        Proveedor: ${c.proveedor || ""}<br>
+        💰 $${c.precio}<br>
+        <small>${new Date(c.fecha).toLocaleString()}</small><br>
+
+        <button class="btn-borrar" onclick="borrar(${index})">🗑 Eliminar</button>
+      </div>
+    `
+  })
+}
+
+// BORRAR
+function borrar(index){
+
+  if(!confirm("¿Eliminar cotización?")) return
+
+  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
+
+  lista.splice(index,1)
+
+  localStorage.setItem("cotizaciones", JSON.stringify(lista))
+
+  cargar()
+}
+
+// INICIO
+cargar()
+document.getElementById("buscador").addEventListener("input", cargar)
+
+</script>
+
+</body>
+</html>
