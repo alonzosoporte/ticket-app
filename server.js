@@ -6,6 +6,13 @@ const io = require('socket.io')(http)
 
 app.use(express.json())
 app.use(express.static(__dirname))
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' data: blob:; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+  )
+  next()
+})
 
 // 🔁 MODO (true = Mongo / false = local)
 const usarMongo = true
@@ -165,7 +172,7 @@ app.get('/modo', (req, res) => {
   res.json({
     modo: usarMongo ? "MONGO 🌍" : "LOCAL 🟢"
   })
-})
+})dirname
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000

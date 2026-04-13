@@ -43,10 +43,6 @@ header {
   box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
-.botones {
-  margin-top:10px;
-}
-
 .botones button {
   margin:3px;
   padding:6px 10px;
@@ -86,8 +82,20 @@ input, textarea {
 <div class="container">
 
 <div id="seccionTickets">
-  <h3>Tickets</h3>
+
+  <h3>➕ Nuevo Ticket</h3>
+
+  <input id="nombre" placeholder="Nombre">
+  <input id="telefono" placeholder="Teléfono">
+  <textarea id="problema" placeholder="Problema"></textarea>
+
+  <button onclick="crear()">Crear Ticket</button>
+
+  <hr>
+
+  <h3>📋 Lista</h3>
   <div id="lista"></div>
+
 </div>
 
 </div>
@@ -97,6 +105,35 @@ input, textarea {
 // IR A COTIZACIONES
 function irCotizaciones(){
   window.location.href = "/cotizaciones.html"
+}
+
+// CREAR TICKET
+async function crear(){
+
+  const nombre = document.getElementById("nombre").value
+  const telefono = document.getElementById("telefono").value
+  const problema = document.getElementById("problema").value
+
+  if(!nombre || !telefono){
+    alert("Nombre y teléfono obligatorios")
+    return
+  }
+
+  await fetch("/ticket", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, telefono, problema })
+  })
+
+  limpiar()
+  cargar()
+}
+
+// LIMPIAR
+function limpiar(){
+  document.getElementById("nombre").value = ""
+  document.getElementById("telefono").value = ""
+  document.getElementById("problema").value = ""
 }
 
 // CARGAR TICKETS
@@ -200,6 +237,11 @@ async function borrar(numero){
   await fetch("/ticket/"+numero,{method:"DELETE"})
 
   cargar()
+}
+
+// SECCIÓN
+function verSeccion(sec){
+  document.getElementById("seccionTickets").style.display = "block"
 }
 
 // INICIO
