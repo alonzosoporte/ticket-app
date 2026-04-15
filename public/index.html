@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sistema Tickets</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #eef2f7;
+  margin: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 20px;
+}
+
+.box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-full {
+  grid-column: 1 / -1;
+}
+
+input, button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+button {
+  background: #22c55e;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+/* 📱 CELULAR */
+@media (max-width: 600px) {
+  .container {
+    margin: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="box">
+    <h2>🛠 Crear Ticket</h2>
+
+    <div class="form-grid">
+      <input id="nombre" placeholder="Nombre">
+      <input id="telefono" placeholder="Teléfono">
+
+      <input id="problema" class="form-full" placeholder="Problema">
+
+      <button class="form-full" onclick="crear()">Enviar Ticket</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function crear() {
+  const n = document.getElementById('nombre').value
+  const t = document.getElementById('telefono').value
+  const p = document.getElementById('problema').value
+
+  if (!n || !t || !p) return alert("Completa todo")
+
+  // 🔥 CREAR TICKET
+  const res = await fetch('/ticket', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nombre:n, telefono:t, problema:p })
+  })
+
+  const data = await res.json()
+
+  // 🔥 FORMATEO TEL
+  let tel = t.replace(/\D/g, '')
+
+  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
+  if (!tel.startsWith('598')) tel = '598' + tel
+
+  const mensaje =
+`Hola ${n} 👋
+
+Tu ticket fue creado correctamente ✅
+
+🧾 Ticket: ${data.numero}
+🔧 Problema: ${p}
+
+Un técnico se comunicará contigo.`
+
+  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+
+  // 🔥 abrir WhatsApp
+  window.location.href = url
+
+  // 🔥 limpiar formulario
+  document.getElementById('nombre').value = ''
+  document.getElementById('telefono').value = ''
+  document.getElementById('problema').value = ''
+}
+</script>
+
+</body>
+</html>

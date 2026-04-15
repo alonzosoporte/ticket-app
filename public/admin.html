@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #eef2f7;
+  color: #111;
+  padding: 20px;
+}
+
+.ticket {
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+input, select, button {
+  margin: 4px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🧑‍💻 Panel Admin</h1>
+
+<button onclick="modo='pendientes'; cargar()">Pendientes</button>
+<button onclick="modo='todos'; cargar()">Todos</button>
+
+<br><br>
+
+<input id="busqueda" placeholder="Buscar por nombre, teléfono o ticket" oninput="cargar()">
+
+<select id="filtroMes" onchange="cargar()">
+  <option value="todos">Todos los meses</option>
+</select>
+
+<br><br>
+
+<div id="resumen"></div>
+
+<div id="lista"></div>
+
+<script>
+
+let modo = 'pendientes'
+const socket = io()
+
+// 📥 CARGAR TICKETS
+async function cargar() {
+  const res = await fetch('/tickets')
+
+if (!res.ok) {
+  console.error('Error server:', await res.text())
+  return
+}
+
+let data = await res.json()
+
+  // 📅 GENERAR MESES
+  let listaMeses = {}
+
+  data.forEach(t => {
+    if (!t.fecha) return
+
+    const fecha = new Date(t.fecha)
+    if (isNaN(fecha)) return
+
+    const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
+
+    listaMeses[key] = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+  })
+
+  // 🔥 llenar select
+  const select = document.getElementById('filtroMes')
+
+  if (select.options.length <= 1) {
+    Object.entries(listaMeses)
+      .reverse()
+      .forEach(([key, texto]) => {
+        const opt = document.createElement('option')
+        opt.value = key
+        opt.textContent = texto
+        select.appendChild(opt)
+      })
+  }
+
+  // 🔥 seleccionar mes actual
+  const hoy = new Date()
+  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
+
+  if (select.value === 'todos') {
+    select.value = mesActualKey
+  }
+
+  // 🔍 FILTRO MES
+  const mesSeleccionado = select.value
+
+  if (mesSeleccionado !== 'todos') {
+    data = data.filter(t => {
+      const fecha = new Date(t.fecha)
+      if (isNaN(fecha)) return false
+
+      const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
+      return key === mesSeleccionado
+    })
+  }
+
+  // 💰 GANANCIAS
+  let meses = {}
+  let totalGeneral = 0
+
+  data.forEach(t => {
+    if (!t.fecha) return
+
+    const fecha = new Date(t.fecha)
+    const mes = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+
+    const gan = t.entregado === 'si' ? (parseFloat(t.ganancia) || 0) : 0
+
+    if (!meses[mes]) meses[mes] = 0
+
+    meses[mes] += gan
+    totalGeneral += gan
+  })
+
+  const ordenados = Object.entries(meses).reverse()
+
+  let htmlResumen = `
+  <div style="background:#fff;padding:15px;border-radius:10px;margin-bottom:15px">
+    <b>💰 Resumen de Ganancias</b><br><br>
+  `
+
+  ordenados.forEach(([mes, total]) => {
+    htmlResumen += `📅 ${mes}: $${total}<br>`
+  })
+
+  htmlResumen += `<br><b>🧮 TOTAL GENERAL: $${totalGeneral}</b>`
+  htmlResumen += `</div>`
+
+  document.getElementById('resumen').innerHTML = htmlResumen
+
+  // 🔥 filtro pendientes
+  if (modo === 'pendientes') {
+    data = data.filter(t => t.entregado !== 'si')
+  }
+
+  // 🔍 buscador
+  const filtro = document.getElementById('busqueda').value.toLowerCase()
+
+  data = data.filter(t =>
+    t.nombre.toLowerCase().includes(filtro) ||
+    t.telefono.includes(filtro) ||
+    t.numero.toLowerCase().includes(filtro)
+  )
+
+  const lista = document.getElementById('lista')
+  lista.innerHTML = ''
+
+  data.reverse().forEach(t => {
+    lista.innerHTML += `
+      <div class="ticket">
+        <b>${t.numero}</b><br>
+        ${t.nombre} (${t.telefono})<br>
+        ${t.problema}<br>
+        📅 ${formatearFecha(t.fecha)}<br><br>
+
+        💲 Precio: <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
+        💰 Ganancia: <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+        <br><br>
+        📝 Detalle del trabajo:<br>
+        <textarea style="width:100%;height:60px" 
+        onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
+
+        <br><br>
+
+        Estado: ${t.estado}<br>
+        Entregado: ${t.entregado}<br><br>
+
+        <button onclick="estado('${t.numero}','proceso')">Proceso</button>
+
+        <button onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+          ✔️ Listo + WhatsApp
+        </button>
+
+        <button onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+        <button onclick="borrar('${t.numero}')">❌</button>
+      </div>
+    `
+  })
+}
+
+// 📅 FORMATEAR FECHA
+function formatearFecha(f) {
+  const fecha = new Date(f)
+  if (isNaN(fecha)) return f || 'Sin fecha'
+  return fecha.toLocaleString('es-UY')
+}
+
+// ✏️ GUARDAR
+async function guardar(id, campo, valor) {
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ [campo]: valor })
+  })
+}
+
+// 🔄 ESTADO
+async function estado(id, estado) {
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ estado })
+  })
+}
+
+// 📦 ENTREGADO
+async function marcarEntregado(id) {
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ entregado: 'si' })
+  })
+}
+
+// ❌ BORRAR
+async function borrar(id) {
+
+  const ok = confirm("¿Seguro que querés borrar este ticket?")
+
+  if (!ok) return
+
+  await fetch('/ticket/'+id,{method:'DELETE'})
+}
+
+// 📲 WHATSAPP
+async function listoWhatsApp(id, nombre, telefono, precio) {
+
+  let tel = telefono.replace(/\D/g, '')
+
+  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
+  if (!tel.startsWith('598')) tel = '598' + tel
+
+  const mensaje =
+`Hola ${nombre} 👋
+
+Tu equipo ya está listo para retirar ✅
+
+🧾 Ticket: ${id}
+💲 Precio: ${precio || 'A confirmar'}
+
+Favor coordinar para retirarlo.`
+
+  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+
+  window.location.href = url
+
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ estado: 'listo' })
+  })
+}
+
+// 🔄 SOCKET
+socket.on('actualizar', cargar)
+cargar()
+
+</script>
+
+</body>
+</html>
