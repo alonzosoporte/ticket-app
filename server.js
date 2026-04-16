@@ -1,85 +1,97 @@
-const mongoose = require('mongoose')
-
-mongoose.connect(process.env.MONGO_URL)
-  .then(() => console.log("✅ Mongo conectado"))
-  .catch(err => console.log("❌ Error Mongo:", err))
 const express = require('express')
 const app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
+const mongoose = require('mongoose')
 
 const PORT = process.env.PORT || 3000
 
+// 🔗 CONEXIÓN A MONGO
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => console.log("✅ Mongo conectado"))
+  .catch(err => console.log("❌ Error Mongo:", err))
+
+// 📦 MODELO DE TICKET
+const TicketSchema = new mongoose.Schema({
+  numero: String,
+  nombre: String,
+  telefono: String,
+  problema: String,
+  estado: String,
+  precio: String,
+  ganancia: String,
+  detalle: String,
+  entregado: String,
+  fecha: String
+})
+
+const Ticket = mongoose.model('Ticket', TicketSchema)
+
+// CONFIG
 app.use(express.json())
 app.use(express.static('public'))
 
-let ticketsLocal = []
-
+// SOCKET
 io.on('connection', () => {
   console.log('Cliente conectado')
 })
 
-// CREAR
-// CREAR
-app.post('/ticket', (req, res) => {
+// 🆕 CREAR TICKET
+app.post('/ticket', async (req, res) => {
   const { nombre, telefono, problema } = req.body
 
   if (!nombre || !telefono || !problema) {
     return res.json({ error: 'Faltan datos' })
   }
 
-  const numero = "T-" + new Date().getFullYear() + "-" + (ticketsLocal.length + 1).toString().padStart(4, '0')
+  const numero = "T-" + Date.now()
 
-  const ahora = new Date()
+  const nuevo = new Ticket({
+    numero,
+    nombre,
+    telefono,
+    problema,
+    estado: 'pendiente',
+    precio: '',
+    ganancia: '',
+    detalle: '',
+    entregado: 'no',
+    fecha: new Date().toISOString()
+  })
 
-  const nuevo = {
-  numero,
-  nombre,
-  telefono,
-  problema,
-  estado: 'pendiente',
-  precio: '',
-  ganancia: '',
-  detalle: '',
-  entregado: 'no',
-  fecha: ahora.toISOString()
-}
-
-  ticketsLocal.push(nuevo)
+  await nuevo.save() // 🔥 GUARDA EN MONGO
 
   io.emit('actualizar')
 
   res.json({ ok: true, numero })
 })
 
-// LISTAR
-app.get('/tickets', (req, res) => {
-  res.json(ticketsLocal)
+// 📄 LISTAR TICKETS
+app.get('/tickets', async (req, res) => {
+  const data = await Ticket.find().sort({ fecha: -1 })
+  res.json(data)
 })
 
-// ACTUALIZAR
-app.put('/ticket/:numero', (req, res) => {
-  const numero = req.params.numero
-  const update = req.body
-
-  ticketsLocal = ticketsLocal.map(t =>
-    t.numero === numero ? { ...t, ...update } : t
+// ✏️ ACTUALIZAR TICKET
+app.put('/ticket/:numero', async (req, res) => {
+  await Ticket.findOneAndUpdate(
+    { numero: req.params.numero },
+    req.body
   )
 
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-// BORRAR
-app.delete('/ticket/:numero', (req, res) => {
-  const numero = req.params.numero
-
-  ticketsLocal = ticketsLocal.filter(t => t.numero !== numero)
+// ❌ BORRAR TICKET
+app.delete('/ticket/:numero', async (req, res) => {
+  await Ticket.findOneAndDelete({ numero: req.params.numero })
 
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
+// 🚀 SERVER
 http.listen(PORT, () => {
   console.log('Servidor en puerto ' + PORT)
 })
