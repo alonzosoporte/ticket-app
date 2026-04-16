@@ -32,16 +32,49 @@ button {
   cursor: pointer;
 }
 </style>
+
+<!-- 🔐 LOGIN -->
+<script>
+const USER = "alonzosoporte"
+const PASS = "foofigh1987"
+
+function checkLogin() {
+  const logged = localStorage.getItem('loginOK')
+
+  if (logged === 'true') return
+
+  const user = prompt("Usuario:")
+  const pass = prompt("Clave:")
+
+  if (user === USER && pass === PASS) {
+    localStorage.setItem('loginOK', 'true')
+  } else {
+    alert("Acceso denegado")
+    window.location.href = "/"
+  }
+}
+
+function logout() {
+  localStorage.removeItem('loginOK')
+  location.reload()
+}
+
+checkLogin()
+</script>
+
 </head>
 
 <body>
 
 <h1>🧑‍💻 Panel Admin</h1>
 
-<button onclick="modo='pendientes'; cargar()">Pendientes</button>
-<button onclick="modo='todos'; cargar()">Todos</button>
-
-<br><br>
+<!-- 🔥 MENÚ -->
+<div style="margin-bottom:15px">
+  <button onclick="modo='pendientes'; cargar()">Pendientes</button>
+  <button onclick="modo='todos'; cargar()">Todos</button>
+  <button onclick="window.location.href='cotizaciones.html'">📊 Cotizaciones</button>
+  <button onclick="logout()">🚪 Salir</button>
+</div>
 
 <input id="busqueda" placeholder="Buscar por nombre, teléfono o ticket" oninput="cargar()">
 
