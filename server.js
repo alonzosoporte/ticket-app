@@ -1,17 +1,20 @@
 const express = require('express')
-const app = express()
-const http = require('http').createServer(app)
-const io = require('socket.io')(http)
 const mongoose = require('mongoose')
+const http = require('http')
+const { Server } = require('socket.io')
+
+const app = express()
+const server = http.createServer(app)
+const io = new Server(server)
 
 const PORT = process.env.PORT || 3000
 
-// 🔗 CONEXIÓN A MONGO
+// 🔥 CONEXIÓN MONGO
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("✅ Mongo conectado"))
   .catch(err => console.log("❌ Error Mongo:", err))
 
-// 📦 MODELO DE TICKET
+// 📦 MODELO
 const TicketSchema = new mongoose.Schema({
   numero: String,
   nombre: String,
@@ -22,16 +25,16 @@ const TicketSchema = new mongoose.Schema({
   ganancia: String,
   detalle: String,
   entregado: String,
-  fecha: String
+  fecha: Date
 })
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// CONFIG
+// 🔧 MIDDLEWARE
 app.use(express.json())
 app.use(express.static('public'))
 
-// SOCKET
+// 🔌 SOCKET
 io.on('connection', () => {
   console.log('Cliente conectado')
 })
@@ -44,54 +47,66 @@ app.post('/ticket', async (req, res) => {
     return res.json({ error: 'Faltan datos' })
   }
 
-  const numero = "T-" + Date.now()
+  try {
+    const año = new Date().getFullYear()
 
-  const nuevo = new Ticket({
-    numero,
-    nombre,
-    telefono,
-    problema,
-    estado: 'pendiente',
-    precio: '',
-    ganancia: '',
-    detalle: '',
-    entregado: 'no',
-    fecha: new Date().toISOString()
-  })
+    const contador = await Ticket.countDocuments()
 
-  await nuevo.save() // 🔥 GUARDA EN MONGO
+    const numero = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
 
-  io.emit('actualizar')
+    const nuevo = new Ticket({
+      numero,
+      nombre,
+      telefono,
+      problema,
+      estado: 'pendiente',
+      precio: '',
+      ganancia: '',
+      detalle: '',
+      entregado: 'no',
+      fecha: new Date()
+    })
 
-  res.json({ ok: true, numero })
+    await nuevo.save()
+
+    io.emit('actualizar')
+
+    res.json({ ok: true, numero })
+
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: 'Error al crear ticket' })
+  }
 })
 
-// 📄 LISTAR TICKETS
+// 📥 LISTAR
 app.get('/tickets', async (req, res) => {
-  const data = await Ticket.find().sort({ fecha: -1 })
+  const data = await Ticket.find()
   res.json(data)
 })
 
-// ✏️ ACTUALIZAR TICKET
+// ✏️ ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
-  await Ticket.findOneAndUpdate(
-    { numero: req.params.numero },
-    req.body
-  )
+  const numero = req.params.numero
+  const update = req.body
+
+  await Ticket.findOneAndUpdate({ numero }, update)
 
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-// ❌ BORRAR TICKET
+// ❌ BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
-  await Ticket.findOneAndDelete({ numero: req.params.numero })
+  const numero = req.params.numero
+
+  await Ticket.findOneAndDelete({ numero })
 
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-// 🚀 SERVER
-http.listen(PORT, () => {
+// 🚀 SERVIDOR
+server.listen(PORT, () => {
   console.log('Servidor en puerto ' + PORT)
 })
