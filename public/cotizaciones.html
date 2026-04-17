@@ -2,56 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Cotizaciones</title>
+<title>Cotizaciones PRO</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #eef2f7;
-  padding: 20px;
-}
-
-.top {
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-}
+body { font-family: Arial; background:#eef2f7; padding:20px; }
 
 .card {
-  background: white;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-input, textarea, select, button {
-  padding:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-button { cursor:pointer; }
-
-img {
-  max-width:120px;
-  margin-top:5px;
-  border-radius:6px;
-}
-
-#sugerencias {
   background:white;
-  border:1px solid #ccc;
-  position:absolute;
-  z-index:10;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.sug { padding:5px; cursor:pointer; }
-.sug:hover { background:#eee; }
+input, select, button, textarea {
+  padding:6px;
+  margin:4px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+button { cursor:pointer }
+
+img { max-width:120px; border-radius:6px }
 
 .resumen {
-  background:#fff;
+  background:white;
   padding:15px;
   border-radius:10px;
   margin-bottom:15px;
@@ -61,43 +37,39 @@ img {
 
 <body>
 
-<h2>📊 Cotizaciones</h2>
+<h2>📊 Cotizaciones PRO</h2>
 
-<div class="top">
-  <input id="buscar" placeholder="Buscar por nombre, celular o producto" oninput="cargar()">
-  <button onclick="mostrarForm()">➕ Nueva cotización</button>
+<input id="buscar" placeholder="Buscar..." oninput="cargar()">
+<button onclick="mostrarForm()">➕ Nueva</button>
 
-  <select id="filtroMes" onchange="cargar()">
-    <option value="todos">Todos los meses</option>
-  </select>
-</div>
+<select id="filtroMes" onchange="cargar()">
+  <option value="todos">Todos</option>
+</select>
 
 <div id="resumen"></div>
 
-<div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-bottom:15px">
+<div id="form" style="display:none;background:white;padding:10px;border-radius:10px">
 
-  <input id="nombre" placeholder="Nombre" oninput="buscarCliente()"><br><br>
-  <input id="celular" placeholder="Celular" oninput="buscarCliente()"><br>
-  <div id="sugerencias"></div>
+<input id="nombre" placeholder="Nombre">
+<input id="celular" placeholder="Celular"><br>
 
-  <br>
+<input id="producto" placeholder="Producto"><br>
 
-  <input id="producto" placeholder="Producto"><br><br>
+<select id="proveedor"></select>
 
-  <input id="proveedor" placeholder="Proveedor"><br><br>
+<input id="nuevoProveedor" placeholder="Nuevo proveedor">
+<button onclick="agregarProveedor()">➕</button><br>
 
-  <input id="costoProveedor" placeholder="Costo proveedor" oninput="calcularGanancia()"><br><br>
+<input id="costoProveedor" placeholder="Costo" oninput="calc()">
+<input id="precioCliente" placeholder="Precio" oninput="calc()">
+<input id="ganancia" readonly placeholder="Ganancia"><br>
 
-  <input id="precioCliente" placeholder="Precio cliente" oninput="calcularGanancia()"><br><br>
+<textarea id="descripcion" placeholder="Descripción"></textarea><br>
 
-  <input id="ganancia" placeholder="Ganancia automática" readonly><br><br>
+<input type="file" id="foto"><br>
 
-  <textarea id="descripcion" placeholder="Descripción"></textarea><br><br>
-
-  <input type="file" id="foto"><br><br>
-
-  <button onclick="guardar()">💾 Guardar</button>
-  <button onclick="cancelar()">❌ Cancelar</button>
+<button onclick="guardar()">💾 Guardar</button>
+<button onclick="cancelar()">❌</button>
 
 </div>
 
@@ -105,149 +77,45 @@ img {
 
 <script>
 
-let editando = null
-let fotoBase64 = ''
+let editando=null
+let fotoBase64=''
 
-// ================== GANANCIA AUTOMÁTICA ==================
-function calcularGanancia() {
-  const costo = parseFloat(document.getElementById('costoProveedor').value) || 0
-  const precio = parseFloat(document.getElementById('precioCliente').value) || 0
-
-  document.getElementById('ganancia').value = precio - costo
+// ================== CALCULO ==================
+function calc(){
+  const c = parseFloat(costoProveedor.value)||0
+  const p = parseFloat(precioCliente.value)||0
+  ganancia.value = p - c
 }
 
-// ================== CARGAR ==================
-async function cargar() {
-
-  const resC = await fetch('/cotizaciones')
-  let cotizaciones = await resC.json()
-
-  const resT = await fetch('/tickets')
-  let tickets = await resT.json()
-
-  const filtro = document.getElementById('buscar').value.toLowerCase()
-
-  cotizaciones = cotizaciones.filter(c =>
-    (c.producto || '').toLowerCase().includes(filtro) ||
-    (c.nombre || '').toLowerCase().includes(filtro) ||
-    (c.celular || '').includes(filtro)
-  )
-
-  // ===== MESES =====
-  let listaMeses = {}
-
-  ;[...cotizaciones, ...tickets].forEach(x => {
-    if (!x.fecha) return
-    const f = new Date(x.fecha)
-    const key = f.getFullYear() + '-' + (f.getMonth()+1)
-    listaMeses[key] = f.toLocaleString('es-UY',{month:'long',year:'numeric'})
-  })
-
-  const select = document.getElementById('filtroMes')
-
-  if (select.options.length <= 1) {
-    Object.entries(listaMeses).reverse().forEach(([k,v])=>{
-      const o=document.createElement('option')
-      o.value=k
-      o.textContent=v
-      select.appendChild(o)
-    })
-  }
-
-  const hoy = new Date()
-  const mesActual = hoy.getFullYear() + '-' + (hoy.getMonth()+1)
-
-  if (select.value === 'todos') select.value = mesActual
-
-  const mesSel = select.value
-
-  function filtrarMes(arr){
-    if(mesSel==='todos') return arr
-    return arr.filter(x=>{
-      const f=new Date(x.fecha)
-      const key=f.getFullYear()+'-'+(f.getMonth()+1)
-      return key===mesSel
-    })
-  }
-
-  cotizaciones = filtrarMes(cotizaciones)
-  tickets = filtrarMes(tickets)
-
-  // ===== GANANCIAS =====
-  let ganCot = 0
-  let ganTick = 0
-
-  cotizaciones.forEach(c=>{
-    ganCot += Number(c.ganancia) || 0
-  })
-
-  tickets.forEach(t=>{
-    if(t.entregado==='si'){
-      ganTick += Number(t.ganancia) || 0
-    }
-  })
-
-  const total = ganCot + ganTick
-
-  document.getElementById('resumen').innerHTML = `
-  <div class="resumen">
-    <b>💰 Resumen del negocio</b><br><br>
-    📊 Cotizaciones: $${ganCot}<br>
-    🧾 Tickets: $${ganTick}<br>
-    <hr>
-    <b>🧮 TOTAL: $${total}</b>
-  </div>
-  `
-
-  // ===== LISTA =====
-  const lista = document.getElementById('lista')
-  lista.innerHTML=''
-
-  cotizaciones.reverse().forEach(c=>{
-    lista.innerHTML+=`
-    <div class="card">
-      <b>${c.producto}</b><br>
-      👤 ${c.nombre||''} (${c.celular||''})<br>
-      🏭 ${c.proveedor||''}<br>
-      💸 ${c.costoProveedor||''}<br>
-      💰 ${c.precioCliente||''}<br>
-      🧾 Ganancia: ${c.ganancia||0}<br>
-      📅 ${new Date(c.fecha).toLocaleString('es-UY')}<br>
-      ${c.foto?`<img src="${c.foto}">`:''}
-
-      <br><br>
-
-      <button onclick="editar('${c._id}')">✏️</button>
-      <button onclick="borrar('${c._id}')">❌</button>
-    </div>
-    `
-  })
-}
-
-// ================== AUTOCOMPLETE ==================
-async function buscarCliente(){
-  const q = document.getElementById('nombre').value || document.getElementById('celular').value
-  if(q.length<2) return
-
-  const res = await fetch('/clientes?q='+q)
+// ================== PROVEEDORES ==================
+async function cargarProveedores(){
+  const res = await fetch('/proveedores')
   const data = await res.json()
 
-  const s = document.getElementById('sugerencias')
-  s.innerHTML=''
+  proveedor.innerHTML=''
 
-  data.forEach(c=>{
-    s.innerHTML+=`<div class="sug" onclick="sel('${c.nombre}','${c.celular}')">${c.nombre} - ${c.celular}</div>`
+  data.forEach(p=>{
+    proveedor.innerHTML+=`<option value="${p._id}">${p.nombre}</option>`
   })
 }
 
-function sel(n,c){
-  document.getElementById('nombre').value=n
-  document.getElementById('celular').value=c
-  document.getElementById('sugerencias').innerHTML=''
+async function agregarProveedor(){
+  const nombre = nuevoProveedor.value
+
+  if(!nombre) return alert('Escribí proveedor')
+
+  await fetch('/proveedores',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nombre})
+  })
+
+  nuevoProveedor.value=''
+  await cargarProveedores()
 }
 
 // ================== FOTO ==================
-document.getElementById('foto').onchange=e=>{
+foto.onchange=e=>{
   const r=new FileReader()
   r.onload=()=>fotoBase64=r.result
   r.readAsDataURL(e.target.files[0])
@@ -257,14 +125,14 @@ document.getElementById('foto').onchange=e=>{
 async function guardar(){
 
   const data={
-    nombre: nombre.value,
-    celular: celular.value,
-    producto: producto.value,
-    proveedor: proveedor.value,
-    costoProveedor: costoProveedor.value,
-    precioCliente: precioCliente.value,
-    descripcion: descripcion.value,
-    foto: fotoBase64
+    nombre:nombre.value,
+    celular:celular.value,
+    producto:producto.value,
+    proveedor:proveedor.value, // 🔥 ahora ID
+    costoProveedor:costoProveedor.value,
+    precioCliente:precioCliente.value,
+    descripcion:descripcion.value,
+    foto:fotoBase64
   }
 
   if(editando){
@@ -285,6 +153,42 @@ async function guardar(){
   cargar()
 }
 
+// ================== CARGAR ==================
+async function cargar(){
+
+  const res = await fetch('/cotizaciones')
+  let data = await res.json()
+
+  const filtro = buscar.value.toLowerCase()
+
+  data = data.filter(c =>
+    (c.producto||'').toLowerCase().includes(filtro) ||
+    (c.nombre||'').toLowerCase().includes(filtro) ||
+    (c.celular||'').includes(filtro)
+  )
+
+  lista.innerHTML=''
+
+  data.reverse().forEach(c=>{
+    lista.innerHTML+=`
+    <div class="card">
+      <b>${c.producto}</b><br>
+      ${c.nombre} (${c.celular})<br>
+      💰 ${c.precioCliente}<br>
+      💸 ${c.costoProveedor}<br>
+      🧾 ${c.ganancia}<br>
+
+      ${c.foto?`<img src="${c.foto}">`:''}
+
+      <br><br>
+
+      <button onclick="editar('${c._id}')">✏️</button>
+      <button onclick="borrar('${c._id}')">❌</button>
+    </div>
+    `
+  })
+}
+
 // ================== EDITAR ==================
 async function editar(id){
   const res=await fetch('/cotizaciones')
@@ -294,7 +198,6 @@ async function editar(id){
   nombre.value=c.nombre||''
   celular.value=c.celular||''
   producto.value=c.producto||''
-  proveedor.value=c.proveedor||''
   costoProveedor.value=c.costoProveedor||''
   precioCliente.value=c.precioCliente||''
   descripcion.value=c.descripcion||''
@@ -302,15 +205,14 @@ async function editar(id){
   fotoBase64=c.foto||''
   editando=id
 
-  calcularGanancia()
+  calc()
   mostrarForm()
 }
 
 // ================== BORRAR ==================
 async function borrar(id){
-  if(!confirm("¿Eliminar cotización?")) return
+  if(!confirm('Eliminar?')) return
   await fetch('/cotizacion/'+id,{method:'DELETE'})
-  limpiar()
   cargar()
 }
 
@@ -321,11 +223,13 @@ function cancelar(){ limpiar() }
 function limpiar(){
   editando=null
   fotoBase64=''
-  document.getElementById('form').reset()
-  document.getElementById('form').style.display='none'
+  form.reset()
+  form.style.display='none'
 }
 
+// INIT
 cargar()
+cargarProveedores()
 
 </script>
 
