@@ -26,50 +26,49 @@ button { cursor:pointer }
 
 img { max-width:120px; border-radius:6px }
 
-.resumen {
-  background:white;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:15px;
-}
 </style>
 </head>
 
 <body>
 
-<h2>📊 Cotizaciones PRO</h2>
+<h2>📊 Cotizaciones</h2>
 
 <input id="buscar" placeholder="Buscar..." oninput="cargar()">
 <button onclick="mostrarForm()">➕ Nueva</button>
 
-<select id="filtroMes" onchange="cargar()">
-  <option value="todos">Todos</option>
-</select>
+<div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-top:10px">
 
-<div id="resumen"></div>
-
-<div id="form" style="display:none;background:white;padding:10px;border-radius:10px">
-
+<!-- 👤 DATOS CLIENTE -->
 <input id="nombre" placeholder="Nombre">
-<input id="celular" placeholder="Celular"><br>
+<input id="celular" placeholder="Celular">
 
-<input id="producto" placeholder="Producto"><br>
+<hr>
+
+<!-- 📦 DATOS PRODUCTO -->
+<input id="producto" placeholder="Producto">
 
 <select id="proveedor"></select>
-
 <input id="nuevoProveedor" placeholder="Nuevo proveedor">
-<button onclick="agregarProveedor()">➕</button><br>
+<button onclick="agregarProveedor()">➕</button>
 
-<input id="costoProveedor" placeholder="Costo" oninput="calc()">
-<input id="precioCliente" placeholder="Precio" oninput="calc()">
-<input id="ganancia" readonly placeholder="Ganancia"><br>
+<br>
 
-<textarea id="descripcion" placeholder="Descripción"></textarea><br>
+<input id="costoProveedor" placeholder="Costo proveedor">
+<input id="precioCliente" placeholder="Precio cliente">
+<input id="ganancia" placeholder="Ganancia" readonly>
 
-<input type="file" id="foto"><br>
+<br>
+
+<textarea id="descripcion" placeholder="Descripción"></textarea>
+
+<br>
+
+<input type="file" id="foto">
+
+<br><br>
 
 <button onclick="guardar()">💾 Guardar</button>
-<button onclick="cancelar()">❌</button>
+<button onclick="cancelar()">❌ Cancelar</button>
 
 </div>
 
@@ -77,84 +76,89 @@ img { max-width:120px; border-radius:6px }
 
 <script>
 
-let editando=null
-let fotoBase64=''
+let editando = null
+let fotoBase64 = ''
 
-// ================== CALCULO ==================
-function calc(){
-  const c = parseFloat(costoProveedor.value)||0
-  const p = parseFloat(precioCliente.value)||0
-  ganancia.value = p - c
+// ================== CALCULO GANANCIA ==================
+function calcularGanancia() {
+  const costo = parseFloat(costoProveedor.value) || 0
+  const precio = parseFloat(precioCliente.value) || 0
+
+  ganancia.value = precio - costo
 }
 
+// 🔥 EVENTOS AUTOMÁTICOS
+costoProveedor.oninput = calcularGanancia
+precioCliente.oninput = calcularGanancia
+
 // ================== PROVEEDORES ==================
-async function cargarProveedores(){
+async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
 
-  proveedor.innerHTML=''
+  proveedor.innerHTML = ''
 
-  data.forEach(p=>{
-    proveedor.innerHTML+=`<option value="${p._id}">${p.nombre}</option>`
+  data.forEach(p => {
+    proveedor.innerHTML += <option value="${p._id}">${p.nombre}</option>
   })
 }
 
-async function agregarProveedor(){
+async function agregarProveedor() {
   const nombre = nuevoProveedor.value
 
-  if(!nombre) return alert('Escribí proveedor')
+  if (!nombre) return alert('Escribí proveedor')
 
-  await fetch('/proveedores',{
+  await fetch('/proveedores', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({nombre})
+    body: JSON.stringify({ nombre })
   })
 
-  nuevoProveedor.value=''
+  nuevoProveedor.value = ''
   await cargarProveedores()
 }
 
 // ================== FOTO ==================
-foto.onchange=e=>{
-  const r=new FileReader()
-  r.onload=()=>fotoBase64=r.result
+foto.onchange = e => {
+  const r = new FileReader()
+  r.onload = () => fotoBase64 = r.result
   r.readAsDataURL(e.target.files[0])
 }
 
 // ================== GUARDAR ==================
-async function guardar(){
+async function guardar() {
 
-  const data={
-    nombre:nombre.value,
-    celular:celular.value,
-    producto:producto.value,
-    proveedor:proveedor.value, // 🔥 ahora ID
-    costoProveedor:costoProveedor.value,
-    precioCliente:precioCliente.value,
-    descripcion:descripcion.value,
-    foto:fotoBase64
+  const data = {
+    nombre: nombre.value,
+    celular: celular.value,
+    producto: producto.value,
+    proveedor: proveedor.value,
+    costoProveedor: costoProveedor.value,
+    precioCliente: precioCliente.value,
+    descripcion: descripcion.value,
+    foto: fotoBase64
   }
 
-  if(editando){
-    await fetch('/cotizacion/'+editando,{
+  if (editando) {
+    await fetch('/cotizacion/' + editando, {
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
+      body: JSON.stringify(data)
     })
-  }else{
-    await fetch('/cotizacion',{
+  } else {
+    await fetch('/cotizacion', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
+      body: JSON.stringify(data)
     })
   }
 
   limpiar()
-  cargar()
+  await cargar()
 }
 
 // ================== CARGAR ==================
-async function cargar(){
+async function cargar() {
 
   const res = await fetch('/cotizaciones')
   let data = await res.json()
@@ -162,69 +166,79 @@ async function cargar(){
   const filtro = buscar.value.toLowerCase()
 
   data = data.filter(c =>
-    (c.producto||'').toLowerCase().includes(filtro) ||
-    (c.nombre||'').toLowerCase().includes(filtro) ||
-    (c.celular||'').includes(filtro)
+    (c.producto || '').toLowerCase().includes(filtro) ||
+    (c.nombre || '').toLowerCase().includes(filtro) ||
+    (c.celular || '').includes(filtro)
   )
 
-  lista.innerHTML=''
+  lista.innerHTML = ''
 
-  data.reverse().forEach(c=>{
-    lista.innerHTML+=`
-    <div class="card">
-      <b>${c.producto}</b><br>
-      ${c.nombre} (${c.celular})<br>
-      💰 ${c.precioCliente}<br>
-      💸 ${c.costoProveedor}<br>
-      🧾 ${c.ganancia}<br>
+  data.reverse().forEach(c => {
+    lista.innerHTML += `
+      <div class="card">
+        <b>${c.producto}</b><br>
+        ${c.nombre || ''} (${c.celular || ''})<br>
+        💸 ${c.costoProveedor || 0}<br>
+        💰 ${c.precioCliente || 0}<br>
+        🧾 ${c.ganancia || 0}<br>
 
-      ${c.foto?`<img src="${c.foto}">`:''}
+        ${c.foto ? `<img src="${c.foto}">` : ''}
 
-      <br><br>
+        <br><br>
 
-      <button onclick="editar('${c._id}')">✏️</button>
-      <button onclick="borrar('${c._id}')">❌</button>
-    </div>
+        <button onclick="editar('${c._id}')">✏️</button>
+        <button onclick="borrar('${c._id}')">❌</button>
+      </div>
     `
   })
 }
 
 // ================== EDITAR ==================
-async function editar(id){
-  const res=await fetch('/cotizaciones')
-  const data=await res.json()
-  const c=data.find(x=>x._id===id)
+async function editar(id) {
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
 
-  nombre.value=c.nombre||''
-  celular.value=c.celular||''
-  producto.value=c.producto||''
-  costoProveedor.value=c.costoProveedor||''
-  precioCliente.value=c.precioCliente||''
-  descripcion.value=c.descripcion||''
+  const c = data.find(x => x._id === id)
 
-  fotoBase64=c.foto||''
-  editando=id
+  nombre.value = c.nombre || ''
+  celular.value = c.celular || ''
+  producto.value = c.producto || ''
+  costoProveedor.value = c.costoProveedor || ''
+  precioCliente.value = c.precioCliente || ''
+  descripcion.value = c.descripcion || ''
 
-  calc()
+  fotoBase64 = c.foto || ''
+  editando = id
+
+  calcularGanancia()
   mostrarForm()
 }
 
 // ================== BORRAR ==================
-async function borrar(id){
-  if(!confirm('Eliminar?')) return
-  await fetch('/cotizacion/'+id,{method:'DELETE'})
-  cargar()
+async function borrar(id) {
+  if (!confirm('Eliminar?')) return
+
+  await fetch('/cotizacion/' + id, { method:'DELETE' })
+
+  limpiar()
+  await cargar()
 }
 
 // ================== UI ==================
-function mostrarForm(){ form.style.display='block' }
-function cancelar(){ limpiar() }
+function mostrarForm() {
+  form.style.display = 'block'
+}
 
-function limpiar(){
-  editando=null
-  fotoBase64=''
+function cancelar() {
+  limpiar()
+}
+
+function limpiar() {
+  editando = null
+  fotoBase64 = ''
   form.reset()
-  form.style.display='none'
+  ganancia.value = ''
+  form.style.display = 'none'
 }
 
 // INIT
