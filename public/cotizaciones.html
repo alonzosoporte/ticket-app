@@ -190,7 +190,7 @@ async function cargar() {
         🧾 ${c.ganancia || 0}<br>
         ${c.foto ? `<img src="${c.foto}">` : ''}
         <br><br>
-        <button onclick="editar('${c._id}')">✏️</button>
+        <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
         <button onclick="borrar('${c._id}')">❌</button>
       </div>
     `
@@ -198,26 +198,21 @@ async function cargar() {
 }
 
 // ================== EDITAR ==================
-async function editar(id) {
-  const res = await fetch('/cotizaciones')
-  const data = await res.json()
+function editar(c) {
 
-  const c = data.find(x => x._id == id)
-
-  if (!c) return alert('Error al cargar')
-
-  nombre.value = c.nombre || ''
-  celular.value = c.celular || ''
-  producto.value = c.producto || ''
-  costoProveedor.value = c.costoProveedor || ''
-  precioCliente.value = c.precioCliente || ''
-  descripcion.value = c.descripcion || ''
+  document.getElementById('nombre').value = c.nombre || ''
+  document.getElementById('celular').value = c.celular || ''
+  document.getElementById('producto').value = c.producto || ''
+  document.getElementById('costoProveedor').value = c.costoProveedor || ''
+  document.getElementById('precioCliente').value = c.precioCliente || ''
+  document.getElementById('descripcion').value = c.descripcion || ''
 
   fotoBase64 = c.foto || ''
   editando = c._id
 
   calcularGanancia()
-  mostrarForm()
+
+  document.getElementById('form').style.display = 'block'
 }
 
 // ================== BORRAR ==================
