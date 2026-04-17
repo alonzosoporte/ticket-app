@@ -36,17 +36,19 @@ const Ticket = mongoose.model('Ticket', TicketSchema)
 // 📦 MODELO COTIZACIONES
 // =======================
 const CotizacionSchema = new mongoose.Schema({
+  nombre: String,
+  celular: String,
   producto: String,
   precio: String,
   descripcion: String,
-  foto: String, // base64
+  foto: String,
   fecha: Date
 })
 
 const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
 // 🔧 MIDDLEWARE
-app.use(express.json({ limit: '10mb' })) // 🔥 importante para imágenes
+app.use(express.json({ limit: '10mb' })) // importante para imágenes
 app.use(express.static('public'))
 
 // 🔌 SOCKET
@@ -55,10 +57,10 @@ io.on('connection', () => {
 })
 
 /* =====================================================
-   🧾 TICKETS (NO TOCAR - YA FUNCIONA)
+   🧾 TICKETS
 ===================================================== */
 
-// 🆕 CREAR TICKET
+// 🆕 CREAR
 app.post('/ticket', async (req, res) => {
   const { nombre, telefono, problema } = req.body
 
@@ -88,7 +90,6 @@ app.post('/ticket', async (req, res) => {
     await nuevo.save()
 
     io.emit('actualizar')
-
     res.json({ ok: true, numero })
 
   } catch (err) {
@@ -97,43 +98,38 @@ app.post('/ticket', async (req, res) => {
   }
 })
 
-// 📥 LISTAR TICKETS
+// 📥 LISTAR
 app.get('/tickets', async (req, res) => {
   const data = await Ticket.find()
   res.json(data)
 })
 
-// ✏️ ACTUALIZAR TICKET
+// ✏️ ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
-  const numero = req.params.numero
-  const update = req.body
-
-  await Ticket.findOneAndUpdate({ numero }, update)
-
+  await Ticket.findOneAndUpdate({ numero: req.params.numero }, req.body)
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-// ❌ BORRAR TICKET
+// ❌ BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
-  const numero = req.params.numero
-
-  await Ticket.findOneAndDelete({ numero })
-
+  await Ticket.findOneAndDelete({ numero: req.params.numero })
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
 /* =====================================================
-   📊 COTIZACIONES (NUEVO SISTEMA)
+   📊 COTIZACIONES
 ===================================================== */
 
 // 🆕 CREAR
 app.post('/cotizacion', async (req, res) => {
   try {
-    const { producto, precio, descripcion, foto } = req.body
+    const { nombre, celular, producto, precio, descripcion, foto } = req.body
 
     const nueva = new Cotizacion({
+      nombre,
+      celular,
       producto,
       precio,
       descripcion,
@@ -174,7 +170,21 @@ app.delete('/cotizacion/:id', async (req, res) => {
   res.json({ ok: true })
 })
 
-// 🚀 SERVIDOR
+// 🔎 AUTOCOMPLETE CLIENTES
+app.get('/clientes', async (req, res) => {
+  const q = req.query.q || ''
+
+  const data = await Cotizacion.find({
+    $or: [
+      { nombre: { $regex: q, $options: 'i' } },
+      { celular: { $regex: q, $options: 'i' } }
+    ]
+  }).limit(10)
+
+  res.json(data)
+})
+
+// 🚀 SERVER
 server.listen(PORT, () => {
   console.log('Servidor en puerto ' + PORT)
 })
