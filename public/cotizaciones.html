@@ -153,9 +153,11 @@ async function guardar() {
     })
   }
 
-  limpiar()
-  await cargar()
-}
+ limpiar()
+
+setTimeout(() => {
+  cargar()
+}, 100
 
 // ================== CARGAR ==================
 async function cargar() {
@@ -221,8 +223,10 @@ async function borrar(id) {
   await fetch('/cotizacion/' + id, { method:'DELETE' })
 
   limpiar()
-  await cargar()
-}
+
+setTimeout(() => {
+  cargar()
+}, 100)
 
 // ================== UI ==================
 function mostrarForm() {
@@ -233,7 +237,7 @@ function cancelar() {
   limpiar()
 }
 
-function limpiar() {
+async function guardar() {
   editando = null
   fotoBase64 = ''
   form.reset()
