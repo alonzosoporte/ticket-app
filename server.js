@@ -32,6 +32,7 @@ const TicketSchema = new mongoose.Schema({
   fecha: Date
 })
 
+
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
 // =======================
@@ -49,6 +50,16 @@ const CotizacionSchema = new mongoose.Schema({
   foto: String,
   fecha: Date
 })
+
+// =======================
+// 📦 MODELO PROVEEDOR
+// =======================
+const ProveedorSchema = new mongoose.Schema({
+  nombre: String
+})
+
+const Proveedor = mongoose.model('Proveedor', ProveedorSchema)
+
 
 const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
@@ -193,6 +204,37 @@ app.put('/cotizacion/:id', async (req, res) => {
 // ❌ BORRAR
 app.delete('/cotizacion/:id', async (req, res) => {
   await Cotizacion.findByIdAndDelete(req.params.id)
+  res.json({ ok: true })
+})
+/* =====================================================
+   🏭 PROVEEDORES
+===================================================== */
+
+// 📥 LISTAR
+app.get('/proveedores', async (req, res) => {
+  const data = await Proveedor.find().sort({ nombre: 1 })
+  res.json(data)
+})
+
+// ➕ CREAR
+app.post('/proveedores', async (req, res) => {
+  const { nombre } = req.body
+
+  if (!nombre) return res.json({ error: 'Falta nombre' })
+
+  const existe = await Proveedor.findOne({ nombre })
+
+  if (existe) return res.json({ error: 'Ya existe' })
+
+  const nuevo = new Proveedor({ nombre })
+  await nuevo.save()
+
+  res.json({ ok: true })
+})
+
+// ❌ BORRAR
+app.delete('/proveedores/:id', async (req, res) => {
+  await Proveedor.findByIdAndDelete(req.params.id)
   res.json({ ok: true })
 })
 
