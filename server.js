@@ -9,7 +9,9 @@ const io = new Server(server)
 
 const PORT = process.env.PORT || 3000
 
+// =======================
 // 🔥 CONEXIÓN MONGO
+// =======================
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("✅ Mongo conectado"))
   .catch(err => console.log("❌ Error Mongo:", err))
@@ -39,7 +41,10 @@ const CotizacionSchema = new mongoose.Schema({
   nombre: String,
   celular: String,
   producto: String,
-  precio: String,
+  proveedor: String,
+  costoProveedor: String,
+  precioCliente: String,
+  ganancia: Number, // 🔥 ahora numérico
   descripcion: String,
   foto: String,
   fecha: Date
@@ -47,11 +52,15 @@ const CotizacionSchema = new mongoose.Schema({
 
 const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
+// =======================
 // 🔧 MIDDLEWARE
-app.use(express.json({ limit: '10mb' })) // importante para imágenes
+// =======================
+app.use(express.json({ limit: '10mb' }))
 app.use(express.static('public'))
 
+// =======================
 // 🔌 SOCKET
+// =======================
 io.on('connection', () => {
   console.log('Cliente conectado')
 })
@@ -125,13 +134,21 @@ app.delete('/ticket/:numero', async (req, res) => {
 // 🆕 CREAR
 app.post('/cotizacion', async (req, res) => {
   try {
-    const { nombre, celular, producto, precio, descripcion, foto } = req.body
+    const { nombre, celular, producto, proveedor, costoProveedor, precioCliente, descripcion, foto } = req.body
+
+    const costo = parseFloat(costoProveedor) || 0
+    const precio = parseFloat(precioCliente) || 0
+
+    const ganancia = precio - costo // 🔥 AUTOMÁTICA
 
     const nueva = new Cotizacion({
       nombre,
       celular,
       producto,
-      precio,
+      proveedor,
+      costoProveedor,
+      precioCliente,
+      ganancia,
       descripcion,
       foto,
       fecha: new Date()
@@ -153,11 +170,20 @@ app.get('/cotizaciones', async (req, res) => {
   res.json(data)
 })
 
-// ✏️ EDITAR
+// ✏️ EDITAR (recalcula ganancia)
 app.put('/cotizacion/:id', async (req, res) => {
   try {
+    const { costoProveedor, precioCliente } = req.body
+
+    const costo = parseFloat(costoProveedor) || 0
+    const precio = parseFloat(precioCliente) || 0
+
+    req.body.ganancia = precio - costo // 🔥 recalcula
+
     await Cotizacion.findByIdAndUpdate(req.params.id, req.body)
+
     res.json({ ok: true })
+
   } catch (err) {
     console.log(err)
     res.status(500).json({ error: 'Error al actualizar' })
@@ -184,7 +210,9 @@ app.get('/clientes', async (req, res) => {
   res.json(data)
 })
 
+// =======================
 // 🚀 SERVER
+// =======================
 server.listen(PORT, () => {
   console.log('Servidor en puerto ' + PORT)
 })

@@ -26,7 +26,7 @@ body {
   box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
-input, textarea, button {
+input, textarea, select, button {
   padding:6px;
   border-radius:6px;
   border:1px solid #ccc;
@@ -43,25 +43,18 @@ img {
 #sugerencias {
   background:white;
   border:1px solid #ccc;
-  max-width:300px;
   position:absolute;
   z-index:10;
 }
 
-.sug {
-  padding:5px;
-  cursor:pointer;
-}
+.sug { padding:5px; cursor:pointer; }
+.sug:hover { background:#eee; }
 
-.sug:hover {
-  background:#eee;
-}
-
-.historial {
+.resumen {
   background:#fff;
-  padding:10px;
+  padding:15px;
   border-radius:10px;
-  margin-bottom:10px;
+  margin-bottom:15px;
 }
 </style>
 </head>
@@ -71,21 +64,36 @@ img {
 <h2>📊 Cotizaciones</h2>
 
 <div class="top">
-  <input id="buscar" placeholder="Buscar producto / cliente..." oninput="cargar()">
-  <button onclick="mostrarForm()">➕ Nueva</button>
+  <input id="buscar" placeholder="Buscar por nombre, celular o producto" oninput="cargar()">
+  <button onclick="mostrarForm()">➕ Nueva cotización</button>
+
+  <select id="filtroMes" onchange="cargar()">
+    <option value="todos">Todos los meses</option>
+  </select>
 </div>
 
-<div id="form" style="display:none;position:relative;background:white;padding:10px;border-radius:10px;margin-bottom:15px">
+<div id="resumen"></div>
+
+<div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-bottom:15px">
 
   <input id="nombre" placeholder="Nombre" oninput="buscarCliente()"><br><br>
   <input id="celular" placeholder="Celular" oninput="buscarCliente()"><br>
-
   <div id="sugerencias"></div>
 
   <br>
+
   <input id="producto" placeholder="Producto"><br><br>
-  <input id="precio" placeholder="Precio"><br><br>
+
+  <input id="proveedor" placeholder="Proveedor"><br><br>
+
+  <input id="costoProveedor" placeholder="Costo proveedor" oninput="calcularGanancia()"><br><br>
+
+  <input id="precioCliente" placeholder="Precio cliente" oninput="calcularGanancia()"><br><br>
+
+  <input id="ganancia" placeholder="Ganancia automática" readonly><br><br>
+
   <textarea id="descripcion" placeholder="Descripción"></textarea><br><br>
+
   <input type="file" id="foto"><br><br>
 
   <button onclick="guardar()">💾 Guardar</button>
@@ -93,7 +101,6 @@ img {
 
 </div>
 
-<div id="historial"></div>
 <div id="lista"></div>
 
 <script>
@@ -101,179 +108,221 @@ img {
 let editando = null
 let fotoBase64 = ''
 
-// 📥 cargar
+// ================== GANANCIA AUTOMÁTICA ==================
+function calcularGanancia() {
+  const costo = parseFloat(document.getElementById('costoProveedor').value) || 0
+  const precio = parseFloat(document.getElementById('precioCliente').value) || 0
+
+  document.getElementById('ganancia').value = precio - costo
+}
+
+// ================== CARGAR ==================
 async function cargar() {
-  const res = await fetch('/cotizaciones')
-  let data = await res.json()
+
+  const resC = await fetch('/cotizaciones')
+  let cotizaciones = await resC.json()
+
+  const resT = await fetch('/tickets')
+  let tickets = await resT.json()
 
   const filtro = document.getElementById('buscar').value.toLowerCase()
 
-  data = data.filter(c =>
+  cotizaciones = cotizaciones.filter(c =>
     (c.producto || '').toLowerCase().includes(filtro) ||
     (c.nombre || '').toLowerCase().includes(filtro) ||
     (c.celular || '').includes(filtro)
   )
 
-  const lista = document.getElementById('lista')
-  lista.innerHTML = ''
+  // ===== MESES =====
+  let listaMeses = {}
 
-  data.reverse().forEach(c => {
-    lista.innerHTML += `
-      <div class="card">
-        <b>${c.producto}</b><br>
-        👤 ${c.nombre || ''} (${c.celular || ''})<br>
-        💲 ${c.precio}<br>
-        ${c.descripcion || ''}<br>
-        ${c.foto ? `<img src="${c.foto}">` : ''}
-
-        <br><br>
-
-        <button onclick="editar('${c._id}')">✏️</button>
-        <button onclick="borrar('${c._id}')">❌</button>
-      </div>
-    `
-  })
-}
-
-// 🔎 AUTOCOMPLETE
-async function buscarCliente() {
-  const nombre = document.getElementById('nombre').value
-  const celular = document.getElementById('celular').value
-
-  const q = nombre || celular
-  if (q.length < 2) return
-
-  const res = await fetch('/clientes?q=' + q)
-  const data = await res.json()
-
-  const sug = document.getElementById('sugerencias')
-  sug.innerHTML = ''
-
-  data.forEach(c => {
-    sug.innerHTML += `
-      <div class="sug" onclick="seleccionar('${c.nombre}','${c.celular}')">
-        ${c.nombre} - ${c.celular}
-      </div>
-    `
-  })
-}
-
-// ✅ seleccionar cliente
-function seleccionar(nombre, celular) {
-  document.getElementById('nombre').value = nombre
-  document.getElementById('celular').value = celular
-  document.getElementById('sugerencias').innerHTML = ''
-
-  mostrarHistorial(celular)
-}
-
-// 📜 historial
-async function mostrarHistorial(cel) {
-  const res = await fetch('/cotizaciones')
-  const data = await res.json()
-
-  const hist = data.filter(c => c.celular === cel)
-
-  const div = document.getElementById('historial')
-  div.innerHTML = '<div class="historial"><b>Historial cliente:</b><br>'
-
-  hist.forEach(h => {
-    div.innerHTML += `• ${h.producto} - $${h.precio}<br>`
+  ;[...cotizaciones, ...tickets].forEach(x => {
+    if (!x.fecha) return
+    const f = new Date(x.fecha)
+    const key = f.getFullYear() + '-' + (f.getMonth()+1)
+    listaMeses[key] = f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  div.innerHTML += '</div>'
-}
+  const select = document.getElementById('filtroMes')
 
-// 📸 imagen
-document.getElementById('foto').onchange = e => {
-  const file = e.target.files[0]
-  const reader = new FileReader()
-
-  reader.onload = () => fotoBase64 = reader.result
-  reader.readAsDataURL(file)
-}
-
-// 💾 guardar
-async function guardar() {
-
-  const nombre = document.getElementById('nombre').value
-  const celular = document.getElementById('celular').value
-  const producto = document.getElementById('producto').value
-  const precio = document.getElementById('precio').value
-  const descripcion = document.getElementById('descripcion').value
-
-  if (!producto) return alert("Falta producto")
-
-  const data = { nombre, celular, producto, precio, descripcion, foto: fotoBase64 }
-
-  if (editando) {
-    await fetch('/cotizacion/' + editando, {
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    })
-  } else {
-    await fetch('/cotizacion', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
+  if (select.options.length <= 1) {
+    Object.entries(listaMeses).reverse().forEach(([k,v])=>{
+      const o=document.createElement('option')
+      o.value=k
+      o.textContent=v
+      select.appendChild(o)
     })
   }
 
-  limpiarForm()
+  const hoy = new Date()
+  const mesActual = hoy.getFullYear() + '-' + (hoy.getMonth()+1)
+
+  if (select.value === 'todos') select.value = mesActual
+
+  const mesSel = select.value
+
+  function filtrarMes(arr){
+    if(mesSel==='todos') return arr
+    return arr.filter(x=>{
+      const f=new Date(x.fecha)
+      const key=f.getFullYear()+'-'+(f.getMonth()+1)
+      return key===mesSel
+    })
+  }
+
+  cotizaciones = filtrarMes(cotizaciones)
+  tickets = filtrarMes(tickets)
+
+  // ===== GANANCIAS =====
+  let ganCot = 0
+  let ganTick = 0
+
+  cotizaciones.forEach(c=>{
+    ganCot += Number(c.ganancia) || 0
+  })
+
+  tickets.forEach(t=>{
+    if(t.entregado==='si'){
+      ganTick += Number(t.ganancia) || 0
+    }
+  })
+
+  const total = ganCot + ganTick
+
+  document.getElementById('resumen').innerHTML = `
+  <div class="resumen">
+    <b>💰 Resumen del negocio</b><br><br>
+    📊 Cotizaciones: $${ganCot}<br>
+    🧾 Tickets: $${ganTick}<br>
+    <hr>
+    <b>🧮 TOTAL: $${total}</b>
+  </div>
+  `
+
+  // ===== LISTA =====
+  const lista = document.getElementById('lista')
+  lista.innerHTML=''
+
+  cotizaciones.reverse().forEach(c=>{
+    lista.innerHTML+=`
+    <div class="card">
+      <b>${c.producto}</b><br>
+      👤 ${c.nombre||''} (${c.celular||''})<br>
+      🏭 ${c.proveedor||''}<br>
+      💸 ${c.costoProveedor||''}<br>
+      💰 ${c.precioCliente||''}<br>
+      🧾 Ganancia: ${c.ganancia||0}<br>
+      📅 ${new Date(c.fecha).toLocaleString('es-UY')}<br>
+      ${c.foto?`<img src="${c.foto}">`:''}
+
+      <br><br>
+
+      <button onclick="editar('${c._id}')">✏️</button>
+      <button onclick="borrar('${c._id}')">❌</button>
+    </div>
+    `
+  })
+}
+
+// ================== AUTOCOMPLETE ==================
+async function buscarCliente(){
+  const q = document.getElementById('nombre').value || document.getElementById('celular').value
+  if(q.length<2) return
+
+  const res = await fetch('/clientes?q='+q)
+  const data = await res.json()
+
+  const s = document.getElementById('sugerencias')
+  s.innerHTML=''
+
+  data.forEach(c=>{
+    s.innerHTML+=`<div class="sug" onclick="sel('${c.nombre}','${c.celular}')">${c.nombre} - ${c.celular}</div>`
+  })
+}
+
+function sel(n,c){
+  document.getElementById('nombre').value=n
+  document.getElementById('celular').value=c
+  document.getElementById('sugerencias').innerHTML=''
+}
+
+// ================== FOTO ==================
+document.getElementById('foto').onchange=e=>{
+  const r=new FileReader()
+  r.onload=()=>fotoBase64=r.result
+  r.readAsDataURL(e.target.files[0])
+}
+
+// ================== GUARDAR ==================
+async function guardar(){
+
+  const data={
+    nombre: nombre.value,
+    celular: celular.value,
+    producto: producto.value,
+    proveedor: proveedor.value,
+    costoProveedor: costoProveedor.value,
+    precioCliente: precioCliente.value,
+    descripcion: descripcion.value,
+    foto: fotoBase64
+  }
+
+  if(editando){
+    await fetch('/cotizacion/'+editando,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    })
+  }else{
+    await fetch('/cotizacion',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    })
+  }
+
+  limpiar()
   cargar()
 }
 
-// ✏️ editar
-async function editar(id) {
-  const res = await fetch('/cotizaciones')
-  const data = await res.json()
+// ================== EDITAR ==================
+async function editar(id){
+  const res=await fetch('/cotizaciones')
+  const data=await res.json()
+  const c=data.find(x=>x._id===id)
 
-  const c = data.find(x => x._id === id)
+  nombre.value=c.nombre||''
+  celular.value=c.celular||''
+  producto.value=c.producto||''
+  proveedor.value=c.proveedor||''
+  costoProveedor.value=c.costoProveedor||''
+  precioCliente.value=c.precioCliente||''
+  descripcion.value=c.descripcion||''
 
-  document.getElementById('nombre').value = c.nombre || ''
-  document.getElementById('celular').value = c.celular || ''
-  document.getElementById('producto').value = c.producto
-  document.getElementById('precio').value = c.precio
-  document.getElementById('descripcion').value = c.descripcion || ''
+  fotoBase64=c.foto||''
+  editando=id
 
-  fotoBase64 = c.foto || ''
-  editando = id
-
+  calcularGanancia()
   mostrarForm()
 }
 
-// ❌ borrar
-async function borrar(id) {
-  if (!confirm("¿Eliminar cotización?")) return
-  await fetch('/cotizacion/' + id, { method:'DELETE' })
-  limpiarForm()
+// ================== BORRAR ==================
+async function borrar(id){
+  if(!confirm("¿Eliminar cotización?")) return
+  await fetch('/cotizacion/'+id,{method:'DELETE'})
+  limpiar()
   cargar()
 }
 
-// 🧼 limpiar
-function limpiarForm() {
-  editando = null
-  fotoBase64 = ''
+// ================== UI ==================
+function mostrarForm(){ form.style.display='block' }
+function cancelar(){ limpiar() }
 
-  document.getElementById('nombre').value = ''
-  document.getElementById('celular').value = ''
-  document.getElementById('producto').value = ''
-  document.getElementById('precio').value = ''
-  document.getElementById('descripcion').value = ''
-
-  document.getElementById('form').style.display = 'none'
-  document.getElementById('historial').innerHTML = ''
-}
-
-// mostrar form
-function mostrarForm() {
-  document.getElementById('form').style.display = 'block'
-}
-
-// cancelar
-function cancelar() {
-  limpiarForm()
+function limpiar(){
+  editando=null
+  fotoBase64=''
+  document.getElementById('form').reset()
+  document.getElementById('form').style.display='none'
 }
 
 cargar()
