@@ -1,203 +1,184 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cotizaciones PRO</title>
+<title>Cotizaciones</title>
 
 <style>
 body {
   font-family: Arial;
-  background:#f4f6f9;
-  margin:0;
+  background: #eef2f7;
+  padding: 20px;
 }
 
-header {
-  background:#222;
-  color:white;
-  padding:15px;
-  text-align:center;
-}
-
-.container {
-  max-width:900px;
-  margin:auto;
-  padding:15px;
+.top {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
 }
 
 .card {
-  background:#fff;
-  padding:15px;
-  margin-bottom:10px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
-input {
-  width:100%;
-  padding:8px;
-  margin-bottom:10px;
+img {
+  max-width: 120px;
+  margin-top:8px;
+  border-radius:6px;
+}
+
+input, textarea, button {
+  padding:6px;
   border-radius:6px;
   border:1px solid #ccc;
 }
 
 button {
-  padding:8px;
-  border:none;
-  border-radius:6px;
   cursor:pointer;
-  color:white;
 }
-
-.btn-guardar { background:#007bff; }
-.btn-borrar { background:#dc3545; }
-.btn-volver { background:#6c757d; }
-.btn-toggle { background:#28a745; margin-bottom:10px; }
-
-.oculto { display:none; }
-
 </style>
 </head>
 
 <body>
 
-<header>
-  <h2>💰 Cotizaciones</h2>
-  <button class="btn-volver" onclick="volver()">⬅ Volver a Tickets</button>
-</header>
+<h2>📊 Cotizaciones</h2>
 
-<div class="container">
+<div class="top">
+  <input id="buscar" placeholder="Buscar producto..." oninput="cargar()">
+  <button onclick="mostrarForm()">➕ Nueva</button>
+</div>
 
-<!-- BOTON MOSTRAR FORM -->
-<button class="btn-toggle" onclick="toggleForm()">➕ Nueva Cotización</button>
+<!-- FORM -->
+<div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-bottom:15px">
 
-<!-- FORM OCULTO -->
-<div id="formulario" class="card oculto">
+  <input id="producto" placeholder="Producto"><br><br>
+  <input id="precio" placeholder="Precio"><br><br>
+  <textarea id="descripcion" placeholder="Descripción"></textarea><br><br>
+  <input type="file" id="foto"><br><br>
 
-  <input id="nombre" placeholder="Nombre *">
-  <input id="cel" placeholder="Celular *">
-  <input id="producto" placeholder="Producto">
-  <input id="proveedor" placeholder="Proveedor">
-  <input id="precio" placeholder="Precio *">
-
-  <button class="btn-guardar" onclick="guardar()">💾 Guardar</button>
+  <button onclick="guardar()">💾 Guardar</button>
+  <button onclick="cancelar()">❌ Cancelar</button>
 
 </div>
 
-<!-- BUSCADOR -->
-<input id="buscador" placeholder="🔍 Buscar cliente, producto o celular...">
-
-<!-- LISTA -->
 <div id="lista"></div>
-
-</div>
 
 <script>
 
-// VOLVER
-function volver(){
-  window.location.href = "/admin.html"
-}
+let editando = null
+let fotoBase64 = ''
 
-// MOSTRAR / OCULTAR FORM
-function toggleForm(){
-  const f = document.getElementById("formulario")
-  f.classList.toggle("oculto")
-}
+// 📥 cargar
+async function cargar() {
+  const res = await fetch('/cotizaciones')
+  let data = await res.json()
 
-// GUARDAR
-function guardar(){
+  const filtro = document.getElementById('buscar').value.toLowerCase()
 
-  const nombre = document.getElementById("nombre").value
-  const cel = document.getElementById("cel").value
-  const precio = document.getElementById("precio").value
-
-  if(!nombre || !cel || !precio){
-    alert("Completar nombre, celular y precio")
-    return
-  }
-
-  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
-
-  const data = {
-    nombre,
-    cel,
-    producto: document.getElementById("producto").value,
-    proveedor: document.getElementById("proveedor").value,
-    precio,
-    fecha: new Date().toISOString() // 🔥 CLAVE
-  }
-
-  lista.push(data)
-
-  localStorage.setItem("cotizaciones", JSON.stringify(lista))
-
-  limpiar()
-  cargar()
-}
-
-// LIMPIAR
-function limpiar(){
-  document.getElementById("nombre").value = ""
-  document.getElementById("cel").value = ""
-  document.getElementById("producto").value = ""
-  document.getElementById("proveedor").value = ""
-  document.getElementById("precio").value = ""
-}
-
-// CARGAR + ORDEN + BUSCAR
-function cargar(){
-
-  const texto = document.getElementById("buscador").value.toLowerCase()
-
-  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
-
-  // 🔥 ORDEN POR FECHA (MAS NUEVO ARRIBA)
-  lista.sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
-
-  // 🔍 BUSCADOR
-  lista = lista.filter(c =>
-    (c.nombre || "").toLowerCase().includes(texto) ||
-    (c.cel || "").includes(texto) ||
-    (c.producto || "").toLowerCase().includes(texto)
+  data = data.filter(c =>
+    c.producto.toLowerCase().includes(filtro)
   )
 
-  const div = document.getElementById("lista")
-  div.innerHTML = ""
+  const lista = document.getElementById('lista')
+  lista.innerHTML = ''
 
-  lista.forEach((c, index) => {
-
-    div.innerHTML += `
+  data.reverse().forEach(c => {
+    lista.innerHTML += `
       <div class="card">
-        <b>${c.nombre}</b> - ${c.cel}<br>
-        ${c.producto || ""}<br>
-        Proveedor: ${c.proveedor || ""}<br>
-        💰 $${c.precio}<br>
-        <small>${new Date(c.fecha).toLocaleString()}</small><br>
+        <b>${c.producto}</b><br>
+        💲 ${c.precio}<br>
+        ${c.descripcion || ''}<br>
+        ${c.foto ? `<img src="${c.foto}">` : ''}
 
-        <button class="btn-borrar" onclick="borrar(${index})">🗑 Eliminar</button>
+        <br><br>
+
+        <button onclick="editar('${c._id}')">✏️</button>
+        <button onclick="borrar('${c._id}')">❌</button>
       </div>
     `
   })
 }
 
-// BORRAR
-function borrar(index){
+// ➕ mostrar form
+function mostrarForm() {
+  document.getElementById('form').style.display = 'block'
+}
 
-  if(!confirm("¿Eliminar cotización?")) return
+// ❌ cancelar
+function cancelar() {
+  editando = null
+  fotoBase64 = ''
+  document.getElementById('form').style.display = 'none'
+}
 
-  let lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]")
+// 📸 convertir imagen
+document.getElementById('foto').onchange = e => {
+  const file = e.target.files[0]
+  const reader = new FileReader()
 
-  lista.splice(index,1)
+  reader.onload = () => {
+    fotoBase64 = reader.result
+  }
 
-  localStorage.setItem("cotizaciones", JSON.stringify(lista))
+  reader.readAsDataURL(file)
+}
 
+// 💾 guardar
+async function guardar() {
+
+  const producto = document.getElementById('producto').value
+  const precio = document.getElementById('precio').value
+  const descripcion = document.getElementById('descripcion').value
+
+  if (!producto) return alert("Falta producto")
+
+  if (editando) {
+    await fetch('/cotizacion/' + editando, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ producto, precio, descripcion, foto: fotoBase64 })
+    })
+  } else {
+    await fetch('/cotizacion', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ producto, precio, descripcion, foto: fotoBase64 })
+    })
+  }
+
+  cancelar()
   cargar()
 }
 
-// INICIO
+// ✏️ editar
+async function editar(id) {
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+
+  const c = data.find(x => x._id === id)
+
+  document.getElementById('producto').value = c.producto
+  document.getElementById('precio').value = c.precio
+  document.getElementById('descripcion').value = c.descripcion || ''
+  fotoBase64 = c.foto || ''
+
+  editando = id
+  mostrarForm()
+}
+
+// ❌ borrar
+async function borrar(id) {
+  if (!confirm("¿Eliminar cotización?")) return
+  await fetch('/cotizacion/' + id, { method:'DELETE' })
+  cargar()
+}
+
 cargar()
-document.getElementById("buscador").addEventListener("input", cargar)
 
 </script>
 
