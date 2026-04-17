@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Cotizaciones PRO</title>
-<button onclick="irAdmin()">⬅ Volver a Admin</button>
 
 <style>
 body { font-family: Arial; background:#eef2f7; padding:20px; }
@@ -32,6 +31,10 @@ img { max-width:120px; border-radius:6px }
 <body>
 
 <h2>📊 Cotizaciones</h2>
+
+<button onclick="irAdmin()">⬅ Volver a Admin</button>
+
+<br><br>
 
 <input id="buscar" placeholder="Buscar..." oninput="cargar()">
 <button onclick="mostrarForm()">➕ Nueva</button>
@@ -77,11 +80,12 @@ img { max-width:120px; border-radius:6px }
 let editando = null
 let fotoBase64 = ''
 
-// ================== GANANCIA ==================
+// ================== NAV ==================
 function irAdmin() {
   window.location.href = '/admin.html'
 }
 
+// ================== GANANCIA ==================
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -161,24 +165,6 @@ async function guardar() {
   setTimeout(cargar, 100)
 }
 
-  if (editando) {
-    await fetch('/cotizacion/' + editando, {
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    })
-  } else {
-    await fetch('/cotizacion', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    })
-  }
-
-  limpiar()
-  setTimeout(cargar, 100)
-}
-
 // ================== CARGAR ==================
 async function cargar() {
   const res = await fetch('/cotizaciones')
@@ -213,31 +199,25 @@ async function cargar() {
 
 // ================== EDITAR ==================
 async function editar(id) {
-
   const res = await fetch('/cotizaciones')
   const data = await res.json()
 
   const c = data.find(x => x._id == id)
 
-  if (!c) {
-    alert('No se encontró la cotización')
-    return
-  }
+  if (!c) return alert('Error al cargar')
 
-  // 🔥 cargar datos correctamente
-  document.getElementById('nombre').value = c.nombre || ''
-  document.getElementById('celular').value = c.celular || ''
-  document.getElementById('producto').value = c.producto || ''
-  document.getElementById('costoProveedor').value = c.costoProveedor || ''
-  document.getElementById('precioCliente').value = c.precioCliente || ''
-  document.getElementById('descripcion').value = c.descripcion || ''
+  nombre.value = c.nombre || ''
+  celular.value = c.celular || ''
+  producto.value = c.producto || ''
+  costoProveedor.value = c.costoProveedor || ''
+  precioCliente.value = c.precioCliente || ''
+  descripcion.value = c.descripcion || ''
 
   fotoBase64 = c.foto || ''
   editando = c._id
 
   calcularGanancia()
-
-  document.getElementById('form').style.display = 'block'
+  mostrarForm()
 }
 
 // ================== BORRAR ==================
