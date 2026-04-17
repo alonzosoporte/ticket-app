@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Cotizaciones PRO</title>
+<button onclick="irAdmin()">⬅ Volver a Admin</button>
 
 <style>
 body { font-family: Arial; background:#eef2f7; padding:20px; }
@@ -77,6 +78,10 @@ let editando = null
 let fotoBase64 = ''
 
 // ================== GANANCIA ==================
+function irAdmin() {
+  window.location.href = '/admin.html'
+}
+
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -122,6 +127,11 @@ foto.onchange = e => {
 // ================== GUARDAR ==================
 async function guardar() {
 
+  if (!producto.value) {
+    alert('Falta producto')
+    return
+  }
+
   const data = {
     nombre: nombre.value,
     celular: celular.value,
@@ -132,6 +142,24 @@ async function guardar() {
     descripcion: descripcion.value,
     foto: fotoBase64
   }
+
+  if (editando) {
+    await fetch('/cotizacion/' + editando, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    })
+  } else {
+    await fetch('/cotizacion', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    })
+  }
+
+  limpiar()
+  setTimeout(cargar, 100)
+}
 
   if (editando) {
     await fetch('/cotizacion/' + editando, {
@@ -185,22 +213,31 @@ async function cargar() {
 
 // ================== EDITAR ==================
 async function editar(id) {
+
   const res = await fetch('/cotizaciones')
   const data = await res.json()
-  const c = data.find(x => x._id === id)
 
-  nombre.value = c.nombre || ''
-  celular.value = c.celular || ''
-  producto.value = c.producto || ''
-  costoProveedor.value = c.costoProveedor || ''
-  precioCliente.value = c.precioCliente || ''
-  descripcion.value = c.descripcion || ''
+  const c = data.find(x => x._id == id)
+
+  if (!c) {
+    alert('No se encontró la cotización')
+    return
+  }
+
+  // 🔥 cargar datos correctamente
+  document.getElementById('nombre').value = c.nombre || ''
+  document.getElementById('celular').value = c.celular || ''
+  document.getElementById('producto').value = c.producto || ''
+  document.getElementById('costoProveedor').value = c.costoProveedor || ''
+  document.getElementById('precioCliente').value = c.precioCliente || ''
+  document.getElementById('descripcion').value = c.descripcion || ''
 
   fotoBase64 = c.foto || ''
-  editando = id
+  editando = c._id
 
   calcularGanancia()
-  mostrarForm()
+
+  document.getElementById('form').style.display = 'block'
 }
 
 // ================== BORRAR ==================
