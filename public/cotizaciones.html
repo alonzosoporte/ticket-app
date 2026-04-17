@@ -25,7 +25,6 @@ input, select, button, textarea {
 button { cursor:pointer }
 
 img { max-width:120px; border-radius:6px }
-
 </style>
 </head>
 
@@ -38,13 +37,11 @@ img { max-width:120px; border-radius:6px }
 
 <div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-top:10px">
 
-<!-- 👤 DATOS CLIENTE -->
 <input id="nombre" placeholder="Nombre">
 <input id="celular" placeholder="Celular">
 
 <hr>
 
-<!-- 📦 DATOS PRODUCTO -->
 <input id="producto" placeholder="Producto">
 
 <select id="proveedor"></select>
@@ -79,15 +76,13 @@ img { max-width:120px; border-radius:6px }
 let editando = null
 let fotoBase64 = ''
 
-// ================== CALCULO GANANCIA ==================
+// ================== GANANCIA ==================
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
-
   ganancia.value = precio - costo
 }
 
-// 🔥 EVENTOS AUTOMÁTICOS
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
@@ -105,7 +100,6 @@ async function cargarProveedores() {
 
 async function agregarProveedor() {
   const nombre = nuevoProveedor.value
-
   if (!nombre) return alert('Escribí proveedor')
 
   await fetch('/proveedores', {
@@ -153,15 +147,12 @@ async function guardar() {
     })
   }
 
- limpiar()
-
-setTimeout(() => {
-  cargar()
-}, 100
+  limpiar()
+  setTimeout(cargar, 100)
+}
 
 // ================== CARGAR ==================
 async function cargar() {
-
   const res = await fetch('/cotizaciones')
   let data = await res.json()
 
@@ -183,11 +174,8 @@ async function cargar() {
         💸 ${c.costoProveedor || 0}<br>
         💰 ${c.precioCliente || 0}<br>
         🧾 ${c.ganancia || 0}<br>
-
         ${c.foto ? `<img src="${c.foto}">` : ''}
-
         <br><br>
-
         <button onclick="editar('${c._id}')">✏️</button>
         <button onclick="borrar('${c._id}')">❌</button>
       </div>
@@ -199,7 +187,6 @@ async function cargar() {
 async function editar(id) {
   const res = await fetch('/cotizaciones')
   const data = await res.json()
-
   const c = data.find(x => x._id === id)
 
   nombre.value = c.nombre || ''
@@ -223,30 +210,34 @@ async function borrar(id) {
   await fetch('/cotizacion/' + id, { method:'DELETE' })
 
   limpiar()
-
-setTimeout(() => {
-  cargar()
-}, 100)
+  setTimeout(cargar, 100)
+}
 
 // ================== UI ==================
 function mostrarForm() {
   limpiar()
-  document.getElementById('form').style.display = 'block'
+  form.style.display = 'block'
 }
 
 function cancelar() {
   limpiar()
 }
 
-async function guardar() {
+function limpiar() {
   editando = null
   fotoBase64 = ''
-  form.reset()
+
+  nombre.value = ''
+  celular.value = ''
+  producto.value = ''
+  costoProveedor.value = ''
+  precioCliente.value = ''
+  descripcion.value = ''
   ganancia.value = ''
+  nuevoProveedor.value = ''
+  foto.value = ''
+
   form.style.display = 'none'
-}
-function mostrarForm() {
-  document.getElementById('form').style.display = 'block'
 }
 
 // INIT
