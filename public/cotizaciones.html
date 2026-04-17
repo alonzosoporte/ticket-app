@@ -99,7 +99,7 @@ async function cargarProveedores() {
   proveedor.innerHTML = ''
 
   data.forEach(p => {
-    proveedor.innerHTML += <option value="${p._id}">${p.nombre}</option>
+    proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>`
   })
 }
 
