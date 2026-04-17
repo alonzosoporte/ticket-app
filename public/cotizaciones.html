@@ -230,7 +230,8 @@ setTimeout(() => {
 
 // ================== UI ==================
 function mostrarForm() {
-  form.style.display = 'block'
+  limpiar()
+  document.getElementById('form').style.display = 'block'
 }
 
 function cancelar() {
@@ -243,6 +244,9 @@ async function guardar() {
   form.reset()
   ganancia.value = ''
   form.style.display = 'none'
+}
+function mostrarForm() {
+  document.getElementById('form').style.display = 'block'
 }
 
 // INIT
