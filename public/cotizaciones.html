@@ -185,9 +185,9 @@ async function cargar() {
       <div class="card">
         <b>${c.producto}</b><br>
         ${c.nombre || ''} (${c.celular || ''})<br>
-        💸 ${c.costoProveedor || 0}<br>
-        💰 ${c.precioCliente || 0}<br>
-        🧾 ${c.ganancia || 0}<br>
+        💸 Costo proveedor: $${c.costoProveedor || 0}<br>
+        💰 Precio cliente: $${c.precioCliente || 0}<br>
+        🧾 Ganancia: $${(c.precioCliente || 0) - (c.costoProveedor || 0)}<br>
         ${c.foto ? `<img src="${c.foto}">` : ''}
         <br><br>
         <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
