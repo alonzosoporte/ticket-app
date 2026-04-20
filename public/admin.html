@@ -1,87 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Panel Admin</title>
-<script src="/socket.io/socket.io.js"></script>
-
-<style>
-body {
-  font-family: Arial;
-  background: #eef2f7;
-  color: #111;
-  padding: 20px;
-}
-
-.ticket {
-  background: white;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-input, select, button {
-  margin: 4px;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-button {
-  cursor: pointer;
-}
-</style>
-
-<!-- 🔐 LOGIN -->
-<script>
-const USER = "alonzosoporte"
-const PASS = "foofigh1987"
-
-function checkLogin() {
-  const logged = localStorage.getItem('loginOK')
-
-  if (logged === 'true') return
-
-  const user = prompt("Usuario:")
-  const pass = prompt("Clave:")
-
-  if (user === USER && pass === PASS) {
-    localStorage.setItem('loginOK', 'true')
-  } else {
-    alert("Acceso denegado")
-    window.location.href = "/"
-  }
-}
-
-function logout() {
-  localStorage.removeItem('loginOK')
-  location.reload()
-}
-
-checkLogin()
-</script>
-
-</head>
-
-<body>
-
-<h1>🧑‍💻 Panel Admin</h1>
-
-<!-- 🔥 MENÚ -->
-<div style="margin-bottom:15px">
-  <button onclick="modo='pendientes'; cargar()">Pendientes</button>
-  <button onclick="modo='todos'; cargar()">Todos</button>
-  <button onclick="window.location.href='cotizaciones.html'">📊 Cotizaciones</button>
-  <button onclick="logout()">🚪 Salir</button>
-</div>
-
-<input id="busqueda" placeholder="Buscar por nombre, teléfono o ticket" oninput="cargar()">
-
-<select id="filtroMes" onchange="cargar()">
-  <option value="todos">Todos los meses</option>
-</select>
-
 <br><br>
 
 <div id="resumen"></div>
@@ -97,12 +13,12 @@ const socket = io()
 async function cargar() {
   const res = await fetch('/tickets')
 
-if (!res.ok) {
-  console.error('Error server:', await res.text())
-  return
-}
+  if (!res.ok) {
+    console.error('Error server:', await res.text())
+    return
+  }
 
-let data = await res.json()
+  let data = await res.json()
 
   // 📅 GENERAR MESES
   let listaMeses = {}
@@ -118,7 +34,6 @@ let data = await res.json()
     listaMeses[key] = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
 
-  // 🔥 llenar select
   const select = document.getElementById('filtroMes')
 
   if (select.options.length <= 1) {
@@ -132,7 +47,6 @@ let data = await res.json()
       })
   }
 
-  // 🔥 seleccionar mes actual
   const hoy = new Date()
   const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
 
@@ -140,7 +54,6 @@ let data = await res.json()
     select.value = mesActualKey
   }
 
-  // 🔍 FILTRO MES
   const mesSeleccionado = select.value
 
   if (mesSeleccionado !== 'todos') {
@@ -205,6 +118,15 @@ let data = await res.json()
   lista.innerHTML = ''
 
   data.reverse().forEach(t => {
+
+    const garantiaTexto = t.garantiaFecha
+      ? `🛡️ Garantía hasta: ${new Date(t.garantiaFecha).toLocaleDateString()}`
+      : ''
+
+    const garantiaFoto = t.garantiaFoto
+      ? `<br><img src="${t.garantiaFoto}" style="max-width:100px;border-radius:6px">`
+      : ''
+
     lista.innerHTML += `
       <div class="ticket">
         <b>${t.numero}</b><br>
@@ -215,9 +137,15 @@ let data = await res.json()
         💲 Precio: <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
         💰 Ganancia: <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
         <br><br>
+
         📝 Detalle del trabajo:<br>
         <textarea style="width:100%;height:60px" 
         onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
+
+        <br><br>
+
+        ${garantiaTexto}
+        ${garantiaFoto}
 
         <br><br>
 
@@ -273,11 +201,8 @@ async function marcarEntregado(id) {
 
 // ❌ BORRAR
 async function borrar(id) {
-
   const ok = confirm("¿Seguro que querés borrar este ticket?")
-
   if (!ok) return
-
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
