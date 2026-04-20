@@ -32,7 +32,6 @@ const TicketSchema = new mongoose.Schema({
   fecha: Date
 })
 
-
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
 // =======================
@@ -45,11 +44,14 @@ const CotizacionSchema = new mongoose.Schema({
   proveedor: String,
   costoProveedor: String,
   precioCliente: String,
-  ganancia: Number, // 🔥 ahora numérico
+  ganancia: Number,
+  confirmada: { type: String, default: 'no' }, // 🔥 NUEVO
   descripcion: String,
   foto: String,
   fecha: Date
 })
+
+const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
 // =======================
 // 📦 MODELO PROVEEDOR
@@ -59,9 +61,6 @@ const ProveedorSchema = new mongoose.Schema({
 })
 
 const Proveedor = mongoose.model('Proveedor', ProveedorSchema)
-
-
-const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
 // =======================
 // 🔧 MIDDLEWARE
@@ -149,8 +148,7 @@ app.post('/cotizacion', async (req, res) => {
 
     const costo = parseFloat(costoProveedor) || 0
     const precio = parseFloat(precioCliente) || 0
-
-    const ganancia = precio - costo // 🔥 AUTOMÁTICA
+    const ganancia = precio - costo
 
     const nueva = new Cotizacion({
       nombre,
@@ -160,6 +158,7 @@ app.post('/cotizacion', async (req, res) => {
       costoProveedor,
       precioCliente,
       ganancia,
+      confirmada: 'no',
       descripcion,
       foto,
       fecha: new Date()
@@ -181,15 +180,21 @@ app.get('/cotizaciones', async (req, res) => {
   res.json(data)
 })
 
-// ✏️ EDITAR (recalcula ganancia)
+// ✏️ EDITAR
 app.put('/cotizacion/:id', async (req, res) => {
   try {
-    const { costoProveedor, precioCliente } = req.body
 
-    const costo = parseFloat(costoProveedor) || 0
-    const precio = parseFloat(precioCliente) || 0
+    const actual = await Cotizacion.findById(req.params.id)
 
-    req.body.ganancia = precio - costo // 🔥 recalcula
+    // 🔥 BLOQUEAR SI YA CONFIRMADA
+    if (actual.confirmada === 'si') {
+      return res.status(400).json({ error: 'No se puede editar, ya confirmada' })
+    }
+
+    const costo = parseFloat(req.body.costoProveedor) || 0
+    const precio = parseFloat(req.body.precioCliente) || 0
+
+    req.body.ganancia = precio - costo
 
     await Cotizacion.findByIdAndUpdate(req.params.id, req.body)
 
@@ -206,24 +211,64 @@ app.delete('/cotizacion/:id', async (req, res) => {
   await Cotizacion.findByIdAndDelete(req.params.id)
   res.json({ ok: true })
 })
+
+/* =====================================================
+   🔥 CONFIRMAR VENTA (PRO)
+===================================================== */
+
+app.put('/cotizacion/confirmar/:id', async (req, res) => {
+
+  const c = await Cotizacion.findById(req.params.id)
+
+  if (!c) return res.sendStatus(404)
+
+  // 🚫 evitar doble confirmación
+  if (c.confirmada === 'si') {
+    return res.status(400).json({ msg: 'Ya confirmada' })
+  }
+
+  const costo = parseFloat(c.costoProveedor) || 0
+  const precio = parseFloat(c.precioCliente) || 0
+  const ganancia = precio - costo
+
+  c.confirmada = 'si'
+  c.ganancia = ganancia
+
+  await c.save()
+
+  // 🔥 SE SUMA A TICKETS
+  await Ticket.create({
+    numero: 'VENTA-' + Date.now(),
+    nombre: c.nombre,
+    telefono: c.celular,
+    problema: 'Venta: ' + c.producto,
+    precio: c.precioCliente,
+    ganancia: ganancia,
+    estado: 'listo',
+    entregado: 'si',
+    fecha: new Date()
+  })
+
+  io.emit('actualizar')
+
+  res.json({ ok: true })
+})
+
 /* =====================================================
    🏭 PROVEEDORES
 ===================================================== */
 
-// 📥 LISTAR
 app.get('/proveedores', async (req, res) => {
   const data = await Proveedor.find().sort({ nombre: 1 })
   res.json(data)
 })
 
-// ➕ CREAR
 app.post('/proveedores', async (req, res) => {
   const { nombre } = req.body
 
   if (!nombre) return res.json({ error: 'Falta nombre' })
 
   const existe = await Proveedor.findOne({ nombre })
-
   if (existe) return res.json({ error: 'Ya existe' })
 
   const nuevo = new Proveedor({ nombre })
@@ -232,13 +277,15 @@ app.post('/proveedores', async (req, res) => {
   res.json({ ok: true })
 })
 
-// ❌ BORRAR
 app.delete('/proveedores/:id', async (req, res) => {
   await Proveedor.findByIdAndDelete(req.params.id)
   res.json({ ok: true })
 })
 
-// 🔎 AUTOCOMPLETE CLIENTES
+/* =====================================================
+   🔎 CLIENTES
+===================================================== */
+
 app.get('/clientes', async (req, res) => {
   const q = req.query.q || ''
 

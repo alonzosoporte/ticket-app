@@ -23,7 +23,6 @@ input, select, button, textarea {
 }
 
 button { cursor:pointer }
-
 img { max-width:120px; border-radius:6px }
 </style>
 </head>
@@ -80,12 +79,12 @@ img { max-width:120px; border-radius:6px }
 let editando = null
 let fotoBase64 = ''
 
-// ================== NAV ==================
+// ================= NAV
 function irAdmin() {
   window.location.href = '/admin.html'
 }
 
-// ================== GANANCIA ==================
+// ================= GANANCIA
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -95,7 +94,7 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// ================== PROVEEDORES ==================
+// ================= PROVEEDORES
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
@@ -121,14 +120,14 @@ async function agregarProveedor() {
   await cargarProveedores()
 }
 
-// ================== FOTO ==================
+// ================= FOTO
 foto.onchange = e => {
   const r = new FileReader()
   r.onload = () => fotoBase64 = r.result
   r.readAsDataURL(e.target.files[0])
 }
 
-// ================== GUARDAR ==================
+// ================= GUARDAR
 async function guardar() {
 
   if (!producto.value) {
@@ -165,8 +164,9 @@ async function guardar() {
   setTimeout(cargar, 100)
 }
 
-// ================== CARGAR ==================
+// ================= CARGAR
 async function cargar() {
+
   const res = await fetch('/cotizaciones')
   let data = await res.json()
 
@@ -181,41 +181,64 @@ async function cargar() {
   lista.innerHTML = ''
 
   data.reverse().forEach(c => {
+
+    const costo = parseFloat(c.costoProveedor) || 0
+    const precio = parseFloat(c.precioCliente) || 0
+    const gan = precio - costo
+    const color = gan >= 0 ? '#0a8f3c' : '#d00000'
+
     lista.innerHTML += `
       <div class="card">
         <b>${c.producto}</b><br>
         ${c.nombre || ''} (${c.celular || ''})<br>
-        💸 Costo proveedor: $${c.costoProveedor || 0}<br>
-        💰 Precio cliente: $${c.precioCliente || 0}<br>
-        🧾 Ganancia: $${(c.precioCliente || 0) - (c.costoProveedor || 0)}<br>
+
+        💸 Costo proveedor: $${costo}<br>
+        💰 Precio cliente: $${precio}<br>
+        🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
+
         ${c.foto ? `<img src="${c.foto}">` : ''}
+
         <br><br>
-        <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
-        <button onclick="borrar('${c._id}')">❌</button>
+
+        ${
+          c.confirmada === 'si'
+          ? '<span style="color:green;font-weight:bold">✅ Confirmada</span>'
+          : `
+            <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
+            <button onclick="borrar('${c._id}')">❌</button>
+            <button onclick="confirmar('${c._id}')">✔ Confirmar</button>
+          `
+        }
+
       </div>
     `
   })
 }
 
-// ================== EDITAR ==================
+// ================= EDITAR
 function editar(c) {
 
-  document.getElementById('nombre').value = c.nombre || ''
-  document.getElementById('celular').value = c.celular || ''
-  document.getElementById('producto').value = c.producto || ''
-  document.getElementById('costoProveedor').value = c.costoProveedor || ''
-  document.getElementById('precioCliente').value = c.precioCliente || ''
-  document.getElementById('descripcion').value = c.descripcion || ''
+  if (c.confirmada === 'si') {
+    alert('No se puede editar, ya confirmada')
+    return
+  }
+
+  nombre.value = c.nombre || ''
+  celular.value = c.celular || ''
+  producto.value = c.producto || ''
+  costoProveedor.value = c.costoProveedor || ''
+  precioCliente.value = c.precioCliente || ''
+  descripcion.value = c.descripcion || ''
 
   fotoBase64 = c.foto || ''
   editando = c._id
 
   calcularGanancia()
 
-  document.getElementById('form').style.display = 'block'
+  form.style.display = 'block'
 }
 
-// ================== BORRAR ==================
+// ================= BORRAR
 async function borrar(id) {
   if (!confirm('Eliminar?')) return
 
@@ -225,7 +248,25 @@ async function borrar(id) {
   setTimeout(cargar, 100)
 }
 
-// ================== UI ==================
+// ================= CONFIRMAR
+async function confirmar(id) {
+
+  if (!confirm('¿Confirmar venta?')) return
+
+  const res = await fetch('/cotizacion/confirmar/' + id, {
+    method:'PUT'
+  })
+
+  if (!res.ok) {
+    const err = await res.json()
+    alert(err.msg || 'Error')
+    return
+  }
+
+  setTimeout(cargar, 100)
+}
+
+// ================= UI
 function mostrarForm() {
   limpiar()
   form.style.display = 'block'
