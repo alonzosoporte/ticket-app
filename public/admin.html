@@ -6,7 +6,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-let modo = 'pendientes'
+let modo = 'todos'
 let socket = null
 
 if (typeof io !== 'undefined') {
@@ -27,6 +27,8 @@ async function cargar() {
   }
 
   let data = await res.json()
+
+console.log('Tickets:', data)
 
   // 📅 GENERAR MESES
   let listaMeses = {}
