@@ -3,11 +3,19 @@
 <div id="resumen"></div>
 
 <div id="lista"></div>
-
+<script src="/socket.io/socket.io.js"></script>
 <script>
 
 let modo = 'pendientes'
-const socket = io()
+let socket = null
+
+if (typeof io !== 'undefined') {
+  socket = io()
+  socket.on('actualizar', cargar)
+} else {
+  console.warn('Socket.IO no disponible')
+}
+cargar()
 
 // 📥 CARGAR TICKETS
 async function cargar() {
