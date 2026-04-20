@@ -44,6 +44,11 @@ async function cargar() {
 
   const select = document.getElementById('filtroMes')
 
+if (!select) {
+  console.warn('filtroMes no existe')
+  return
+}
+
   if (select.options.length <= 1) {
     Object.entries(listaMeses)
       .reverse()
