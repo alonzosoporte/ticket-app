@@ -1,24 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin</title>
+
+<!-- SOCKET OPCIONAL -->
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #eef2f7;
+  padding: 20px;
+}
+
+.ticket {
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+input, select, button, textarea {
+  margin: 4px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button { cursor: pointer }
+</style>
+</head>
+
+<body>
+
+<h1>🧑‍💻 Panel Admin</h1>
+
+<button onclick="modo='pendientes'; cargar()">Pendientes</button>
+<button onclick="modo='todos'; cargar()">Todos</button>
+
+<br><br>
+
+<input id="busqueda" placeholder="Buscar..." oninput="cargar()">
+
+<select id="filtroMes" onchange="cargar()">
+  <option value="todos">Todos los meses</option>
+</select>
+
 <br><br>
 
 <div id="resumen"></div>
-
 <div id="lista"></div>
-<script src="/socket.io/socket.io.js"></script>
+
 <script>
 
-let modo = 'todos'
+let modo = 'todos' // 🔥 IMPORTANTE
 let socket = null
 
+// SOCKET SEGURO
 if (typeof io !== 'undefined') {
   socket = io()
   socket.on('actualizar', cargar)
 } else {
-  console.warn('Socket.IO no disponible')
+  console.warn('Socket no disponible')
 }
-cargar()
 
-// 📥 CARGAR TICKETS
+// ================= CARGAR
 async function cargar() {
+
+  console.log('Cargando tickets...')
+
   const res = await fetch('/tickets')
 
   if (!res.ok) {
@@ -28,120 +80,86 @@ async function cargar() {
 
   let data = await res.json()
 
-console.log('Tickets:', data)
+  console.log('Tickets:', data)
 
-  // 📅 GENERAR MESES
+  const lista = document.getElementById('lista')
+  const resumen = document.getElementById('resumen')
+  const select = document.getElementById('filtroMes')
+
+  if (!lista || !resumen || !select) {
+    console.error('Faltan elementos HTML')
+    return
+  }
+
+  // ================= MESES
   let listaMeses = {}
 
   data.forEach(t => {
     if (!t.fecha) return
+    const f = new Date(t.fecha)
+    if (isNaN(f)) return
 
-    const fecha = new Date(t.fecha)
-    if (isNaN(fecha)) return
-
-    const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
-
-    listaMeses[key] = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+    const key = f.getFullYear() + '-' + (f.getMonth()+1)
+    listaMeses[key] = f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  const select = document.getElementById('filtroMes')
-
-if (!select) {
-  console.warn('filtroMes no existe')
-  return
-}
-
   if (select.options.length <= 1) {
-    Object.entries(listaMeses)
-      .reverse()
-      .forEach(([key, texto]) => {
-        const opt = document.createElement('option')
-        opt.value = key
-        opt.textContent = texto
-        select.appendChild(opt)
-      })
-  }
-
-  const hoy = new Date()
-  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
-
-  if (select.value === 'todos') {
-    select.value = mesActualKey
-  }
-
-  const mesSeleccionado = select.value
-
-  if (mesSeleccionado !== 'todos') {
-    data = data.filter(t => {
-      const fecha = new Date(t.fecha)
-      if (isNaN(fecha)) return false
-
-      const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
-      return key === mesSeleccionado
+    Object.entries(listaMeses).reverse().forEach(([k,v])=>{
+      const opt = document.createElement('option')
+      opt.value = k
+      opt.textContent = v
+      select.appendChild(opt)
     })
   }
 
-  // 💰 GANANCIAS
-  let meses = {}
-  let totalGeneral = 0
+  const mesSel = select.value
 
-  data.forEach(t => {
-    if (!t.fecha) return
+  if (mesSel !== 'todos') {
+    data = data.filter(t=>{
+      const f = new Date(t.fecha)
+      const key = f.getFullYear() + '-' + (f.getMonth()+1)
+      return key === mesSel
+    })
+  }
 
-    const fecha = new Date(t.fecha)
-    const mes = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+  // ================= GANANCIAS
+  let total = 0
 
-    const gan = t.entregado === 'si' ? (parseFloat(t.ganancia) || 0) : 0
-
-    if (!meses[mes]) meses[mes] = 0
-
-    meses[mes] += gan
-    totalGeneral += gan
+  data.forEach(t=>{
+    if (t.entregado === 'si') {
+      total += parseFloat(t.ganancia) || 0
+    }
   })
 
-  const ordenados = Object.entries(meses).reverse()
-
-  let htmlResumen = `
-  <div style="background:#fff;padding:15px;border-radius:10px;margin-bottom:15px">
-    <b>💰 Resumen de Ganancias</b><br><br>
+  resumen.innerHTML = `
+    <div style="background:#fff;padding:10px;border-radius:10px">
+      💰 Total ganado: <b>$${total}</b>
+    </div>
   `
 
-  ordenados.forEach(([mes, total]) => {
-    htmlResumen += `📅 ${mes}: $${total}<br>`
-  })
-
-  htmlResumen += `<br><b>🧮 TOTAL GENERAL: $${totalGeneral}</b>`
-  htmlResumen += `</div>`
-
-  document.getElementById('resumen').innerHTML = htmlResumen
-
-  // 🔥 filtro pendientes
+  // ================= FILTROS
   if (modo === 'pendientes') {
     data = data.filter(t => t.entregado !== 'si')
   }
 
-  // 🔍 buscador
-  const filtro = document.getElementById('busqueda').value.toLowerCase()
+  const filtro = (busqueda.value || '').toLowerCase()
 
   data = data.filter(t =>
-    t.nombre.toLowerCase().includes(filtro) ||
-    t.telefono.includes(filtro) ||
-    t.numero.toLowerCase().includes(filtro)
+    (t.nombre || '').toLowerCase().includes(filtro) ||
+    (t.telefono || '').includes(filtro) ||
+    (t.numero || '').toLowerCase().includes(filtro)
   )
 
-  const lista = document.getElementById('lista')
+  // ================= VACÍO
+  if (data.length === 0) {
+    lista.innerHTML = '<div>No hay tickets</div>'
+    return
+  }
+
+  // ================= RENDER
   lista.innerHTML = ''
 
-  data.reverse().forEach(t => {
-
-    const garantiaTexto = t.garantiaFecha
-      ? `🛡️ Garantía hasta: ${new Date(t.garantiaFecha).toLocaleDateString()}`
-      : ''
-
-    const garantiaFoto = t.garantiaFoto
-      ? `<br><img src="${t.garantiaFoto}" style="max-width:100px;border-radius:6px">`
-      : ''
-
+  data.reverse().forEach(t=>{
     lista.innerHTML += `
       <div class="ticket">
         <b>${t.numero}</b><br>
@@ -149,30 +167,30 @@ if (!select) {
         ${t.problema}<br>
         📅 ${formatearFecha(t.fecha)}<br><br>
 
-        💲 Precio: <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
-        💰 Ganancia: <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
-        <br><br>
+        💲 Precio:
+        <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
 
-        📝 Detalle del trabajo:<br>
-        <textarea style="width:100%;height:60px" 
-        onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
+        💰 Ganancia:
+        <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
         <br><br>
 
-        ${garantiaTexto}
-        ${garantiaFoto}
+        📝 Detalle:<br>
+        <textarea onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
 
         <br><br>
 
         Estado: ${t.estado}<br>
-        Entregado: ${t.entregado}<br><br>
+        Entregado: ${t.entregado}<br>
+
+        ${t.garantiaFecha ? `
+          <br>🛡️ Garantía: ${new Date(t.garantiaFecha).toLocaleDateString()}
+          ${t.garantiaFoto ? `<br><img src="${t.garantiaFoto}">` : ''}
+        ` : ''}
+
+        <br><br>
 
         <button onclick="estado('${t.numero}','proceso')">Proceso</button>
-
-        <button onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-          ✔️ Listo + WhatsApp
-        </button>
-
         <button onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
         <button onclick="borrar('${t.numero}')">❌</button>
       </div>
@@ -180,78 +198,43 @@ if (!select) {
   })
 }
 
-// 📅 FORMATEAR FECHA
-function formatearFecha(f) {
-  const fecha = new Date(f)
-  if (isNaN(fecha)) return f || 'Sin fecha'
-  return fecha.toLocaleString('es-UY')
+// ================= FUNCIONES
+function formatearFecha(f){
+  const d = new Date(f)
+  if (isNaN(d)) return 'Sin fecha'
+  return d.toLocaleString('es-UY')
 }
 
-// ✏️ GUARDAR
-async function guardar(id, campo, valor) {
+async function guardar(id,campo,valor){
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ [campo]: valor })
+    body: JSON.stringify({[campo]:valor})
   })
 }
 
-// 🔄 ESTADO
-async function estado(id, estado) {
+async function estado(id,estado){
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado })
+    body: JSON.stringify({estado})
   })
 }
 
-// 📦 ENTREGADO
-async function marcarEntregado(id) {
+async function marcarEntregado(id){
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ entregado: 'si' })
+    body: JSON.stringify({entregado:'si'})
   })
 }
 
-// ❌ BORRAR
-async function borrar(id) {
-  const ok = confirm("¿Seguro que querés borrar este ticket?")
-  if (!ok) return
+async function borrar(id){
+  if (!confirm('Eliminar?')) return
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
-// 📲 WHATSAPP
-async function listoWhatsApp(id, nombre, telefono, precio) {
-
-  let tel = telefono.replace(/\D/g, '')
-
-  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-  if (!tel.startsWith('598')) tel = '598' + tel
-
-  const mensaje =
-`Hola ${nombre} 👋
-
-Tu equipo ya está listo para retirar ✅
-
-🧾 Ticket: ${id}
-💲 Precio: ${precio || 'A confirmar'}
-
-Favor coordinar para retirarlo.`
-
-  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
-
-  window.location.href = url
-
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado: 'listo' })
-  })
-}
-
-// 🔄 SOCKET
-socket.on('actualizar', cargar)
+// INIT
 cargar()
 
 </script>
