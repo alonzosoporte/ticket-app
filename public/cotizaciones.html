@@ -32,9 +32,7 @@ img { max-width:120px; border-radius:6px }
 
 <h2>📊 Cotizaciones</h2>
 
-<a href="/admin.html">
-  <button>⬅ Volver a Admin</button>
-</a>
+<button onclick="location.href='admin.html'">⬅ Volver</button>
 
 <br><br>
 
@@ -66,16 +64,15 @@ img { max-width:120px; border-radius:6px }
 
 <br>
 
+📸 Foto:
 <input type="file" id="foto">
-
-<hr>
-
-<label>📅 Garantía hasta:</label><br>
-<input type="date" id="garantiaFecha">
 
 <br>
 
-<label>📷 Foto garantía:</label><br>
+🛡️ Garantía hasta:
+<input type="date" id="garantiaFecha">
+
+📸 Foto garantía:
 <input type="file" id="garantiaFoto">
 
 <br><br>
@@ -93,12 +90,7 @@ let editando = null
 let fotoBase64 = ''
 let garantiaBase64 = ''
 
-// NAV
-function irAdmin() {
-  window.location.href = '/admin.html'
-}
-
-// GANANCIA
+// ================= GANANCIA =================
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -108,26 +100,26 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// FOTO PRODUCTO
+// ================= FOTO =================
 foto.onchange = e => {
   const r = new FileReader()
   r.onload = () => fotoBase64 = r.result
   r.readAsDataURL(e.target.files[0])
 }
 
-// FOTO GARANTÍA
 garantiaFoto.onchange = e => {
   const r = new FileReader()
   r.onload = () => garantiaBase64 = r.result
   r.readAsDataURL(e.target.files[0])
 }
 
-// PROVEEDORES
+// ================= PROVEEDORES =================
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
 
   proveedor.innerHTML = ''
+
   data.forEach(p => {
     proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>`
   })
@@ -146,10 +138,8 @@ async function agregarProveedor() {
   cargarProveedores()
 }
 
-// GUARDAR
+// ================= GUARDAR =================
 async function guardar() {
-
-  if (!producto.value) return alert('Falta producto')
 
   const data = {
     nombre: nombre.value,
@@ -179,16 +169,16 @@ async function guardar() {
   }
 
   limpiar()
-  setTimeout(cargar, 100)
+  cargar()
 }
 
-// CARGAR
+// ================= CARGAR =================
 async function cargar() {
 
   const res = await fetch('/cotizaciones')
   let data = await res.json()
 
-  const filtro = buscar.value.toLowerCase()
+  const filtro = (buscar.value || '').toLowerCase()
 
   data = data.filter(c =>
     (c.producto || '').toLowerCase().includes(filtro) ||
@@ -202,51 +192,47 @@ async function cargar() {
 
     const costo = parseFloat(c.costoProveedor) || 0
     const precio = parseFloat(c.precioCliente) || 0
-    const gan = precio - costo
-    const color = gan >= 0 ? '#0a8f3c' : '#d00000'
+    const gan = c.ganancia || (precio - costo)
+
+    const color = gan >= 0 ? 'green' : 'red'
 
     lista.innerHTML += `
-  <div class="card" onclick='verDetalle(${JSON.stringify(c)})'>
+      <div class="card" onclick='verDetalle(${JSON.stringify(c)})'>
 
-    <b>${c.producto}</b><br>
-    ${c.nombre || ''} (${c.celular || ''})<br>
+        <b>${c.producto}</b><br>
+        ${c.nombre || ''} (${c.celular || ''})<br>
 
-    💸 Costo proveedor: $${costo}<br>
-    💰 Precio cliente: $${precio}<br>
-    🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
+        💸 Costo proveedor: $${costo}<br>
+        💰 Precio cliente: $${precio}<br>
+        🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
 
-    ${c.foto ? <img src="${c.foto}"> : ''}
+        ${c.foto ? `<img src="${c.foto}">` : ''}
 
-    ${c.garantiaFecha ? `
-      <br>🛡️ Garantía: ${new Date(c.garantiaFecha).toLocaleDateString()}
-      ${c.garantiaFoto ? <br><img src="${c.garantiaFoto}"> : ''}
-    ` : ''}
+        ${c.garantiaFecha ? `
+          <br>🛡️ Garantía: ${new Date(c.garantiaFecha).toLocaleDateString()}
+          ${c.garantiaFoto ? `<br><img src="${c.garantiaFoto}">` : ''}
+        ` : ''}
 
-    <br><br>
+        <br><br>
 
-    ${
-      c.confirmada === 'si'
-      ? '<span style="color:green;font-weight:bold">✅ Confirmada</span>'
-      : `
-        <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
-        <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
-        <button onclick="event.stopPropagation(); confirmar('${c._id}')">✔ Confirmar</button>
-      `
-    }
-
+        ${
+          c.confirmada === 'si'
+          ? '<span style="color:green;font-weight:bold">✅ Confirmada</span>'
+          : `
+            <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
+            <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
+            <button onclick="event.stopPropagation(); confirmar('${c._id}')">✔ Confirmar</button>
+          `
+        }
 
       </div>
     `
   })
 }
 
-// EDITAR
+// ================= EDITAR =================
 function editar(c) {
-
-  if (c.confirmada === 'si') {
-    alert('No editable')
-    return
-  }
+  editando = c._id
 
   nombre.value = c.nombre || ''
   celular.value = c.celular || ''
@@ -254,57 +240,43 @@ function editar(c) {
   costoProveedor.value = c.costoProveedor || ''
   precioCliente.value = c.precioCliente || ''
   descripcion.value = c.descripcion || ''
-
-  garantiaFecha.value = c.garantiaFecha ? c.garantiaFecha.split('T')[0] : ''
+  garantiaFecha.value = c.garantiaFecha || ''
 
   fotoBase64 = c.foto || ''
   garantiaBase64 = c.garantiaFoto || ''
-
-  editando = c._id
 
   calcularGanancia()
   form.style.display = 'block'
 }
 
-// BORRAR
+// ================= BORRAR =================
 async function borrar(id) {
   if (!confirm('Eliminar?')) return
   await fetch('/cotizacion/' + id, { method:'DELETE' })
-  setTimeout(cargar, 100)
+  cargar()
 }
 
-// CONFIRMAR
+// ================= CONFIRMAR =================
 async function confirmar(id) {
-  if (!confirm('Confirmar venta?')) return
-
-  const res = await fetch('/cotizacion/confirmar/' + id, { method:'PUT' })
-
-  if (!res.ok) {
-    const err = await res.json()
-    alert(err.msg || 'Error')
-    return
-  }
-
-  setTimeout(cargar, 100)
+  await fetch('/cotizacion/' + id, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ confirmada: 'si' })
+  })
+  cargar()
 }
 
-// DETALLE
+// ================= DETALLE =================
 function verDetalle(c) {
-  alert(`
-Producto: ${c.producto}
-
-Cliente: ${c.nombre || ''}
-Celular: ${c.celular || ''}
-
-Precio: $${c.precioCliente || 0}
-Costo: $${c.costoProveedor || 0}
-Ganancia: $${c.ganancia || 0}
-
-Garantía: ${c.garantiaFecha ? new Date(c.garantiaFecha).toLocaleDateString() : 'Sin garantía'}
-`)
+  alert(
+`Producto: ${c.producto}
+Cliente: ${c.nombre}
+Precio: ${c.precioCliente}
+Ganancia: ${c.ganancia}`
+  )
 }
 
-// UI
+// ================= UI =================
 function mostrarForm() {
   limpiar()
   form.style.display = 'block'
@@ -327,9 +299,6 @@ function limpiar() {
   descripcion.value = ''
   ganancia.value = ''
   garantiaFecha.value = ''
-  nuevoProveedor.value = ''
-  foto.value = ''
-  garantiaFoto.value = ''
 
   form.style.display = 'none'
 }
