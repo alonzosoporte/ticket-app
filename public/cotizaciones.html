@@ -206,33 +206,34 @@ async function cargar() {
     const color = gan >= 0 ? '#0a8f3c' : '#d00000'
 
     lista.innerHTML += `
-      <div class="card" onclick='verDetalle(${JSON.stringify(c)})'>
+  <div class="card" onclick='verDetalle(${JSON.stringify(c)})'>
 
-        <b>${c.producto}</b><br>
-        ${c.nombre || ''} (${c.celular || ''})<br>
+    <b>${c.producto}</b><br>
+    ${c.nombre || ''} (${c.celular || ''})<br>
 
-        💸 Costo proveedor: $${costo}<br>
-        💰 Precio cliente: $${precio}<br>
-        🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
+    💸 Costo proveedor: $${costo}<br>
+    💰 Precio cliente: $${precio}<br>
+    🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
 
-        ${c.foto ? `<img src="${c.foto}">` : ''}
+    ${c.foto ? <img src="${c.foto}"> : ''}
 
-        ${c.garantiaFecha ? `
-          <br>🛡️ Garantía: ${new Date(c.garantiaFecha).toLocaleDateString()}
-          ${c.garantiaFoto ? `<br><img src="${c.garantiaFoto}"> : ''}`
-        ` : ''}
+    ${c.garantiaFecha ? `
+      <br>🛡️ Garantía: ${new Date(c.garantiaFecha).toLocaleDateString()}
+      ${c.garantiaFoto ? <br><img src="${c.garantiaFoto}"> : ''}
+    ` : ''}
 
-        <br><br>
+    <br><br>
 
-        ${
-          c.confirmada === 'si'
-          ? '<span style="color:green;font-weight:bold">✅ Confirmada</span>'
-          : `
-            <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
-            <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
-            <button onclick="event.stopPropagation(); confirmar('${c._id}')">✔ Confirmar</button>
-          `
-        }
+    ${
+      c.confirmada === 'si'
+      ? '<span style="color:green;font-weight:bold">✅ Confirmada</span>'
+      : `
+        <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
+        <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
+        <button onclick="event.stopPropagation(); confirmar('${c._id}')">✔ Confirmar</button>
+      `
+    }
+`
 
       </div>
     `
