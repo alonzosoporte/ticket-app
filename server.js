@@ -162,28 +162,58 @@ app.get('/cotizaciones', async (req, res) => {
 })
 
 app.put('/cotizacion/:id', async (req, res) => {
+  try {
 
-  const actual = await Cotizacion.findById(req.params.id)
+    const cot = await Cotizacion.findById(req.params.id)
 
-  if (actual.confirmada === 'si') {
-    return res.status(400).json({ error: 'No editable' })
+    if (!cot) return res.json({ error: 'No existe' })
+
+    const { costoProveedor, precioCliente, confirmada } = req.body
+
+    const costo = parseFloat(costoProveedor || cot.costoProveedor) || 0
+    const precio = parseFloat(precioCliente || cot.precioCliente) || 0
+
+    const ganancia = precio - costo
+
+    // 🔥 si se confirma por primera vez
+    if (confirmada === 'si' && cot.confirmada !== 'si') {
+
+      // 🧾 crear ticket automático
+      const contador = await Ticket.countDocuments()
+      const año = new Date().getFullYear()
+
+      const numero = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
+
+      const nuevoTicket = new Ticket({
+        numero,
+        nombre: cot.nombre,
+        telefono: cot.celular,
+        problema: cot.producto,
+        estado: 'listo',
+        precio: precio,
+        ganancia: ganancia,
+        detalle: 'Generado desde cotización',
+        entregado: 'si',
+        fecha: new Date()
+      })
+
+      await nuevoTicket.save()
+
+      // 🔥 actualizar en tiempo real
+      io.emit('actualizar')
+    }
+
+    req.body.ganancia = ganancia
+
+    await Cotizacion.findByIdAndUpdate(req.params.id, req.body)
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: 'Error al actualizar' })
   }
-
-  const costo = parseFloat(req.body.costoProveedor) || 0
-  const precio = parseFloat(req.body.precioCliente) || 0
-
-  req.body.ganancia = precio - costo
-
-  await Cotizacion.findByIdAndUpdate(req.params.id, req.body)
-
-  res.json({ ok: true })
 })
-
-app.delete('/cotizacion/:id', async (req, res) => {
-  await Cotizacion.findByIdAndDelete(req.params.id)
-  res.json({ ok: true })
-})
-
 // =======================
 // 🔥 CONFIRMAR
 // =======================
