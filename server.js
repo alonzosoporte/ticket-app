@@ -40,6 +40,7 @@ const Ticket = mongoose.model('Ticket', TicketSchema)
 // 📦 COTIZACIONES
 // =======================
 const CotizacionSchema = new mongoose.Schema({
+  numero: String, // 🔥 NUEVO
   nombre: String,
   celular: String,
   producto: String,
@@ -138,10 +139,16 @@ app.post('/cotizacion', async (req, res) => {
     garantiaFecha, garantiaFoto
   } = req.body
 
+  // 🔥 GENERAR NÚMERO
+  const contador = await Cotizacion.countDocuments()
+  const año = new Date().getFullYear()
+  const numero = "COT-" + año + "-" + (contador + 1).toString().padStart(4, '0')
+
   const costo = parseFloat(costoProveedor) || 0
   const precio = parseFloat(precioCliente) || 0
 
   const nueva = new Cotizacion({
+    numero, // 👈 NUEVO
     nombre,
     celular,
     producto,
@@ -180,16 +187,16 @@ app.put('/cotizacion/:id', async (req, res) => {
     const precio = parseFloat(precioCliente || cot.precioCliente) || 0
     const ganancia = precio - costo
 
-    // 🔥 CONFIRMAR (UNA SOLA VEZ)
+    // 🔥 CONFIRMAR SOLO UNA VEZ
     if (confirmada === 'si' && cot.confirmada !== 'si') {
 
       const contador = await Ticket.countDocuments()
       const año = new Date().getFullYear()
 
-      const numero = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
+      const numeroTicket = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
 
       const nuevoTicket = new Ticket({
-        numero,
+        numero: numeroTicket,
         nombre: cot.nombre,
         telefono: cot.celular,
         problema: 'Venta: ' + cot.producto,
@@ -204,7 +211,6 @@ app.put('/cotizacion/:id', async (req, res) => {
       })
 
       await nuevoTicket.save()
-
       io.emit('actualizar')
     }
 
@@ -230,9 +236,7 @@ app.delete('/cotizacion/:id', async (req, res) => {
       return res.status(404).json({ error: 'No existe' })
     }
 
-    // 🔥 SI ESTÁ CONFIRMADA → BORRAR TICKET
     if (cot.confirmada === 'si') {
-
       await Ticket.findOneAndDelete({
         nombre: cot.nombre,
         telefono: cot.celular,
@@ -240,10 +244,8 @@ app.delete('/cotizacion/:id', async (req, res) => {
       })
     }
 
-    // 🔥 BORRAR COTIZACIÓN
     await Cotizacion.findByIdAndDelete(req.params.id)
 
-    // 🔥 REFRESH EN TIEMPO REAL
     io.emit('actualizar')
 
     res.json({ ok: true })
