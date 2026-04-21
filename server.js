@@ -9,6 +9,9 @@ const io = new Server(server)
 
 const PORT = process.env.PORT || 3000
 
+// =======================
+// 🔥 MONGO
+// =======================
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("✅ Mongo conectado"))
   .catch(err => console.log("❌ Error Mongo:", err))
@@ -27,8 +30,8 @@ const TicketSchema = new mongoose.Schema({
   detalle: String,
   entregado: String,
   fecha: Date,
-  garantiaFecha: Date,   // 🔥 NUEVO
-  garantiaFoto: String   // 🔥 NUEVO
+  garantiaFecha: Date,
+  garantiaFoto: String
 })
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
@@ -46,14 +49,16 @@ const CotizacionSchema = new mongoose.Schema({
   ganancia: Number,
   descripcion: String,
   foto: String,
-  confirmada: String, // 👈 ACÁ
+  confirmada: String,
+  garantiaFecha: Date,
+  garantiaFoto: String,
   fecha: Date
 })
 
 const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
 
 // =======================
-// 📦 PROVEEDOR
+// 📦 PROVEEDORES
 // =======================
 const ProveedorSchema = new mongoose.Schema({
   nombre: String
@@ -122,18 +127,8 @@ app.delete('/ticket/:numero', async (req, res) => {
 // =======================
 // 📊 COTIZACIONES
 // =======================
-// ❌ BORRAR COTIZACION
-// =======================
-app.delete('/cotizacion/:id', async (req, res) => {
-  try {
-    await Cotizacion.findByIdAndDelete(req.params.id)
-    res.json({ ok: true })
-  } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: 'Error al borrar' })
-  }
-})
-// =======================
+
+// 🆕 CREAR
 app.post('/cotizacion', async (req, res) => {
 
   const {
@@ -166,29 +161,28 @@ app.post('/cotizacion', async (req, res) => {
   res.json({ ok: true })
 })
 
+// 📥 LISTAR
 app.get('/cotizaciones', async (req, res) => {
   const data = await Cotizacion.find()
   res.json(data)
 })
 
+// ✏️ EDITAR + CONFIRMAR
 app.put('/cotizacion/:id', async (req, res) => {
   try {
 
     const cot = await Cotizacion.findById(req.params.id)
-
     if (!cot) return res.json({ error: 'No existe' })
 
     const { costoProveedor, precioCliente, confirmada } = req.body
 
     const costo = parseFloat(costoProveedor || cot.costoProveedor) || 0
     const precio = parseFloat(precioCliente || cot.precioCliente) || 0
-
     const ganancia = precio - costo
 
-    // 🔥 si se confirma por primera vez
+    // 🔥 CONFIRMAR (UNA SOLA VEZ)
     if (confirmada === 'si' && cot.confirmada !== 'si') {
 
-      // 🧾 crear ticket automático
       const contador = await Ticket.countDocuments()
       const año = new Date().getFullYear()
 
@@ -198,18 +192,19 @@ app.put('/cotizacion/:id', async (req, res) => {
         numero,
         nombre: cot.nombre,
         telefono: cot.celular,
-        problema: cot.producto,
+        problema: 'Venta: ' + cot.producto,
         estado: 'listo',
         precio: precio,
         ganancia: ganancia,
         detalle: 'Generado desde cotización',
         entregado: 'si',
-        fecha: new Date()
+        fecha: new Date(),
+        garantiaFecha: cot.garantiaFecha,
+        garantiaFoto: cot.garantiaFoto
       })
 
       await nuevoTicket.save()
 
-      // 🔥 actualizar en tiempo real
       io.emit('actualizar')
     }
 
@@ -224,44 +219,16 @@ app.put('/cotizacion/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar' })
   }
 })
-// =======================
-// 🔥 CONFIRMAR
-// =======================
-app.put('/cotizacion/confirmar/:id', async (req, res) => {
 
-  const c = await Cotizacion.findById(req.params.id)
-
-  if (!c) return res.sendStatus(404)
-
-  if (c.confirmada === 'si') {
-    return res.status(400).json({ msg: 'Ya confirmada' })
+// ❌ BORRAR
+app.delete('/cotizacion/:id', async (req, res) => {
+  try {
+    await Cotizacion.findByIdAndDelete(req.params.id)
+    res.json({ ok: true })
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: 'Error al borrar' })
   }
-
-  const costo = parseFloat(c.costoProveedor) || 0
-  const precio = parseFloat(c.precioCliente) || 0
-  const ganancia = precio - costo
-
-  c.confirmada = 'si'
-  c.ganancia = ganancia
-
-  await c.save()
-
-  await Ticket.create({
-    numero: 'VENTA-' + Date.now(),
-    nombre: c.nombre,
-    telefono: c.celular,
-    problema: 'Venta: ' + c.producto,
-    precio: c.precioCliente,
-    ganancia: ganancia,
-    estado: 'listo',
-    entregado: 'si',
-    fecha: new Date(),
-    garantiaFecha: c.garantiaFecha,   // 🔥 PASA GARANTÍA
-    garantiaFoto: c.garantiaFoto
-  })
-
-  io.emit('actualizar')
-  res.json({ ok: true })
 })
 
 // =======================
