@@ -171,9 +171,9 @@ async function guardar() {
     costoProveedor: costoProveedor.value,
     precioCliente: precioCliente.value,
     descripcion: descripcion.value,
-    foto: fotoBase64,
+    foto: fotoBase64 || '',
     garantiaFecha: garantiaFecha.value,
-    garantiaFoto: garantiaBase64
+    garantiaFoto: garantiaBase64 || ''
   }
 
   if (editando) {
@@ -338,10 +338,14 @@ function cancelar() {
 }
 
 function limpiar() {
+
   editando = null
+
+  // 🔥 limpiar memoria
   fotoBase64 = ''
   garantiaBase64 = ''
 
+  // 🔥 limpiar inputs
   nombre.value = ''
   celular.value = ''
   producto.value = ''
@@ -351,6 +355,11 @@ function limpiar() {
   ganancia.value = ''
   garantiaFecha.value = ''
 
+  // 🔥 limpiar file inputs (CLAVE)
+  document.getElementById('foto').value = ''
+  document.getElementById('garantiaFoto').value = ''
+
+  // 🔥 ocultar form
   form.style.display = 'none'
 }
 
