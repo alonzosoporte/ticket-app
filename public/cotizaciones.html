@@ -219,7 +219,8 @@ async function cargar() {
           c.confirmada === 'si'
   ? `
     <span style="color:green;font-weight:bold">✅ Confirmada</span><br><br>
-    <button onclick="event.stopPropagation(); borrar('${c._id}')">❌ Eliminar</button>
+    <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
+
   `
   : `
     <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
@@ -254,8 +255,16 @@ function editar(c) {
 
 // ================= BORRAR =================
 async function borrar(id) {
-  if (!confirm('Eliminar?')) return
-  await fetch('/cotizacion/' + id, { method:'DELETE' })
+
+  const ok = confirm('Eliminar?')
+  if (!ok) return
+
+  const res = await fetch('/cotizacion/' + id, {
+    method:'DELETE'
+  })
+
+  console.log('DELETE status:', res.status)
+
   cargar()
 }
 
