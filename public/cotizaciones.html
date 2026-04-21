@@ -112,7 +112,6 @@ let editando = null
 let fotoBase64 = ''
 let garantiaBase64 = ''
 
-// ================= GANANCIA =================
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -122,7 +121,6 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// ================= FOTO =================
 foto.onchange = e => {
   const r = new FileReader()
   r.onload = () => fotoBase64 = r.result
@@ -135,7 +133,6 @@ garantiaFoto.onchange = e => {
   r.readAsDataURL(e.target.files[0])
 }
 
-// ================= PROVEEDORES =================
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
@@ -160,7 +157,6 @@ async function agregarProveedor() {
   cargarProveedores()
 }
 
-// ================= GUARDAR =================
 async function guardar() {
 
   const data = {
@@ -194,7 +190,6 @@ async function guardar() {
   cargar()
 }
 
-// ================= CARGAR =================
 async function cargar() {
 
   const res = await fetch('/cotizaciones')
@@ -215,10 +210,8 @@ async function cargar() {
     const costo = parseFloat(c.costoProveedor) || 0
     const precio = parseFloat(c.precioCliente) || 0
     const gan = c.ganancia || (precio - costo)
-
     const color = gan >= 0 ? 'green' : 'red'
 
-    // 🔥 GARANTÍA
     let garantiaTexto = ''
     if (c.garantiaFecha) {
       const hoy = new Date()
@@ -237,13 +230,16 @@ async function cargar() {
     lista.innerHTML += `
       <div class="card">
 
+        📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
+        🧾 ${c.numero || 'Sin número'}<br><br>
+
         <b>${c.producto}</b><br>
         ${c.nombre || ''} (${c.celular || ''})<br>
 
-        💸 Precio costo $ ${costo}<br>
+        💸 Precio costo $${costo}<br>
         💰 Precio cliente $${precio}<br>
         🧾 Ganancia <span style="color:${color};font-weight:bold">$${gan}</span><br>
- 
+
         ${garantiaTexto}
 
         <br>
@@ -271,7 +267,6 @@ async function cargar() {
   })
 }
 
-// ================= IMAGEN =================
 function verImg(src) {
   modalImg.style.display = 'flex'
   imgGrande.src = src
@@ -281,7 +276,6 @@ modalImg.onclick = () => {
   modalImg.style.display = 'none'
 }
 
-// ================= EDITAR =================
 function editar(c) {
   editando = c._id
 
@@ -300,14 +294,12 @@ function editar(c) {
   form.style.display = 'block'
 }
 
-// ================= BORRAR =================
 async function borrar(id) {
   if (!confirm('Eliminar?')) return
   await fetch('/cotizacion/' + id, { method:'DELETE' })
   cargar()
 }
 
-// ================= CONFIRMAR =================
 async function confirmar(id) {
   const res = await fetch('/cotizaciones')
   const data = await res.json()
@@ -327,7 +319,6 @@ async function confirmar(id) {
   cargar()
 }
 
-// ================= UI =================
 function mostrarForm() {
   limpiar()
   form.style.display = 'block'
@@ -338,14 +329,10 @@ function cancelar() {
 }
 
 function limpiar() {
-
   editando = null
-
-  // 🔥 limpiar memoria
   fotoBase64 = ''
   garantiaBase64 = ''
 
-  // 🔥 limpiar inputs
   nombre.value = ''
   celular.value = ''
   producto.value = ''
@@ -355,15 +342,12 @@ function limpiar() {
   ganancia.value = ''
   garantiaFecha.value = ''
 
-  // 🔥 limpiar file inputs (CLAVE)
   document.getElementById('foto').value = ''
   document.getElementById('garantiaFoto').value = ''
 
-  // 🔥 ocultar form
   form.style.display = 'none'
 }
 
-// INIT
 cargar()
 cargarProveedores()
 
