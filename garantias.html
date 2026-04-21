@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Garantías</title>
+
+<style>
+body { font-family: Arial; background:#eef2f7; padding:20px; }
+
+.card {
+  background:white;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+select {
+  padding:6px;
+  border-radius:6px;
+}
+
+.vencida {
+  color:red;
+  font-weight:bold;
+}
+
+.vigente {
+  color:green;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🛡️ Garantías</h2>
+
+<button onclick="location.href='admin.html'">⬅ Volver</button>
+
+<br><br>
+
+<select id="filtro" onchange="cargar()">
+  <option value="vigentes" selected>Vigentes</option>
+  <option value="vencidas">Vencidas</option>
+  <option value="todas">Todas</option>
+</select>
+
+<div id="lista"></div>
+
+<script>
+
+async function cargar() {
+
+  const res = await fetch('/tickets')
+  let data = await res.json()
+
+  const filtro = document.getElementById('filtro').value
+  const hoy = new Date()
+
+  data = data.filter(t => t.garantiaFecha)
+
+  if (filtro === 'vigentes') {
+    data = data.filter(t => new Date(t.garantiaFecha) >= hoy)
+  }
+
+  if (filtro === 'vencidas') {
+    data = data.filter(t => new Date(t.garantiaFecha) < hoy)
+  }
+
+  lista.innerHTML = ''
+
+  data.reverse().forEach(t => {
+
+    const g = new Date(t.garantiaFecha)
+    const vencida = g < hoy
+
+    lista.innerHTML += `
+      <div class="card">
+        <b>${t.numero}</b><br>
+        ${t.nombre} (${t.telefono})<br>
+        ${t.problema}<br><br>
+
+        🛡️ Garantía:
+        <span class="${vencida ? 'vencida' : 'vigente'}">
+          ${g.toLocaleDateString()}
+          ${vencida ? ' (VENCIDA)' : ''}
+        </span>
+      </div>
+    `
+  })
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>

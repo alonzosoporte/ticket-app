@@ -34,6 +34,7 @@ button { cursor:pointer }
 
 <!-- 🔥 MENÚ -->
 <button onclick="irCotizaciones()">📊 Cotizaciones</button>
+<button onclick="irGarantias()">🛡️ Garantías</button>
 
 <br><br>
 
@@ -42,12 +43,6 @@ button { cursor:pointer }
 
 <select id="filtroMes" onchange="cargar()">
   <option value="todos">Todos los meses</option>
-</select>
-
-<select id="filtroGarantia" onchange="cargar()">
-  <option value="todas">Todas las garantías</option>
-  <option value="vigentes">Vigentes</option>
-  <option value="vencidas">Vencidas</option>
 </select>
 
 <button onclick="modo='pendientes';cargar()">Pendientes</button>
@@ -78,22 +73,6 @@ async function cargar() {
   }
 
   let data = await res.json()
-
-  // ================= FILTRO GARANTIA =================
-  const filtroGarantia = document.getElementById('filtroGarantia').value
-
-  if (filtroGarantia !== 'todas') {
-    const hoy = new Date()
-
-    data = data.filter(t => {
-      if (!t.garantiaFecha) return false
-
-      const g = new Date(t.garantiaFecha)
-
-      if (filtroGarantia === 'vigentes') return g >= hoy
-      if (filtroGarantia === 'vencidas') return g < hoy
-    })
-  }
 
   // ================= FILTRO MES =================
   let listaMeses = {}
