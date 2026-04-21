@@ -122,6 +122,18 @@ app.delete('/ticket/:numero', async (req, res) => {
 // =======================
 // 📊 COTIZACIONES
 // =======================
+// ❌ BORRAR COTIZACION
+// =======================
+app.delete('/cotizacion/:id', async (req, res) => {
+  try {
+    await Cotizacion.findByIdAndDelete(req.params.id)
+    res.json({ ok: true })
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: 'Error al borrar' })
+  }
+})
+// =======================
 app.post('/cotizacion', async (req, res) => {
 
   const {
