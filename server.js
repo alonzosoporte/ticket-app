@@ -44,11 +44,9 @@ const CotizacionSchema = new mongoose.Schema({
   costoProveedor: String,
   precioCliente: String,
   ganancia: Number,
-  confirmada: { type: String, default: 'no' },
   descripcion: String,
   foto: String,
-  garantiaFecha: Date,
-  garantiaFoto: String,
+  confirmada: String, // 👈 ACÁ
   fecha: Date
 })
 

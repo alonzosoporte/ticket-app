@@ -261,14 +261,28 @@ async function borrar(id) {
 
 // ================= CONFIRMAR =================
 async function confirmar(id) {
+
+  // 🔥 1. traer todas las cotizaciones
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+
+  // 🔥 2. buscar la que corresponde
+  const c = data.find(x => x._id === id)
+
+  // 🔥 3. mandar TODO al server
   await fetch('/cotizacion/' + id, {
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ confirmada: 'si' })
+    body: JSON.stringify({
+      confirmada: 'si',
+      costoProveedor: c.costoProveedor,
+      precioCliente: c.precioCliente
+    })
   })
+
+  // 🔥 4. recargar pantalla
   cargar()
 }
-
 // ================= DETALLE =================
 function verDetalle(c) {
   alert(
