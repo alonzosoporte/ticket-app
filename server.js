@@ -223,8 +223,31 @@ app.put('/cotizacion/:id', async (req, res) => {
 // ❌ BORRAR
 app.delete('/cotizacion/:id', async (req, res) => {
   try {
+
+    const cot = await Cotizacion.findById(req.params.id)
+
+    if (!cot) {
+      return res.status(404).json({ error: 'No existe' })
+    }
+
+    // 🔥 SI ESTÁ CONFIRMADA → BORRAR TICKET
+    if (cot.confirmada === 'si') {
+
+      await Ticket.findOneAndDelete({
+        nombre: cot.nombre,
+        telefono: cot.celular,
+        problema: 'Venta: ' + cot.producto
+      })
+    }
+
+    // 🔥 BORRAR COTIZACIÓN
     await Cotizacion.findByIdAndDelete(req.params.id)
+
+    // 🔥 REFRESH EN TIEMPO REAL
+    io.emit('actualizar')
+
     res.json({ ok: true })
+
   } catch (err) {
     console.log(err)
     res.status(500).json({ error: 'Error al borrar' })
