@@ -13,7 +13,6 @@ body { font-family: Arial; background:#eef2f7; padding:20px; }
   margin:10px 0;
   border-radius:10px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  cursor:pointer;
 }
 
 input, select, button, textarea {
@@ -24,7 +23,25 @@ input, select, button, textarea {
 }
 
 button { cursor:pointer }
-img { max-width:120px; border-radius:6px }
+
+.thumb {
+  width:60px;
+  height:60px;
+  object-fit:cover;
+  border-radius:6px;
+  margin:3px;
+  cursor:pointer;
+  border:2px solid #ddd;
+}
+
+.thumb:hover {
+  border-color:#007bff;
+}
+
+.vencida {
+  color:red;
+  font-weight:bold;
+}
 </style>
 </head>
 
@@ -83,6 +100,11 @@ img { max-width:120px; border-radius:6px }
 </div>
 
 <div id="lista"></div>
+
+<!-- MODAL IMAGEN -->
+<div id="modalImg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;z-index:999">
+  <img id="imgGrande" style="max-width:90%;max-height:90%;border-radius:10px">
+</div>
 
 <script>
 
@@ -196,42 +218,67 @@ async function cargar() {
 
     const color = gan >= 0 ? 'green' : 'red'
 
+    // 🔥 GARANTÍA
+    let garantiaTexto = ''
+    if (c.garantiaFecha) {
+      const hoy = new Date()
+      const g = new Date(c.garantiaFecha)
+      const vencida = g < hoy
+
+      garantiaTexto = `
+        <br>🛡️ Garantía:
+        <span class="${vencida ? 'vencida' : ''}">
+          ${g.toLocaleDateString()}
+          ${vencida ? ' (VENCIDA)' : ''}
+        </span>
+      `
+    }
+
     lista.innerHTML += `
-      <div class="card" onclick='verDetalle(${JSON.stringify(c)})'>
+      <div class="card">
 
         <b>${c.producto}</b><br>
         ${c.nombre || ''} (${c.celular || ''})<br>
 
-        💸 Costo proveedor: $${costo}<br>
-        💰 Precio cliente: $${precio}<br>
-        🧾 Ganancia: <span style="color:${color};font-weight:bold">$${gan}</span><br>
+        💸 $${costo}<br>
+        💰 $${precio}<br>
+        🧾 <span style="color:${color};font-weight:bold">$${gan}</span><br>
 
-        ${c.foto ? `<img src="${c.foto}">` : ''}
+        ${garantiaTexto}
 
-        ${c.garantiaFecha ? `
-          <br>🛡️ Garantía: ${new Date(c.garantiaFecha).toLocaleDateString()}
-          ${c.garantiaFoto ? `<br><img src="${c.garantiaFoto}">` : ''}
-        ` : ''}
+        <br>
+
+        ${c.foto ? `<img class="thumb" src="${c.foto}" onclick="verImg('${c.foto}')">` : ''}
+        ${c.garantiaFoto ? `<img class="thumb" src="${c.garantiaFoto}" onclick="verImg('${c.garantiaFoto}')">` : ''}
 
         <br><br>
 
         ${
           c.confirmada === 'si'
-  ? `
-    <span style="color:green;font-weight:bold">✅ Confirmada</span><br><br>
-    <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
-
-  `
-  : `
-    <button onclick='event.stopPropagation(); editar(${JSON.stringify(c)})'>✏️</button>
-    <button onclick="event.stopPropagation(); borrar('${c._id}')">❌</button>
-    <button onclick="event.stopPropagation(); confirmar('${c._id}')">✔ Confirmar</button>
-  `
+          ? `
+            <span style="color:green;font-weight:bold">✅ Confirmada</span><br><br>
+            <button onclick="borrar('${c._id}')">❌</button>
+          `
+          : `
+            <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
+            <button onclick="borrar('${c._id}')">❌</button>
+            <button onclick="confirmar('${c._id}')">✔ Confirmar</button>
+          `
         }
 
       </div>
     `
   })
+}
+
+// ================= IMAGEN =================
+function verImg(src) {
+  modalImg.style.display = 'flex'
+  imgGrande.src = src
+}
+
+modalImg.onclick = () => {
+  modalImg.style.display = 'none'
 }
 
 // ================= EDITAR =================
@@ -255,30 +302,18 @@ function editar(c) {
 
 // ================= BORRAR =================
 async function borrar(id) {
-
-  const ok = confirm('Eliminar?')
-  if (!ok) return
-
-  const res = await fetch('/cotizacion/' + id, {
-    method:'DELETE'
-  })
-
-  console.log('DELETE status:', res.status)
-
+  if (!confirm('Eliminar?')) return
+  await fetch('/cotizacion/' + id, { method:'DELETE' })
   cargar()
 }
 
 // ================= CONFIRMAR =================
 async function confirmar(id) {
-
-  // 🔥 1. traer todas las cotizaciones
   const res = await fetch('/cotizaciones')
   const data = await res.json()
 
-  // 🔥 2. buscar la que corresponde
   const c = data.find(x => x._id === id)
 
-  // 🔥 3. mandar TODO al server
   await fetch('/cotizacion/' + id, {
     method:'PUT',
     headers:{'Content-Type':'application/json'},
@@ -289,17 +324,7 @@ async function confirmar(id) {
     })
   })
 
-  // 🔥 4. recargar pantalla
   cargar()
-}
-// ================= DETALLE =================
-function verDetalle(c) {
-  alert(
-`Producto: ${c.producto}
-Cliente: ${c.nombre}
-Precio: ${c.precioCliente}
-Ganancia: ${c.ganancia}`
-  )
 }
 
 // ================= UI =================
