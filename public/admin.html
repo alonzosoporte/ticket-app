@@ -2,51 +2,56 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Panel Admin</title>
+<title>Admin Tickets PRO</title>
 
-<!-- SOCKET OPCIONAL -->
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-body {
-  font-family: Arial;
-  background: #eef2f7;
-  padding: 20px;
-}
+body { font-family: Arial; background:#eef2f7; padding:20px; }
 
 .ticket {
-  background: white;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  background:white;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-input, select, button, textarea {
-  margin: 4px;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+input, textarea, button, select {
+  padding:6px;
+  margin:4px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
-button { cursor: pointer }
+button { cursor:pointer }
 </style>
 </head>
 
 <body>
 
-<h1>🧑‍💻 Panel Admin</h1>
+<h2>🧾 Administración</h2>
 
-<button onclick="modo='pendientes'; cargar()">Pendientes</button>
-<button onclick="modo='todos'; cargar()">Todos</button>
+<!-- 🔥 MENÚ -->
+<button onclick="irCotizaciones()">📊 Cotizaciones</button>
 
 <br><br>
 
+<!-- 🔎 FILTROS -->
 <input id="busqueda" placeholder="Buscar..." oninput="cargar()">
 
 <select id="filtroMes" onchange="cargar()">
   <option value="todos">Todos los meses</option>
 </select>
+
+<select id="filtroGarantia" onchange="cargar()">
+  <option value="todas">Todas las garantías</option>
+  <option value="vigentes">Vigentes</option>
+  <option value="vencidas">Vencidas</option>
+</select>
+
+<button onclick="modo='pendientes';cargar()">Pendientes</button>
+<button onclick="modo='todos';cargar()">Todos</button>
 
 <br><br>
 
@@ -55,21 +60,15 @@ button { cursor: pointer }
 
 <script>
 
-let modo = 'todos' // 🔥 IMPORTANTE
-let socket = null
+let modo = 'pendientes'
+const socket = io()
 
-// SOCKET SEGURO
-if (typeof io !== 'undefined') {
-  socket = io()
-  socket.on('actualizar', cargar)
-} else {
-  console.warn('Socket no disponible')
+function irCotizaciones() {
+  window.location.href = 'cotizaciones.html'
 }
 
-// ================= CARGAR
+// ================= CARGAR =================
 async function cargar() {
-
-  console.log('Cargando tickets...')
 
   const res = await fetch('/tickets')
 
@@ -80,92 +79,135 @@ async function cargar() {
 
   let data = await res.json()
 
-  console.log('Tickets:', data)
+  // ================= FILTRO GARANTIA =================
+  const filtroGarantia = document.getElementById('filtroGarantia').value
 
-  const lista = document.getElementById('lista')
-  const resumen = document.getElementById('resumen')
-  const select = document.getElementById('filtroMes')
+  if (filtroGarantia !== 'todas') {
+    const hoy = new Date()
 
-  if (!lista || !resumen || !select) {
-    console.error('Faltan elementos HTML')
-    return
+    data = data.filter(t => {
+      if (!t.garantiaFecha) return false
+
+      const g = new Date(t.garantiaFecha)
+
+      if (filtroGarantia === 'vigentes') return g >= hoy
+      if (filtroGarantia === 'vencidas') return g < hoy
+    })
   }
 
-  // ================= MESES
+  // ================= FILTRO MES =================
   let listaMeses = {}
 
   data.forEach(t => {
     if (!t.fecha) return
-    const f = new Date(t.fecha)
-    if (isNaN(f)) return
 
-    const key = f.getFullYear() + '-' + (f.getMonth()+1)
-    listaMeses[key] = f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+    const fecha = new Date(t.fecha)
+    if (isNaN(fecha)) return
+
+    const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
+    listaMeses[key] = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
 
+  const select = document.getElementById('filtroMes')
+
   if (select.options.length <= 1) {
-    Object.entries(listaMeses).reverse().forEach(([k,v])=>{
+    Object.entries(listaMeses).reverse().forEach(([key, texto]) => {
       const opt = document.createElement('option')
-      opt.value = k
-      opt.textContent = v
+      opt.value = key
+      opt.textContent = texto
       select.appendChild(opt)
     })
   }
 
-  const mesSel = select.value
+  const hoy = new Date()
+  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
 
-  if (mesSel !== 'todos') {
-    data = data.filter(t=>{
-      const f = new Date(t.fecha)
-      const key = f.getFullYear() + '-' + (f.getMonth()+1)
-      return key === mesSel
+  if (select.value === 'todos') {
+    select.value = mesActualKey
+  }
+
+  const mesSeleccionado = select.value
+
+  if (mesSeleccionado !== 'todos') {
+    data = data.filter(t => {
+      const fecha = new Date(t.fecha)
+      if (isNaN(fecha)) return false
+
+      const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
+      return key === mesSeleccionado
     })
   }
 
-  // ================= GANANCIAS
-  let total = 0
+  // ================= RESUMEN =================
+  let meses = {}
+  let totalGeneral = 0
 
-  data.forEach(t=>{
-    if (t.entregado === 'si') {
-      total += parseFloat(t.ganancia) || 0
-    }
+  data.forEach(t => {
+    if (!t.fecha) return
+
+    const fecha = new Date(t.fecha)
+    const mes = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+
+    const gan = t.entregado === 'si' ? (parseFloat(t.ganancia) || 0) : 0
+
+    if (!meses[mes]) meses[mes] = 0
+
+    meses[mes] += gan
+    totalGeneral += gan
   })
 
-  resumen.innerHTML = `
-    <div style="background:#fff;padding:10px;border-radius:10px">
-      💰 Total ganado: <b>$${total}</b>
-    </div>
+  let htmlResumen = `
+  <div style="background:#fff;padding:15px;border-radius:10px;margin-bottom:15px">
+    <b>💰 Resumen de Ganancias</b><br><br>
   `
 
-  // ================= FILTROS
+  Object.entries(meses).reverse().forEach(([mes, total]) => {
+    htmlResumen += `📅 ${mes}: $${total}<br>`
+  })
+
+  htmlResumen += `<br><b>🧮 TOTAL GENERAL: $${totalGeneral}</b>`
+  htmlResumen += `</div>`
+
+  document.getElementById('resumen').innerHTML = htmlResumen
+
+  // ================= FILTRO PENDIENTES =================
   if (modo === 'pendientes') {
     data = data.filter(t => t.entregado !== 'si')
   }
 
-  const filtro = (busqueda.value || '').toLowerCase()
+  // ================= BUSCADOR =================
+  const filtro = document.getElementById('busqueda').value.toLowerCase()
 
   data = data.filter(t =>
-    (t.nombre || '').toLowerCase().includes(filtro) ||
-    (t.telefono || '').includes(filtro) ||
-    (t.numero || '').toLowerCase().includes(filtro)
+    t.nombre.toLowerCase().includes(filtro) ||
+    t.telefono.includes(filtro) ||
+    t.numero.toLowerCase().includes(filtro)
   )
 
-  // ================= VACÍO
-  if (data.length === 0) {
-    lista.innerHTML = '<div>No hay tickets</div>'
-    return
-  }
-
-  // ================= RENDER
+  const lista = document.getElementById('lista')
   lista.innerHTML = ''
 
-  data.reverse().forEach(t=>{
+  data.reverse().forEach(t => {
+
+    const garantiaVencida = t.garantiaFecha && new Date(t.garantiaFecha) < new Date()
+
     lista.innerHTML += `
       <div class="ticket">
+
         <b>${t.numero}</b><br>
         ${t.nombre} (${t.telefono})<br>
         ${t.problema}<br>
-        📅 ${formatearFecha(t.fecha)}<br><br>
+        📅 ${formatearFecha(t.fecha)}<br>
+
+        ${t.garantiaFecha ? `
+          🛡️ Garantía:
+          <span style="color:${garantiaVencida ? 'red' : 'green'}">
+            ${formatearFecha(t.garantiaFecha)}
+            ${garantiaVencida ? ' (VENCIDA)' : ''}
+          </span><br>
+        ` : ''}
+
+        <br>
 
         💲 Precio:
         <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
@@ -175,132 +217,97 @@ async function cargar() {
 
         <br><br>
 
-        📝 Detalle del trabajo :<br>
-        <textarea onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
+        📝 Detalle:<br>
+        <textarea style="width:100%;height:60px"
+        onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
 
         <br><br>
 
         Estado: ${t.estado}<br>
-        Entregado: ${t.entregado}<br>
+        Entregado: ${t.entregado}<br><br>
 
-        ${t.garantiaFecha ? `
-          <br>🛡️ Garantía: ${new Date(t.garantiaFecha).toLocaleDateString()}
-          
-        ` : ''}
+        <button onclick="estado('${t.numero}','proceso')">Proceso</button>
 
-        <br><br>
+        <button onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+          ✔️ Listo + WhatsApp
+        </button>
 
-       <button onclick="estado('${t.numero}','proceso')">Proceso</button>
+        <button onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+        <button onclick="borrar('${t.numero}')">❌</button>
 
-      <button onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-      ✔️ Listo + WhatsApp
-      </button>
-
-      <button onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
-      <button onclick="borrar('${t.numero}')">❌</button>
       </div>
     `
   })
 }
-async function listoWhatsApp(id, nombre, telefono, precio) {
 
-  let tel = (telefono || '').replace(/\D/g, '')
-
-  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-  if (!tel.startsWith('598')) tel = '598' + tel
-
-  const mensaje =
-`Hola ${nombre} 👋
-
-Tu equipo ya está listo para retirar ✅
-
-🧾 Ticket: ${id}
-💲 Precio: ${precio || 'A confirmar'}
-
-Favor coordinar retiro.`
-
-  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
-
-  window.open(url, '_blank')
-
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado: 'listo' })
-  })
-}
-// ================= FUNCIONES
-async function listoWhatsApp(id, nombre, telefono, precio) {
-
-  let tel = (telefono || '').replace(/\D/g, '')
-
-  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-  if (!tel.startsWith('598')) tel = '598' + tel
-
-  const mensaje =
-`Hola ${nombre} 👋
-
-Tu equipo ya está listo para retirar ✅
-
-🧾 Ticket: ${id}
-💲 Precio: ${precio || 'A confirmar'}
-
-Favor coordinar retiro.`
-
-  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
-
-  window.open(url, '_blank')
-
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado: 'listo' })
-  })
-}
+// ================= FUNCIONES =================
 
 function formatearFecha(f) {
-  const d = new Date(f)
-  if (isNaN(d)) return 'Sin fecha'
-
-  return d.toLocaleString('es-UY', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const fecha = new Date(f)
+  if (isNaN(fecha)) return f || 'Sin fecha'
+  return fecha.toLocaleString('es-UY')
 }
 
-async function guardar(id,campo,valor){
+async function guardar(id, campo, valor) {
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({[campo]:valor})
+    body: JSON.stringify({ [campo]: valor })
   })
 }
 
-async function estado(id,estado){
+async function estado(id, estado) {
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({estado})
+    body: JSON.stringify({ estado })
   })
 }
 
-async function marcarEntregado(id){
+async function marcarEntregado(id) {
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({entregado:'si'})
+    body: JSON.stringify({ entregado: 'si' })
   })
 }
 
-async function borrar(id){
-  if (!confirm('Eliminar?')) return
+async function borrar(id) {
+  if (!confirm("¿Seguro que querés borrar este ticket?")) return
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
-// INIT
+async function listoWhatsApp(id, nombre, telefono, precio) {
+
+  let tel = telefono.replace(/\D/g, '')
+
+  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
+  if (!tel.startsWith('598')) tel = '598' + tel
+
+  const mensaje =
+`Hola ${nombre} 👋
+
+Tu equipo ya está listo para retirar ✅
+
+🧾 Ticket: ${id}
+💲 Precio: ${precio || 'A confirmar'}
+
+Favor coordinar para retirarlo.`
+
+  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+
+  window.location.href = url
+
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ estado: 'listo' })
+  })
+}
+
+// ================= SOCKET =================
+socket.on('actualizar', cargar)
+
 cargar()
 
 </script>
