@@ -15,9 +15,11 @@ body { font-family: Arial; background:#eef2f7; padding:20px; }
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-select {
+select, input {
   padding:6px;
   border-radius:6px;
+  border:1px solid #ccc;
+  margin-right:5px;
 }
 
 .vencida {
@@ -40,6 +42,8 @@ select {
 
 <br><br>
 
+<input id="buscar" placeholder="Buscar por nombre, celular o ticket..." oninput="cargar()">
+
 <select id="filtro" onchange="cargar()">
   <option value="vigentes" selected>Vigentes</option>
   <option value="vencidas">Vencidas</option>
@@ -55,11 +59,21 @@ async function cargar() {
   const res = await fetch('/tickets')
   let data = await res.json()
 
+  const texto = (buscar.value || '').toLowerCase()
   const filtro = document.getElementById('filtro').value
   const hoy = new Date()
 
+  // 🔍 FILTRO BUSCADOR
+  data = data.filter(t =>
+    (t.nombre || '').toLowerCase().includes(texto) ||
+    (t.telefono || '').includes(texto) ||
+    (t.numero || '').toLowerCase().includes(texto)
+  )
+
+  // 🔥 SOLO LOS QUE TIENEN GARANTÍA
   data = data.filter(t => t.garantiaFecha)
 
+  // 🔥 FILTRO ESTADO
   if (filtro === 'vigentes') {
     data = data.filter(t => new Date(t.garantiaFecha) >= hoy)
   }
@@ -77,15 +91,19 @@ async function cargar() {
 
     lista.innerHTML += `
       <div class="card">
+
         <b>${t.numero}</b><br>
         ${t.nombre} (${t.telefono})<br>
-        ${t.problema}<br><br>
+        ${t.problema}<br>
+
+        📅 ${t.fecha ? new Date(t.fecha).toLocaleDateString() : ''}<br><br>
 
         🛡️ Garantía:
         <span class="${vencida ? 'vencida' : 'vigente'}">
           ${g.toLocaleDateString()}
           ${vencida ? ' (VENCIDA)' : ''}
         </span>
+
       </div>
     `
   })
