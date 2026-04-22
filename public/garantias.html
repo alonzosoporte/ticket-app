@@ -7,21 +7,87 @@
 <style>
 body { font-family: Arial; background:#eef2f7; padding:20px; }
 
+body {
+  font-family: Arial;
+  background:#eef2f7;
+  padding:20px;
+}
+
+/* 🔥 CONTENEDOR SUPERIOR */
+.topbar {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+/* 🔍 BUSCADOR PRO */
+input {
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  flex:1;
+  min-width:200px;
+  outline:none;
+  transition:0.2s;
+}
+
+input:focus {
+  border-color:#007bff;
+  box-shadow:0 0 0 2px rgba(0,123,255,0.2);
+}
+
+/* 🎛️ SELECT */
+select {
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+/* 🔥 BOTONES */
+button {
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+/* tipos */
+.btn {
+  background:#007bff;
+  color:white;
+}
+
+.btn:hover {
+  background:#0056b3;
+}
+
+.btn-back {
+  background:#6c757d;
+  color:white;
+}
+
+.btn-back:hover {
+  background:#545b62;
+}
+
+/* 🧾 CARDS */
 .card {
   background:white;
-  padding:12px;
+  padding:14px;
   margin:10px 0;
-  border-radius:10px;
+  border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  transition:0.2s;
 }
 
-select, input {
-  padding:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  margin-right:5px;
+.card:hover {
+  transform:scale(1.01);
 }
 
+/* 🛡️ ESTADOS */
 .vencida {
   color:red;
   font-weight:bold;
@@ -31,6 +97,7 @@ select, input {
   color:green;
   font-weight:bold;
 }
+
 </style>
 </head>
 
@@ -38,11 +105,19 @@ select, input {
 
 <h2>🛡️ Garantías</h2>
 
-<button onclick="location.href='admin.html'">⬅ Volver</button>
+<div class="topbar">
 
-<br><br>
+  <button class="btn-back" onclick="location.href='admin.html'">⬅ Volver</button>
 
-<input id="buscar" placeholder="Buscar por nombre, celular o ticket..." oninput="cargar()">
+  <input id="buscar" placeholder="🔍 Buscar por nombre, celular o ticket..." oninput="cargar()">
+
+  <select id="filtro" onchange="cargar()">
+    <option value="vigentes">🟢 Vigentes</option>
+    <option value="vencidas">🔴 Vencidas</option>
+    <option value="todas">📋 Todas</option>
+  </select>
+
+</div>
 
 <select id="filtro" onchange="cargar()">
   <option value="vigentes" selected>Vigentes</option>
