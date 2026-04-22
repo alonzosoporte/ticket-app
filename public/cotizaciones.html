@@ -5,25 +5,71 @@
 <title>Cotizaciones PRO</title>
 
 <style>
-body { font-family: Arial; background:#eef2f7; padding:20px; }
+body {
+  font-family: Arial;
+  background:#eef2f7;
+  padding:20px;
+}
 
+/* 🔥 TOPBAR */
+.topbar {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:15px;
+  align-items:center;
+}
+
+/* 🔍 BUSCADOR */
+input, select {
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  outline:none;
+}
+
+input {
+  width:100%;
+  max-width:240px;
+}
+
+/* 🔥 BOTONES */
+button {
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+.btn { background:#007bff; color:white; }
+.btn:hover { background:#0056b3; }
+
+.btn-success { background:#28a745; color:white; }
+.btn-success:hover { background:#1e7e34; }
+
+.btn-danger { background:#dc3545; color:white; }
+.btn-danger:hover { background:#b02a37; }
+
+.btn-secondary { background:#6c757d; color:white; }
+.btn-secondary:hover { background:#545b62; }
+
+/* 🧾 CARDS */
 .card {
   background:white;
-  padding:12px;
+  padding:14px;
   margin:10px 0;
-  border-radius:10px;
+  border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  transition:0.2s;
 }
 
-input, select, button, textarea {
-  padding:6px;
-  margin:4px;
-  border-radius:6px;
-  border:1px solid #ccc;
+.card:hover {
+  transform:scale(1.01);
 }
 
-button { cursor:pointer }
-
+/* 🖼️ THUMB */
 .thumb {
   width:60px;
   height:60px;
@@ -38,6 +84,7 @@ button { cursor:pointer }
   border-color:#007bff;
 }
 
+/* 🛡️ */
 .vencida {
   color:red;
   font-weight:bold;
@@ -49,14 +96,17 @@ button { cursor:pointer }
 
 <h2>📊 Cotizaciones</h2>
 
-<button onclick="location.href='admin.html'">⬅ Volver</button>
+<div class="topbar">
 
-<br><br>
+  <button class="btn-secondary" onclick="location.href='admin.html'">⬅ Volver</button>
 
-<input id="buscar" placeholder="Buscar por nombre, celular o ticket..." oninput="cargar()">
-<button onclick="mostrarForm()">➕ Nueva</button>
+  <input id="buscar" placeholder="🔍 Buscar nombre, celular o ticket..." oninput="cargar()">
 
-<div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-top:10px">
+  <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
+
+</div>
+
+<div id="form" style="display:none;background:white;padding:15px;border-radius:12px;margin-bottom:15px">
 
 <input id="nombre" placeholder="Nombre">
 <input id="celular" placeholder="Celular">
@@ -67,7 +117,7 @@ button { cursor:pointer }
 
 <select id="proveedor"></select>
 <input id="nuevoProveedor" placeholder="Nuevo proveedor">
-<button onclick="agregarProveedor()">➕</button>
+<button class="btn" onclick="agregarProveedor()">➕</button>
 
 <br>
 
@@ -81,29 +131,23 @@ button { cursor:pointer }
 
 <br>
 
-📸 Foto:
-<input type="file" id="foto">
-
+📸 <input type="file" id="foto">
 <br>
-
-🛡️ Garantía hasta:
-<input type="date" id="garantiaFecha">
-
-📸 Foto garantía:
-<input type="file" id="garantiaFoto">
+🛡️ <input type="date" id="garantiaFecha">
+📸 <input type="file" id="garantiaFoto">
 
 <br><br>
 
-<button onclick="guardar()">💾 Guardar</button>
-<button onclick="cancelar()">❌ Cancelar</button>
+<button class="btn-success" onclick="guardar()">💾 Guardar</button>
+<button class="btn-danger" onclick="cancelar()">❌ Cancelar</button>
 
 </div>
 
 <div id="lista"></div>
 
-<!-- MODAL IMAGEN -->
-<div id="modalImg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;z-index:999">
-  <img id="imgGrande" style="max-width:90%;max-height:90%;border-radius:10px">
+<!-- MODAL -->
+<div id="modalImg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center">
+  <img id="imgGrande" style="max-width:90%;max-height:90%">
 </div>
 
 <script>
@@ -136,25 +180,8 @@ garantiaFoto.onchange = e => {
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
-
   proveedor.innerHTML = ''
-
-  data.forEach(p => {
-    proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>`
-  })
-}
-
-async function agregarProveedor() {
-  if (!nuevoProveedor.value) return alert('Escribí proveedor')
-
-  await fetch('/proveedores', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ nombre: nuevoProveedor.value })
-  })
-
-  nuevoProveedor.value = ''
-  cargarProveedores()
+  data.forEach(p => proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>)`
 }
 
 async function guardar() {
@@ -173,17 +200,9 @@ async function guardar() {
   }
 
   if (editando) {
-    await fetch('/cotizacion/' + editando, {
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    })
+    await fetch('/cotizacion/' + editando,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
   } else {
-    await fetch('/cotizacion', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    })
+    await fetch('/cotizacion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
   }
 
   limpiar()
@@ -197,12 +216,12 @@ async function cargar() {
 
   const filtro = (buscar.value || '').toLowerCase()
 
-data = data.filter(c =>
-  (c.producto || '').toLowerCase().includes(filtro) ||
-  (c.nombre || '').toLowerCase().includes(filtro) ||
-  (c.celular || '').includes(filtro) ||
-  (c.numero || '').toLowerCase().includes(filtro) // 🔥 NUEVO
-)
+  data = data.filter(c =>
+    (c.nombre || '').toLowerCase().includes(filtro) ||
+    (c.celular || '').includes(filtro) ||
+    (c.numero || '').toLowerCase().includes(filtro)
+  )
+
   lista.innerHTML = ''
 
   data.reverse().forEach(c => {
@@ -210,22 +229,9 @@ data = data.filter(c =>
     const costo = parseFloat(c.costoProveedor) || 0
     const precio = parseFloat(c.precioCliente) || 0
     const gan = c.ganancia || (precio - costo)
-    const color = gan >= 0 ? 'green' : 'red'
 
-    let garantiaTexto = ''
-    if (c.garantiaFecha) {
-      const hoy = new Date()
-      const g = new Date(c.garantiaFecha)
-      const vencida = g < hoy
-
-      garantiaTexto = `
-        <br>🛡️ Garantía:
-        <span class="${vencida ? 'vencida' : ''}">
-          ${g.toLocaleDateString()}
-          ${vencida ? ' (VENCIDA)' : ''}
-        </span>
-      `
-    }
+    const g = new Date(c.garantiaFecha)
+    const vencida = c.garantiaFecha && g < new Date()
 
     lista.innerHTML += `
       <div class="card">
@@ -234,13 +240,15 @@ data = data.filter(c =>
         🧾 ${c.numero || 'Sin número'}<br><br>
 
         <b>${c.producto}</b><br>
-        ${c.nombre || ''} (${c.celular || ''})<br>
+        ${c.nombre} (${c.celular})<br>
 
-        💸 Precio costo $${costo}<br>
-        💰 Precio cliente $${precio}<br>
-        🧾 Ganancia <span style="color:${color};font-weight:bold">$${gan}</span><br>
+        💸 $${costo} | 💰 $${precio}<br>
+        🧾 <b>$${gan}</b><br>
 
-        ${garantiaTexto}
+        ${c.garantiaFecha ? `
+        🛡️ <span class="${vencida ? 'vencida':''}">
+        ${g.toLocaleDateString()} ${vencida ? '(VENCIDA)':''}
+        </span><br>` : ''}
 
         <br>
 
@@ -251,14 +259,11 @@ data = data.filter(c =>
 
         ${
           c.confirmada === 'si'
-          ? `
-            <span style="color:green;font-weight:bold">✅ Confirmada</span><br><br>
-            <button onclick="borrar('${c._id}')">❌</button>
-          `
+          ? `<button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
           : `
-            <button onclick='editar(${JSON.stringify(c)})'>✏️</button>
-            <button onclick="borrar('${c._id}')">❌</button>
-            <button onclick="confirmar('${c._id}')">✔ Confirmar</button>
+            <button class="btn" onclick='editar(${JSON.stringify(c)})'>✏️</button>
+            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
           `
         }
 
@@ -267,85 +272,76 @@ data = data.filter(c =>
   })
 }
 
-function verImg(src) {
-  modalImg.style.display = 'flex'
-  imgGrande.src = src
+function verImg(src){
+  modalImg.style.display='flex'
+  imgGrande.src=src
 }
 
-modalImg.onclick = () => {
-  modalImg.style.display = 'none'
-}
+modalImg.onclick=()=>modalImg.style.display='none'
 
-function editar(c) {
-  editando = c._id
-
-  nombre.value = c.nombre || ''
-  celular.value = c.celular || ''
-  producto.value = c.producto || ''
-  costoProveedor.value = c.costoProveedor || ''
-  precioCliente.value = c.precioCliente || ''
-  descripcion.value = c.descripcion || ''
-  garantiaFecha.value = c.garantiaFecha || ''
-
-  fotoBase64 = c.foto || ''
-  garantiaBase64 = c.garantiaFoto || ''
-
+function editar(c){
+  editando=c._id
+  nombre.value=c.nombre||''
+  celular.value=c.celular||''
+  producto.value=c.producto||''
+  costoProveedor.value=c.costoProveedor||''
+  precioCliente.value=c.precioCliente||''
+  descripcion.value=c.descripcion||''
+  garantiaFecha.value=c.garantiaFecha||''
+  fotoBase64=c.foto||''
+  garantiaBase64=c.garantiaFoto||''
   calcularGanancia()
-  form.style.display = 'block'
+  form.style.display='block'
 }
 
-async function borrar(id) {
-  if (!confirm('Eliminar?')) return
-  await fetch('/cotizacion/' + id, { method:'DELETE' })
+async function borrar(id){
+  if(!confirm('Eliminar?'))return
+  await fetch('/cotizacion/'+id,{method:'DELETE'})
   cargar()
 }
 
-async function confirmar(id) {
-  const res = await fetch('/cotizaciones')
-  const data = await res.json()
+async function confirmar(id){
+  const res=await fetch('/cotizaciones')
+  const data=await res.json()
+  const c=data.find(x=>x._id===id)
 
-  const c = data.find(x => x._id === id)
-
-  await fetch('/cotizacion/' + id, {
+  await fetch('/cotizacion/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      confirmada: 'si',
-      costoProveedor: c.costoProveedor,
-      precioCliente: c.precioCliente
+    body:JSON.stringify({
+      confirmada:'si',
+      costoProveedor:c.costoProveedor,
+      precioCliente:c.precioCliente
     })
   })
 
   cargar()
 }
 
-function mostrarForm() {
+function mostrarForm(){
   limpiar()
-  form.style.display = 'block'
+  form.style.display='block'
 }
 
-function cancelar() {
+function cancelar(){
   limpiar()
 }
 
-function limpiar() {
-  editando = null
-  fotoBase64 = ''
-  garantiaBase64 = ''
-
-  nombre.value = ''
-  celular.value = ''
-  producto.value = ''
-  costoProveedor.value = ''
-  precioCliente.value = ''
-  descripcion.value = ''
-  ganancia.value = ''
-  garantiaFecha.value = ''
-
-  document.getElementById('foto').value = ''
-  document.getElementById('garantiaFoto').value = ''
-
-  form.style.display = 'none'
+function limpiar(){
+  editando=null
+  fotoBase64=''
+  garantiaBase64=''
+  nombre.value=''
+  celular.value=''
+  producto.value=''
+  costoProveedor.value=''
+  precioCliente.value=''
+  descripcion.value=''
+  ganancia.value=''
+  garantiaFecha.value=''
+  document.getElementById('foto').value=''
+  document.getElementById('garantiaFoto').value=''
+  form.style.display='none'
 }
 
 cargar()
