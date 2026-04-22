@@ -258,12 +258,16 @@ async function cargar() {
         <br><br>
 
         ${
-          c.confirmada === 'si'
-          ? `<button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
-          : `
-            <button class="btn" onclick="editar('${c._id}')">✏️</button>
-            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
+          ${c.confirmada === 'si'
+  ? `
+    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+  `
+  : `
+    <button class="btn" onclick="editar('${c._id}')">✏️</button>
+    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+    <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
+  `
+}
           `
         }
 
