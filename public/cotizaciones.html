@@ -261,7 +261,7 @@ async function cargar() {
           c.confirmada === 'si'
           ? `<button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
           : `
-            <button class="btn" onclick='editar(${JSON.stringify(c)})'>✏️</button>
+            <button class="btn" onclick="editar('${c._id}')">✏️</button>
             <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
             <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
           `
@@ -279,19 +279,30 @@ function verImg(src){
 
 modalImg.onclick=()=>modalImg.style.display='none'
 
-function editar(c){
-  editando=c._id
-  nombre.value=c.nombre||''
-  celular.value=c.celular||''
-  producto.value=c.producto||''
-  costoProveedor.value=c.costoProveedor||''
-  precioCliente.value=c.precioCliente||''
-  descripcion.value=c.descripcion||''
-  garantiaFecha.value=c.garantiaFecha||''
-  fotoBase64=c.foto||''
-  garantiaBase64=c.garantiaFoto||''
+async function editar(id){
+
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+
+  const c = data.find(x => x._id === id)
+
+  if (!c) return alert('Error al cargar')
+
+  editando = c._id
+
+  nombre.value = c.nombre || ''
+  celular.value = c.celular || ''
+  producto.value = c.producto || ''
+  costoProveedor.value = c.costoProveedor || ''
+  precioCliente.value = c.precioCliente || ''
+  descripcion.value = c.descripcion || ''
+  garantiaFecha.value = c.garantiaFecha || ''
+
+  fotoBase64 = c.foto || ''
+  garantiaBase64 = c.garantiaFoto || ''
+
   calcularGanancia()
-  form.style.display='block'
+  form.style.display = 'block'
 }
 
 async function borrar(id){
