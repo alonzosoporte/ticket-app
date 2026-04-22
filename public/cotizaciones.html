@@ -53,7 +53,7 @@ button { cursor:pointer }
 
 <br><br>
 
-<input id="buscar" placeholder="Buscar..." oninput="cargar()">
+<input id="buscar" placeholder="Buscar por nombre, celular o ticket..." oninput="cargar()">
 <button onclick="mostrarForm()">➕ Nueva</button>
 
 <div id="form" style="display:none;background:white;padding:10px;border-radius:10px;margin-top:10px">
@@ -197,12 +197,12 @@ async function cargar() {
 
   const filtro = (buscar.value || '').toLowerCase()
 
-  data = data.filter(c =>
-    (c.producto || '').toLowerCase().includes(filtro) ||
-    (c.nombre || '').toLowerCase().includes(filtro) ||
-    (c.celular || '').includes(filtro)
-  )
-
+data = data.filter(c =>
+  (c.producto || '').toLowerCase().includes(filtro) ||
+  (c.nombre || '').toLowerCase().includes(filtro) ||
+  (c.celular || '').includes(filtro) ||
+  (c.numero || '').toLowerCase().includes(filtro) // 🔥 NUEVO
+)
   lista.innerHTML = ''
 
   data.reverse().forEach(c => {
