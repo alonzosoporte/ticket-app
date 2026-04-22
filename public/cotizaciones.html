@@ -11,7 +11,6 @@ body {
   padding:20px;
 }
 
-/* 🔥 TOPBAR */
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -20,56 +19,37 @@ body {
   align-items:center;
 }
 
-/* 🔍 BUSCADOR */
 input, select {
   padding:8px 10px;
   border-radius:10px;
   border:1px solid #ccc;
-  outline:none;
 }
 
 input {
-  width:100%;
   max-width:240px;
 }
 
-/* 🔥 BOTONES */
 button {
   padding:8px 12px;
   border:none;
   border-radius:10px;
   cursor:pointer;
   font-weight:bold;
-  transition:0.2s;
 }
 
 .btn { background:#007bff; color:white; }
-.btn:hover { background:#0056b3; }
-
 .btn-success { background:#28a745; color:white; }
-.btn-success:hover { background:#1e7e34; }
-
 .btn-danger { background:#dc3545; color:white; }
-.btn-danger:hover { background:#b02a37; }
-
 .btn-secondary { background:#6c757d; color:white; }
-.btn-secondary:hover { background:#545b62; }
 
-/* 🧾 CARDS */
 .card {
   background:white;
   padding:14px;
   margin:10px 0;
   border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  transition:0.2s;
 }
 
-.card:hover {
-  transform:scale(1.01);
-}
-
-/* 🖼️ THUMB */
 .thumb {
   width:60px;
   height:60px;
@@ -84,7 +64,6 @@ button {
   border-color:#007bff;
 }
 
-/* 🛡️ */
 .vencida {
   color:red;
   font-weight:bold;
@@ -97,13 +76,9 @@ button {
 <h2>📊 Cotizaciones</h2>
 
 <div class="topbar">
-
   <button class="btn-secondary" onclick="location.href='admin.html'">⬅ Volver</button>
-
-  <input id="buscar" placeholder="🔍 Buscar nombre, celular o ticket..." oninput="cargar()">
-
+  <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
   <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
-
 </div>
 
 <div id="form" style="display:none;background:white;padding:15px;border-radius:12px;margin-bottom:15px">
@@ -181,7 +156,7 @@ async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
   proveedor.innerHTML = ''
-  data.forEach(p => proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>)`
+  data.forEach(p => proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>`)
 }
 
 async function guardar() {
@@ -218,8 +193,7 @@ async function cargar() {
 
   data = data.filter(c =>
     (c.nombre || '').toLowerCase().includes(filtro) ||
-    (c.celular || '').includes(filtro) ||
-    (c.numero || '').toLowerCase().includes(filtro)
+    (c.celular || '').includes(filtro)
   )
 
   lista.innerHTML = ''
@@ -237,7 +211,6 @@ async function cargar() {
       <div class="card">
 
         📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
-        🧾 ${c.numero || 'Sin número'}<br><br>
 
         <b>${c.producto}</b><br>
         ${c.nombre} (${c.celular})<br>
@@ -258,16 +231,12 @@ async function cargar() {
         <br><br>
 
         ${
-          ${c.confirmada === 'si'
-  ? `
-    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-  `
-  : `
-    <button class="btn" onclick="editar('${c._id}')">✏️</button>
-    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-    <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
-  `
-}
+          c.confirmada === 'si'
+          ? `<button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
+          : `
+            <button class="btn" onclick="editar('${c._id}')">✏️</button>
+            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
           `
         }
 
@@ -287,26 +256,25 @@ async function editar(id){
 
   const res = await fetch('/cotizaciones')
   const data = await res.json()
-
   const c = data.find(x => x._id === id)
 
-  if (!c) return alert('Error al cargar')
+  if (!c) return
 
   editando = c._id
 
-  nombre.value = c.nombre || ''
-  celular.value = c.celular || ''
-  producto.value = c.producto || ''
-  costoProveedor.value = c.costoProveedor || ''
-  precioCliente.value = c.precioCliente || ''
-  descripcion.value = c.descripcion || ''
-  garantiaFecha.value = c.garantiaFecha || ''
+  nombre.value=c.nombre||''
+  celular.value=c.celular||''
+  producto.value=c.producto||''
+  costoProveedor.value=c.costoProveedor||''
+  precioCliente.value=c.precioCliente||''
+  descripcion.value=c.descripcion||''
+  garantiaFecha.value=c.garantiaFecha||''
 
-  fotoBase64 = c.foto || ''
-  garantiaBase64 = c.garantiaFoto || ''
+  fotoBase64=c.foto||''
+  garantiaBase64=c.garantiaFoto||''
 
   calcularGanancia()
-  form.style.display = 'block'
+  form.style.display='block'
 }
 
 async function borrar(id){
