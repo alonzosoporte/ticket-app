@@ -23,11 +23,10 @@ body {
 
 /* 🔍 BUSCADOR PRO */
 input {
-  padding:10px;
+  padding:8px 10px;
   border-radius:10px;
   border:1px solid #ccc;
-  flex:1;
-  min-width:200px;
+  width:250px; /* 🔥 tamaño fijo */
   outline:none;
   transition:0.2s;
 }
@@ -118,12 +117,6 @@ button {
   </select>
 
 </div>
-
-<select id="filtro" onchange="cargar()">
-  <option value="vigentes" selected>Vigentes</option>
-  <option value="vencidas">Vencidas</option>
-  <option value="todas">Todas</option>
-</select>
 
 <div id="lista"></div>
 
