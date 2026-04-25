@@ -7,274 +7,107 @@ const app = express()
 const server = http.createServer(app)
 const io = new Server(server)
 
-const PORT = process.env.PORT || 3000
+// ================= CONFIG =================
+app.use(express.json({ limit: '10mb' }))
+app.use(express.static('public'))
 
-// =======================
-// 🔥 MONGO
-// =======================
-mongoose.connect(process.env.MONGO_URL)
-  .then(() => console.log("✅ Mongo conectado"))
-  .catch(err => console.log("❌ Error Mongo:", err))
+// ================= MONGODB =================
+// 🔴 NO CAMBIES TU URL, dejá la que ya usabas
+mongoose.connect('mongodb+srv://alonzosoporte:Foofigh1987!@cluster0.mafkjzo.mongodb.net/ticketsDB')
+.then(()=> console.log('Mongo conectado'))
+.catch(err => console.log(err))
 
-// =======================
-// 📦 TICKETS
-// =======================
+// ================= SCHEMA =================
 const TicketSchema = new mongoose.Schema({
   numero: String,
   nombre: String,
   telefono: String,
   problema: String,
-  estado: String,
+  descripcion: String, // 🔥 ESTO ARREGLA TU PROBLEMA
+  detalle: String,
   precio: String,
   ganancia: String,
-  detalle: String,
+  estado: String,
   entregado: String,
-  fecha: Date,
-  garantiaFecha: Date,
-  garantiaFoto: String
+  fecha: { type: Date, default: Date.now },
+  garantiaFecha: String
 })
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// =======================
-// 📦 COTIZACIONES
-// =======================
-const CotizacionSchema = new mongoose.Schema({
-  numero: String, // 🔥 NUEVO
-  nombre: String,
-  celular: String,
-  producto: String,
-  proveedor: String,
-  costoProveedor: String,
-  precioCliente: String,
-  ganancia: Number,
-  descripcion: String,
-  foto: String,
-  confirmada: String,
-  garantiaFecha: Date,
-  garantiaFoto: String,
-  fecha: Date
+// ================= SOCKET =================
+io.on('connection', () => {
+  console.log('Cliente conectado')
 })
 
-const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
+// ================= RUTAS =================
 
-// =======================
-// 📦 PROVEEDORES
-// =======================
-const ProveedorSchema = new mongoose.Schema({
-  nombre: String
-})
-
-const Proveedor = mongoose.model('Proveedor', ProveedorSchema)
-
-// =======================
-app.use(express.json({ limit: '10mb' }))
-app.use(express.static('public'))
-
-io.on('connection', () => console.log('Cliente conectado'))
-
-// =======================
-// 🧾 TICKETS
-// =======================
+// CREAR
 app.post('/ticket', async (req, res) => {
-
-  const { nombre, telefono, problema } = req.body
-
-  if (!nombre || !telefono || !problema) {
-    return res.json({ error: 'Faltan datos' })
-  }
-
-  const año = new Date().getFullYear()
-  const contador = await Ticket.countDocuments()
-
-  const numero = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
-
-  const nuevo = new Ticket({
-    numero,
-    nombre,
-    telefono,
-    problema,
-    estado: 'pendiente',
-    precio: '',
-    ganancia: '',
-    detalle: '',
-    entregado: 'no',
-    fecha: new Date()
-  })
-
-  await nuevo.save()
-  io.emit('actualizar')
-
-  res.json({ ok: true, numero })
-})
-
-app.get('/tickets', async (req, res) => {
-  const data = await Ticket.find()
-  res.json(data)
-})
-
-app.put('/ticket/:numero', async (req, res) => {
-  await Ticket.findOneAndUpdate({ numero: req.params.numero }, req.body)
-  io.emit('actualizar')
-  res.json({ ok: true })
-})
-
-app.delete('/ticket/:numero', async (req, res) => {
-  await Ticket.findOneAndDelete({ numero: req.params.numero })
-  io.emit('actualizar')
-  res.json({ ok: true })
-})
-
-// =======================
-// 📊 COTIZACIONES
-// =======================
-
-// 🆕 CREAR
-app.post('/cotizacion', async (req, res) => {
-
-  const {
-    nombre, celular, producto, proveedor,
-    costoProveedor, precioCliente,
-    descripcion, foto,
-    garantiaFecha, garantiaFoto
-  } = req.body
-
-  // 🔥 GENERAR NÚMERO
-  const contador = await Cotizacion.countDocuments()
-  const año = new Date().getFullYear()
-  const numero = "COT-" + año + "-" + (contador + 1).toString().padStart(4, '0')
-
-  const costo = parseFloat(costoProveedor) || 0
-  const precio = parseFloat(precioCliente) || 0
-
-  const nueva = new Cotizacion({
-    numero, // 👈 NUEVO
-    nombre,
-    celular,
-    producto,
-    proveedor,
-    costoProveedor,
-    precioCliente,
-    ganancia: precio - costo,
-    confirmada: 'no',
-    descripcion,
-    foto,
-    garantiaFecha,
-    garantiaFoto,
-    fecha: new Date()
-  })
-
-  await nueva.save()
-  res.json({ ok: true })
-})
-
-// 📥 LISTAR
-app.get('/cotizaciones', async (req, res) => {
-  const data = await Cotizacion.find()
-  res.json(data)
-})
-
-// ✏️ EDITAR + CONFIRMAR
-app.put('/cotizacion/:id', async (req, res) => {
   try {
 
-    const cot = await Cotizacion.findById(req.params.id)
-    if (!cot) return res.json({ error: 'No existe' })
+    const numero = Math.floor(10000 + Math.random() * 90000).toString()
 
-    const { costoProveedor, precioCliente, confirmada } = req.body
+    const nuevo = new Ticket({
+      ...req.body,
+      numero,
+      estado: 'pendiente',
+      entregado: 'no'
+    })
 
-    const costo = parseFloat(costoProveedor || cot.costoProveedor) || 0
-    const precio = parseFloat(precioCliente || cot.precioCliente) || 0
-    const ganancia = precio - costo
+    await nuevo.save()
 
-    // 🔥 CONFIRMAR SOLO UNA VEZ
-    if (confirmada === 'si' && cot.confirmada !== 'si') {
+    io.emit('actualizar')
 
-      const contador = await Ticket.countDocuments()
-      const año = new Date().getFullYear()
-
-      const numeroTicket = "T-" + año + "-" + (contador + 1).toString().padStart(4, '0')
-
-      const nuevoTicket = new Ticket({
-        numero: numeroTicket,
-        nombre: cot.nombre,
-        telefono: cot.celular,
-        problema: 'Venta: ' + cot.producto,
-        estado: 'listo',
-        precio: precio,
-        ganancia: ganancia,
-        detalle: 'Generado desde cotización',
-        entregado: 'si',
-        fecha: new Date(),
-        garantiaFecha: cot.garantiaFecha,
-        garantiaFoto: cot.garantiaFoto
-      })
-
-      await nuevoTicket.save()
-      io.emit('actualizar')
-    }
-
-    req.body.ganancia = ganancia
-
-    await Cotizacion.findByIdAndUpdate(req.params.id, req.body)
-
-    res.json({ ok: true })
+    res.json(nuevo)
 
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: 'Error al actualizar' })
+    console.error(err)
+    res.status(500).json({ error: 'Error creando ticket' })
   }
 })
 
-// ❌ BORRAR
-app.delete('/cotizacion/:id', async (req, res) => {
+// LISTAR
+app.get('/tickets', async (req, res) => {
+  try {
+    const data = await Ticket.find().sort({ _id: -1 })
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo tickets' })
+  }
+})
+
+// ACTUALIZAR
+app.put('/ticket/:numero', async (req, res) => {
   try {
 
-    const cot = await Cotizacion.findById(req.params.id)
-
-    if (!cot) {
-      return res.status(404).json({ error: 'No existe' })
-    }
-
-    if (cot.confirmada === 'si') {
-      await Ticket.findOneAndDelete({
-        nombre: cot.nombre,
-        telefono: cot.celular,
-        problema: 'Venta: ' + cot.producto
-      })
-    }
-
-    await Cotizacion.findByIdAndDelete(req.params.id)
+    await Ticket.findOneAndUpdate(
+      { numero: req.params.numero },
+      { $set: req.body }
+    )
 
     io.emit('actualizar')
 
     res.json({ ok: true })
 
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: 'Error al borrar' })
+    console.error(err)
+    res.status(500).json({ error: 'Error actualizando' })
   }
 })
 
-// =======================
-// 🏭 PROVEEDORES
-// =======================
-app.get('/proveedores', async (req, res) => {
-  res.json(await Proveedor.find())
+// BORRAR
+app.delete('/ticket/:numero', async (req, res) => {
+  try {
+    await Ticket.findOneAndDelete({ numero: req.params.numero })
+    io.emit('actualizar')
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Error borrando' })
+  }
 })
 
-app.post('/proveedores', async (req, res) => {
-  const { nombre } = req.body
-  if (!nombre) return res.json({ error: 'Falta nombre' })
-
-  const existe = await Proveedor.findOne({ nombre })
-  if (existe) return res.json({ error: 'Ya existe' })
-
-  await new Proveedor({ nombre }).save()
-  res.json({ ok: true })
-})
-
-// =======================
-server.listen(PORT, () => {
-  console.log('Servidor en puerto ' + PORT)
+// ================= START =================
+server.listen(3000, () => {
+  console.log('Servidor corriendo en http://localhost:3000')
 })
