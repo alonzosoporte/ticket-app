@@ -115,15 +115,26 @@ async function crear() {
   if (tel.startsWith('0')) tel = '598' + tel.substring(1)
   if (!tel.startsWith('598')) tel = '598' + tel
 
+  const fecha = new Date(data.fecha).toLocaleString('es-UY', {
+  weekday: 'long',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+
   const mensaje =
 `Hola ${n} 👋
 
 Tu ticket fue creado correctamente ✅
 
+📅 Fecha solicitud: ${fecha}
+
 🧾 Ticket: ${data.numero}
 🔧 Problema: ${p}
 
-Un técnico se comunicará contigo.`
+El técnico se comunicará contigo.`
 
   const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
 
