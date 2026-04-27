@@ -5,53 +5,7 @@
 <title>Cotizaciones PRO</title>
 
 <style>
-  @media (max-width:600px) {
-  .fila-precios {
-    flex-wrap:wrap;
-  }
 
-  .campo {
-    width:100%;
-  }
-}
-
-  fila-precios {
-  display:flex;
-  gap:12px;
-  margin-top:10px;
-  justify-content:flex-start; /* 🔥 evita que se estiren */
-}
-
-.campo {
-  width:180px; /* 🔥 tamaño fijo prolijo */
-}
-
-.campo label {
-  display:block;
-  font-weight:bold;
-  margin-bottom:4px;
-  font-size:13px;
-}
-
-.campo input {
-  width:100%;
-  padding:6px 8px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-.campo label {
-  display:block;
-  font-weight:bold;
-  margin-bottom:4px;
-}
-
-.campo input {
-  width:100%;
-  padding:8px;
-  border-radius:10px;
-  border:1px solid #ccc;
-}
 body {
   font-family: Arial;
   background:#eef2f7;
@@ -66,14 +20,10 @@ body {
   align-items:center;
 }
 
-input, select {
+input, select, textarea {
   padding:8px 10px;
   border-radius:10px;
   border:1px solid #ccc;
-}
-
-input {
-  max-width:240px;
 }
 
 button {
@@ -97,6 +47,17 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
+.fila-precios {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.campo {
+  flex:1;
+  min-width:150px;
+}
+
 .thumb {
   width:60px;
   height:60px;
@@ -104,17 +65,13 @@ button {
   border-radius:6px;
   margin:3px;
   cursor:pointer;
-  border:2px solid #ddd;
-}
-
-.thumb:hover {
-  border-color:#007bff;
 }
 
 .vencida {
   color:red;
   font-weight:bold;
 }
+
 </style>
 </head>
 
@@ -137,11 +94,16 @@ button {
 
 <input id="producto" placeholder="Producto">
 
-<select id="proveedor"></select>
+<br><br>
+
+<select id="proveedor">
+  <option value="">-- Seleccionar proveedor --</option>
+</select>
+
 <input id="nuevoProveedor" placeholder="Nuevo proveedor">
 <button class="btn" onclick="agregarProveedor()">➕</button>
 
-<br>
+<br><br>
 
 <div class="fila-precios">
 
@@ -182,17 +144,13 @@ button {
 
 <div id="lista"></div>
 
-<!-- MODAL -->
-<div id="modalImg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center">
-  <img id="imgGrande" style="max-width:90%;max-height:90%">
-</div>
-
 <script>
 
 let editando = null
 let fotoBase64 = ''
 let garantiaBase64 = ''
 
+// ================= GANANCIA =================
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -202,6 +160,7 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
+// ================= IMÁGENES =================
 foto.onchange = e => {
   const r = new FileReader()
   r.onload = () => fotoBase64 = r.result
@@ -214,13 +173,33 @@ garantiaFoto.onchange = e => {
   r.readAsDataURL(e.target.files[0])
 }
 
+// ================= PROVEEDORES =================
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
-  proveedor.innerHTML = ''
-  data.forEach(p => proveedor.innerHTML += `<option value="${p._id}">${p.nombre}</option>`)
+
+  proveedor.innerHTML = `<option value="">-- Seleccionar proveedor --</option>`
+
+  data.forEach(p => {
+    proveedor.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`
+  })
 }
 
+async function agregarProveedor(){
+  const nombre = nuevoProveedor.value.trim()
+  if(!nombre) return alert('Escribí proveedor')
+
+  await fetch('/proveedor',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nombre })
+  })
+
+  nuevoProveedor.value=''
+  cargarProveedores()
+}
+
+// ================= GUARDAR =================
 async function guardar() {
 
   const data = {
@@ -246,6 +225,34 @@ async function guardar() {
   cargar()
 }
 
+// ================= CONFIRMAR VENTA =================
+async function confirmar(id){
+
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+  const c = data.find(x => x._id === id)
+
+  if (!c) return
+
+  const costo = parseFloat(c.costoProveedor) || 0
+  const precio = parseFloat(c.precioCliente) || 0
+  const gan = precio - costo
+
+  await fetch('/cotizacion/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      confirmada:'si',
+      ganancia: gan
+    })
+  })
+
+  alert(✅ `Venta confirmada\n💰 Ganancia: $${gan}`)
+
+  cargar()
+}
+
+// ================= LISTAR =================
 async function cargar() {
 
   const res = await fetch('/cotizaciones')
@@ -266,9 +273,6 @@ async function cargar() {
     const precio = parseFloat(c.precioCliente) || 0
     const gan = c.ganancia || (precio - costo)
 
-    const g = new Date(c.garantiaFecha)
-    const vencida = c.garantiaFecha && g < new Date()
-
     lista.innerHTML += `
       <div class="card">
 
@@ -277,28 +281,19 @@ async function cargar() {
         <b>${c.producto}</b><br>
         ${c.nombre} (${c.celular})<br>
 
-        💸 Precio costo $${costo} | 💰 Preccio cliente $${precio}<br>
-        🧾 <b>Ganancia $${gan}</b><br>
-
-        ${c.garantiaFecha ? `
-        🛡️ <span class="${vencida ? 'vencida':''}">
-        ${g.toLocaleDateString()} ${vencida ? '(VENCIDA)':''}
-        </span><br>` : ''}
-
-        <br>
-
-        ${c.foto ? `<img class="thumb" src="${c.foto}" onclick="verImg('${c.foto}')">` : ''}
-        ${c.garantiaFoto ? `<img class="thumb" src="${c.garantiaFoto}" onclick="verImg('${c.garantiaFoto}')">` : ''}
-
-        <br><br>
+        💸 Costo $${costo} | 💰 Cliente $${precio}<br>
+        🧾 <b>Ganancia $${gan}</b><br><br>
 
         ${
           c.confirmada === 'si'
-          ? `<button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
+          ? `
+            <span style="color:green;font-weight:bold">✔ Venta confirmada</span><br><br>
+            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+          `
           : `
             <button class="btn" onclick="editar('${c._id}')">✏️</button>
             <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar</button>
+            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar venta</button>
           `
         }
 
@@ -307,20 +302,11 @@ async function cargar() {
   })
 }
 
-function verImg(src){
-  modalImg.style.display='flex'
-  imgGrande.src=src
-}
-
-modalImg.onclick=()=>modalImg.style.display='none'
-
+// ================= RESTO =================
 async function editar(id){
-
   const res = await fetch('/cotizaciones')
   const data = await res.json()
   const c = data.find(x => x._id === id)
-
-  if (!c) return
 
   editando = c._id
 
@@ -330,10 +316,6 @@ async function editar(id){
   costoProveedor.value=c.costoProveedor||''
   precioCliente.value=c.precioCliente||''
   descripcion.value=c.descripcion||''
-  garantiaFecha.value=c.garantiaFecha||''
-
-  fotoBase64=c.foto||''
-  garantiaBase64=c.garantiaFoto||''
 
   calcularGanancia()
   form.style.display='block'
@@ -342,24 +324,6 @@ async function editar(id){
 async function borrar(id){
   if(!confirm('Eliminar?'))return
   await fetch('/cotizacion/'+id,{method:'DELETE'})
-  cargar()
-}
-
-async function confirmar(id){
-  const res=await fetch('/cotizaciones')
-  const data=await res.json()
-  const c=data.find(x=>x._id===id)
-
-  await fetch('/cotizacion/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      confirmada:'si',
-      costoProveedor:c.costoProveedor,
-      precioCliente:c.precioCliente
-    })
-  })
-
   cargar()
 }
 
@@ -374,8 +338,6 @@ function cancelar(){
 
 function limpiar(){
   editando=null
-  fotoBase64=''
-  garantiaBase64=''
   nombre.value=''
   celular.value=''
   producto.value=''
@@ -383,12 +345,10 @@ function limpiar(){
   precioCliente.value=''
   descripcion.value=''
   ganancia.value=''
-  garantiaFecha.value=''
-  document.getElementById('foto').value=''
-  document.getElementById('garantiaFoto').value=''
   form.style.display='none'
 }
 
+// ================= INIT =================
 cargar()
 cargarProveedores()
 

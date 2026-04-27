@@ -13,7 +13,6 @@ body {
   padding:20px;
 }
 
-/* 🔥 TOPBAR */
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -22,7 +21,6 @@ body {
   align-items:center;
 }
 
-/* 🔍 BUSCADOR */
 input {
   padding:8px 10px;
   border-radius:10px;
@@ -30,62 +28,39 @@ input {
   width:100%;
   max-width:240px;
   outline:none;
-  transition:0.2s;
 }
 
-input:focus {
-  border-color:#007bff;
-  box-shadow:0 0 0 2px rgba(0,123,255,0.2);
-}
-
-/* 🎛️ SELECT */
 select {
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
-/* 🔥 BOTONES */
 button {
   padding:8px 12px;
   border:none;
   border-radius:10px;
   cursor:pointer;
   font-weight:bold;
-  transition:0.2s;
 }
 
 .btn { background:#007bff; color:white; }
-.btn:hover { background:#0056b3; }
-
 .btn-success { background:#28a745; color:white; }
-.btn-success:hover { background:#1e7e34; }
-
 .btn-danger { background:#dc3545; color:white; }
-.btn-danger:hover { background:#b02a37; }
-
 .btn-secondary { background:#6c757d; color:white; }
-.btn-secondary:hover { background:#545b62; }
 
-/* 🧾 CARDS */
 .ticket {
   background:white;
   padding:14px;
   margin:10px 0;
   border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  transition:0.2s;
-}
-
-.ticket:hover {
-  transform:scale(1.01);
 }
 
 .ticket input, .ticket textarea {
   width:100%;
 }
 
-/* 📊 RESUMEN */
 .resumen {
   background:#fff;
   padding:15px;
@@ -98,8 +73,6 @@ button {
 
 <body>
 
-
-<!-- 🔥 TOPBAR -->
 <div class="topbar">
 
   <button class="btn-secondary" onclick="irCotizaciones()">📊 Cotizaciones</button>
@@ -115,7 +88,9 @@ button {
   <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
 
 </div>
+
 <h2>🧾 Sistema De Tickets</h2>
+
 <div id="resumen"></div>
 <div id="lista"></div>
 
@@ -181,31 +156,38 @@ async function cargar() {
     })
   }
 
-  // ================= RESUMEN =================
-  let meses = {}
-  let totalGeneral = 0
+  // ================= RESUMEN NUEVO =================
+  let totalReparaciones = 0
+  let totalVentas = 0
 
+  // 🔧 tickets
   data.forEach(t => {
-    if (!t.fecha) return
-
-    const fecha = new Date(t.fecha)
-    const mes = fecha.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
-
     const gan = t.entregado === 'si' ? (parseFloat(t.ganancia) || 0) : 0
-
-    if (!meses[mes]) meses[mes] = 0
-
-    meses[mes] += gan
-    totalGeneral += gan
+    totalReparaciones += gan
   })
 
-  let htmlResumen = `<div class="resumen"><b>💰 Resumen de Ganancias</b><br><br>`
+  // 🛒 cotizaciones
+  const resCot = await fetch('/cotizaciones')
+  const cotizaciones = await resCot.json()
 
-  Object.entries(meses).reverse().forEach(([mes, total]) => {
-    htmlResumen += `📅 ${mes}: $${total}<br>`
+  cotizaciones.forEach(c => {
+    if (c.confirmada === 'si') {
+      totalVentas += parseFloat(c.ganancia) || 0
+    }
   })
 
-  htmlResumen += `<br><b>🧮 TOTAL GENERAL: $${totalGeneral}</b></div>`
+  const totalGeneral = totalReparaciones + totalVentas
+
+  let htmlResumen = `
+  <div class="resumen">
+    <b>💰 Panel de Ganancias</b><br><br>
+
+    🔧 Reparaciones: $${totalReparaciones}<br>
+    🛒 Ventas: $${totalVentas}<br><br>
+
+    <b>🧮 TOTAL GENERAL: $${totalGeneral}</b>
+  </div>
+  `
 
   document.getElementById('resumen').innerHTML = htmlResumen
 
@@ -227,8 +209,6 @@ async function cargar() {
 
   data.reverse().forEach(t => {
 
-    const garantiaVencida = t.garantiaFecha && new Date(t.garantiaFecha) < new Date()
-
     lista.innerHTML += `
       <div class="ticket">
 
@@ -236,14 +216,6 @@ async function cargar() {
         ${t.nombre} (${t.telefono})<br>
         ${t.problema}<br>
         📅 ${formatearFecha(t.fecha)}<br>
-
-        ${t.garantiaFecha ? `
-          🛡️ Garantía:
-          <span style="color:${garantiaVencida ? 'red' : 'green'}">
-            ${formatearFecha(t.garantiaFecha)}
-            ${garantiaVencida ? ' (VENCIDA)' : ''}
-          </span><br>
-        ` : ''}
 
         <br>
 
@@ -256,15 +228,9 @@ async function cargar() {
         <br><br>
 
         📝 Detalle:<br>
-        <textarea style="height:60px"
-        onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
+        <textarea onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle || ''}</textarea>
 
         <br><br>
-
-        Estado: ${t.estado}<br>
-        Entregado: ${t.entregado}<br><br>
-
-        <button class="btn" onclick="estado('${t.numero}','proceso')">🔄 Proceso</button>
 
         <button class="btn-success"
         onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
@@ -295,14 +261,6 @@ async function guardar(id, campo, valor) {
   })
 }
 
-async function estado(id, estado) {
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado })
-  })
-}
-
 async function marcarEntregado(id) {
   await fetch('/ticket/'+id,{
     method:'PUT',
@@ -323,13 +281,10 @@ async function listoWhatsApp(id, nombre, telefono, precio){
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
-  // 🔥 TRAER DATOS DEL TICKET
   const res = await fetch('/tickets')
   const data = await res.json()
-
   const t = data.find(x => x.numero === id)
 
-  // 🔥 FORMATEAR FECHA
   const fecha = new Date(t.fecha).toLocaleString('es-UY')
 
   const mensaje =
@@ -347,12 +302,6 @@ Favor coordinar para retirarlo.`
   const url="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(mensaje)
 
   window.location.href=url
-
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({estado:'listo'})
-  })
 }
 
 // ================= SOCKET =================
