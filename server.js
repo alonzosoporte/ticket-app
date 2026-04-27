@@ -57,15 +57,30 @@ app.post('/ticket', async (req, res) => {
       return res.json({ error: 'Faltan datos' })
     }
 
-    // 🔥 CONTADOR SEGURO (ANTI DUPLICADOS)
-    let contador = await Counter.findOneAndUpdate(
-      { nombre: 'ticket' },
-      { $inc: { valor: 1 } },
-      { new: true, upsert: true }
-    )
+    // 🔎 verificar si hay tickets
+    const cantidad = await Ticket.countDocuments()
 
-    const numero = contador.valor
+    let numero = 1
 
+    if (cantidad === 0) {
+      // 🔥 reiniciar contador
+      await Counter.findOneAndUpdate(
+        { nombre: 'ticket' },
+        { valor: 1 },
+        { upsert: true }
+      )
+    } else {
+      // 🔥 sumar normal
+      let contador = await Counter.findOneAndUpdate(
+        { nombre: 'ticket' },
+        { $inc: { valor: 1 } },
+        { new: true, upsert: true }
+      )
+
+      numero = contador.valor
+    }
+
+    // 🎯 FORMATO FINAL
     const numeroFormateado =
       'Ticket-' + numero.toString().padStart(3, '0')
 
