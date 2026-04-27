@@ -12,7 +12,6 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.static('public'))
 
 // ================= MONGODB =================
-// 🔴 NO CAMBIES TU URL, dejá la que ya usabas
 mongoose.connect('mongodb+srv://alonzosoporte:Foofigh1987!@cluster0.mafkjzo.mongodb.net/ticketsDB')
 .then(()=> console.log('Mongo conectado'))
 .catch(err => console.log(err))
@@ -23,7 +22,7 @@ const TicketSchema = new mongoose.Schema({
   nombre: String,
   telefono: String,
   problema: String,
-  descripcion: String, // 🔥 ESTO ARREGLA TU PROBLEMA
+  descripcion: String,
   detalle: String,
   precio: String,
   ganancia: String,
@@ -40,17 +39,42 @@ io.on('connection', () => {
   console.log('Cliente conectado')
 })
 
-// ================= RUTAS =================
-
-// CREAR
+// ================= CREAR =================
 app.post('/ticket', async (req, res) => {
   try {
 
-    const numero = Math.floor(10000 + Math.random() * 90000).toString()
+    const { nombre, telefono, problema } = req.body
+
+    if (!nombre || !telefono || !problema) {
+      return res.json({ error: 'Faltan datos' })
+    }
+
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = (now.getMonth() + 1).toString().padStart(2, '0')
+
+    const prefix = `Ticket-${year}-${month}-`
+
+    // 🔎 buscar último ticket del mes
+    const ultimo = await Ticket.findOne({
+      numero: { $regex: `^${prefix}` }
+    }).sort({ numero: -1 })
+
+    let nuevoNumero = 1
+
+    if (ultimo && ultimo.numero) {
+      const partes = ultimo.numero.split('-')
+      const num = parseInt(partes[3])
+      nuevoNumero = num + 1
+    }
+
+    // 🎯 FORMATO FINAL
+    const numeroFormateado =
+      prefix + nuevoNumero.toString().padStart(2, '0')
 
     const nuevo = new Ticket({
       ...req.body,
-      numero,
+      numero: numeroFormateado,
       estado: 'pendiente',
       entregado: 'no'
     })
@@ -67,7 +91,7 @@ app.post('/ticket', async (req, res) => {
   }
 })
 
-// LISTAR
+// ================= LISTAR =================
 app.get('/tickets', async (req, res) => {
   try {
     const data = await Ticket.find().sort({ _id: -1 })
@@ -77,7 +101,7 @@ app.get('/tickets', async (req, res) => {
   }
 })
 
-// ACTUALIZAR
+// ================= ACTUALIZAR =================
 app.put('/ticket/:numero', async (req, res) => {
   try {
 
@@ -96,7 +120,7 @@ app.put('/ticket/:numero', async (req, res) => {
   }
 })
 
-// BORRAR
+// ================= BORRAR =================
 app.delete('/ticket/:numero', async (req, res) => {
   try {
     await Ticket.findOneAndDelete({ numero: req.params.numero })
