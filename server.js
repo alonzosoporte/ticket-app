@@ -32,6 +32,8 @@ const TicketSchema = new mongoose.Schema({
   garantiaFecha: String
 })
 
+const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
+
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
 // 🔥 CONTADOR PRO
@@ -143,6 +145,11 @@ app.delete('/ticket/:numero', async (req, res) => {
     res.status(500).json({ error: 'Error borrando' })
   }
 })
+
+app.post('/cotizacion', ...)
+app.get('/cotizaciones', ...)
+app.put('/cotizacion/:id', ...)
+app.delete('/cotizacion/:id', ...)
 
 // ================= START =================
 server.listen(3000, () => {
