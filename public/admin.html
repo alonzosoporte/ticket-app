@@ -316,31 +316,42 @@ async function borrar(id) {
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
-async function listoWhatsApp(id, nombre, telefono, precio) {
+async function listoWhatsApp(id, nombre, telefono, precio){
 
-  let tel = telefono.replace(/\D/g, '')
+  let tel = telefono.replace(/\D/g,'')
 
-  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-  if (!tel.startsWith('598')) tel = '598' + tel
+  if(tel.startsWith('0')) tel='598'+tel.substring(1)
+  if(!tel.startsWith('598')) tel='598'+tel
+
+  // 🔥 TRAER DATOS DEL TICKET
+  const res = await fetch('/tickets')
+  const data = await res.json()
+
+  const t = data.find(x => x.numero === id)
+
+  // 🔥 FORMATEAR FECHA
+  const fecha = new Date(t.fecha).toLocaleString('es-UY')
 
   const mensaje =
 `Hola ${nombre} 👋
 
 Tu equipo ya está listo para retirar ✅
 
+📅 Fecha solicitud: ${fecha}
+
 🧾 Ticket: ${id}
 💲 Precio: ${precio || 'A confirmar'}
 
 Favor coordinar para retirarlo.`
 
-  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+  const url="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(mensaje)
 
-  window.location.href = url
+  window.location.href=url
 
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ estado: 'listo' })
+    body: JSON.stringify({estado:'listo'})
   })
 }
 
