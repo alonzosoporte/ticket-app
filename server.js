@@ -34,6 +34,14 @@ const TicketSchema = new mongoose.Schema({
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
+// 🔥 CONTADOR PRO
+const CounterSchema = new mongoose.Schema({
+  nombre: String,
+  valor: Number
+})
+
+const Counter = mongoose.model('Counter', CounterSchema)
+
 // ================= SOCKET =================
 io.on('connection', () => {
   console.log('Cliente conectado')
@@ -49,34 +57,24 @@ app.post('/ticket', async (req, res) => {
       return res.json({ error: 'Faltan datos' })
     }
 
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = (now.getMonth() + 1).toString().padStart(2, '0')
+    // 🔥 CONTADOR SEGURO (ANTI DUPLICADOS)
+    let contador = await Counter.findOneAndUpdate(
+      { nombre: 'ticket' },
+      { $inc: { valor: 1 } },
+      { new: true, upsert: true }
+    )
 
-    const prefix = `Ticket-${year}-${month}-`
+    const numero = contador.valor
 
-    // 🔎 buscar último ticket del mes
-    const ultimo = await Ticket.findOne({
-      numero: { $regex: `^${prefix}` }
-    }).sort({ numero: -1 })
-
-    let nuevoNumero = 1
-
-    if (ultimo && ultimo.numero) {
-      const partes = ultimo.numero.split('-')
-      const num = parseInt(partes[3])
-      nuevoNumero = num + 1
-    }
-
-    // 🎯 FORMATO FINAL
     const numeroFormateado =
-      prefix + nuevoNumero.toString().padStart(2, '0')
+      'Ticket-' + numero.toString().padStart(3, '0')
 
     const nuevo = new Ticket({
       ...req.body,
       numero: numeroFormateado,
       estado: 'pendiente',
-      entregado: 'no'
+      entregado: 'no',
+      fecha: new Date()
     })
 
     await nuevo.save()
