@@ -247,7 +247,7 @@ async function confirmar(id){
     })
   })
 
-  alert(✅ `Venta confirmada\n💰 Ganancia: $${gan}`)
+  alert(`✅ Venta confirmada\n💰 Ganancia: $${gan}`)
 
   cargar()
 }
@@ -329,7 +329,7 @@ async function borrar(id){
 
 function mostrarForm(){
   limpiar()
-  form.style.display='block'
+  document.getElementById('form').style.display = 'block'
 }
 
 function cancelar(){
@@ -345,7 +345,7 @@ function limpiar(){
   precioCliente.value=''
   descripcion.value=''
   ganancia.value=''
-  form.style.display='none'
+  document.getElementById('form').style.display='none'
 }
 
 // ================= INIT =================
