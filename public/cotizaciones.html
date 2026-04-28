@@ -175,8 +175,12 @@ garantiaFoto.onchange = e => {
 
 // ================= PROVEEDORES =================
 async function cargarProveedores() {
-  const res = await fetch('/proveedores')
-  const data = await res.json()
+  const res = await fetch('/cotizaciones')
+  const text = await res.text()
+
+  constconsole.log("RESPUESTA:", text)
+
+  const data = JSON.parse(text)
 
   proveedor.innerHTML = `<option value="">-- Seleccionar proveedor --</option>`
 
