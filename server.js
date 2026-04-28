@@ -57,11 +57,21 @@ const CotizacionSchema = new mongoose.Schema({
 const Cotizacion = mongoose.models.Cotizacion || mongoose.model('Cotizacion', CotizacionSchema)
 
 
+// 🏢 PROVEEDORES (PRO)
+const ProveedorSchema = new mongoose.Schema({
+  nombre: { type: String, unique: true }
+})
+
+const Proveedor = mongoose.models.Proveedor || mongoose.model('Proveedor', ProveedorSchema)
+
+
 // 🔢 CONTADOR
 const CounterSchema = new mongoose.Schema({
   nombre: String,
   valor: Number
 })
+
+
 
 const Counter = mongoose.model('Counter', CounterSchema)
 
@@ -227,6 +237,76 @@ app.delete('/cotizacion/:id', async (req, res) => {
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: 'Error borrando cotizacion' })
+  }
+})
+
+
+// ================= PROVEEDORES =================
+
+// LISTAR
+app.get('/proveedores', async (req, res) => {
+  try {
+    const data = await Proveedor.find().sort({ nombre: 1 })
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo proveedores' })
+  }
+})
+
+// CREAR
+app.post('/proveedores', async (req, res) => {
+  try {
+
+    const nombre = req.body.nombre?.trim()
+
+    if (!nombre) {
+      return res.json({ error: 'Nombre requerido' })
+    }
+
+    const existe = await Proveedor.findOne({ nombre })
+
+    if (existe) {
+      return res.json({ ok: true })
+    }
+
+    const nuevo = new Proveedor({ nombre })
+
+    await nuevo.save()
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error creando proveedor' })
+  }
+})
+// ================= PROVEEDORES =================
+
+// LISTAR
+app.get('/proveedores', async (req, res) => {
+  try {
+    const data = await Proveedor.find()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo proveedores' })
+  }
+})
+
+// CREAR
+app.post('/proveedores', async (req, res) => {
+  try {
+    const { nombre } = req.body
+
+    if (!nombre) {
+      return res.status(400).json({ error: 'Nombre requerido' })
+    }
+
+    const nuevo = new Proveedor({ nombre })
+    await nuevo.save()
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error creando proveedor' })
   }
 })
 
