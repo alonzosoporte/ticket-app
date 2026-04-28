@@ -215,18 +215,29 @@ app.get('/cotizaciones', async (req, res) => {
 app.put('/cotizacion/:id', async (req, res) => {
   try {
 
-    const costo = parseFloat(req.body.costoProveedor) || 0
-    const precio = parseFloat(req.body.precioCliente) || 0
+    const data = req.body
 
-    await Cotizacion.findByIdAndUpdate(req.params.id, {
-      ...req.body,
-      ganancia: precio - costo
-    })
+    // 🔥 si viene confirmada, calculamos ganancia SI O SI
+    if (data.confirmada === 'si') {
+
+      const costo = parseFloat(data.costoProveedor) || 0
+      const precio = parseFloat(data.precioCliente) || 0
+
+      data.ganancia = precio - costo
+    }
+
+    await Cotizacion.findByIdAndUpdate(
+      req.params.id,
+      { $set: data }
+    )
+
+    io.emit('actualizar')
 
     res.json({ ok: true })
 
   } catch (err) {
-    res.status(500).json({ error: 'Error actualizando cotizacion' })
+    console.error(err)
+    res.status(500).json({ error: 'Error actualizando cotización' })
   }
 })
 

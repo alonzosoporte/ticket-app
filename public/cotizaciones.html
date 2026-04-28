@@ -231,20 +231,17 @@ async function confirmar(id){
 
   if (!c) return
 
-  const costo = parseFloat(c.costoProveedor) || 0
-  const precio = parseFloat(c.precioCliente) || 0
-  const gan = precio - costo
-
   await fetch('/cotizacion/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       confirmada:'si',
-      ganancia: gan
+      costoProveedor: c.costoProveedor,
+      precioCliente: c.precioCliente
     })
   })
 
-  alert(`✅ Venta confirmada\n💰 Ganancia: $${gan}`)
+  alert('✅ Venta confirmada')
 
   cargar()
 }
