@@ -16,7 +16,9 @@ mongoose.connect('mongodb+srv://alonzosoporte:Foofigh1987!@cluster0.mafkjzo.mong
 .then(()=> console.log('Mongo conectado'))
 .catch(err => console.log(err))
 
-// ================= SCHEMA =================
+// ================= SCHEMAS =================
+
+// 🎫 TICKETS
 const TicketSchema = new mongoose.Schema({
   numero: String,
   nombre: String,
@@ -32,11 +34,30 @@ const TicketSchema = new mongoose.Schema({
   garantiaFecha: String
 })
 
-const Cotizacion = mongoose.model('Cotizacion', CotizacionSchema)
-
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// 🔥 CONTADOR PRO
+
+// 📊 COTIZACIONES
+const CotizacionSchema = new mongoose.Schema({
+  nombre: String,
+  celular: String,
+  producto: String,
+  proveedor: String,
+  costoProveedor: String,
+  precioCliente: String,
+  ganancia: Number,
+  descripcion: String,
+  foto: String,
+  garantiaFecha: String,
+  garantiaFoto: String,
+  confirmada: { type: String, default: 'no' },
+  fecha: { type: Date, default: Date.now }
+})
+
+const Cotizacion = mongoose.models.Cotizacion || mongoose.model('Cotizacion', CotizacionSchema)
+
+
+// 🔢 CONTADOR
 const CounterSchema = new mongoose.Schema({
   nombre: String,
   valor: Number
@@ -44,12 +65,16 @@ const CounterSchema = new mongoose.Schema({
 
 const Counter = mongoose.model('Counter', CounterSchema)
 
+
 // ================= SOCKET =================
 io.on('connection', () => {
   console.log('Cliente conectado')
 })
 
-// ================= CREAR =================
+
+// ================= TICKETS =================
+
+// CREAR
 app.post('/ticket', async (req, res) => {
   try {
 
@@ -59,20 +84,17 @@ app.post('/ticket', async (req, res) => {
       return res.json({ error: 'Faltan datos' })
     }
 
-    // 🔎 verificar si hay tickets
     const cantidad = await Ticket.countDocuments()
 
     let numero = 1
 
     if (cantidad === 0) {
-      // 🔥 reiniciar contador
       await Counter.findOneAndUpdate(
         { nombre: 'ticket' },
         { valor: 1 },
         { upsert: true }
       )
     } else {
-      // 🔥 sumar normal
       let contador = await Counter.findOneAndUpdate(
         { nombre: 'ticket' },
         { $inc: { valor: 1 } },
@@ -82,9 +104,7 @@ app.post('/ticket', async (req, res) => {
       numero = contador.valor
     }
 
-    // 🎯 FORMATO FINAL
-    const numeroFormateado =
-      'Ticket-' + numero.toString().padStart(3, '0')
+    const numeroFormateado = 'Ticket-' + numero.toString().padStart(3, '0')
 
     const nuevo = new Ticket({
       ...req.body,
@@ -106,7 +126,7 @@ app.post('/ticket', async (req, res) => {
   }
 })
 
-// ================= LISTAR =================
+// LISTAR
 app.get('/tickets', async (req, res) => {
   try {
     const data = await Ticket.find().sort({ _id: -1 })
@@ -116,7 +136,7 @@ app.get('/tickets', async (req, res) => {
   }
 })
 
-// ================= ACTUALIZAR =================
+// ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
   try {
 
@@ -135,7 +155,7 @@ app.put('/ticket/:numero', async (req, res) => {
   }
 })
 
-// ================= BORRAR =================
+// BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
   try {
     await Ticket.findOneAndDelete({ numero: req.params.numero })
@@ -146,12 +166,74 @@ app.delete('/ticket/:numero', async (req, res) => {
   }
 })
 
-app.post('/cotizacion', ...)
-app.get('/cotizaciones', ...)
-app.put('/cotizacion/:id', ...)
-app.delete('/cotizacion/:id', ...)
+
+// ================= COTIZACIONES =================
+
+// CREAR
+app.post('/cotizacion', async (req, res) => {
+  try {
+
+    const costo = parseFloat(req.body.costoProveedor) || 0
+    const precio = parseFloat(req.body.precioCliente) || 0
+
+    const nueva = new Cotizacion({
+      ...req.body,
+      ganancia: precio - costo
+    })
+
+    await nueva.save()
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error creando cotizacion' })
+  }
+})
+
+// LISTAR
+app.get('/cotizaciones', async (req, res) => {
+  try {
+    const data = await Cotizacion.find().sort({ _id: -1 })
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo cotizaciones' })
+  }
+})
+
+// ACTUALIZAR
+app.put('/cotizacion/:id', async (req, res) => {
+  try {
+
+    const costo = parseFloat(req.body.costoProveedor) || 0
+    const precio = parseFloat(req.body.precioCliente) || 0
+
+    await Cotizacion.findByIdAndUpdate(req.params.id, {
+      ...req.body,
+      ganancia: precio - costo
+    })
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error actualizando cotizacion' })
+  }
+})
+
+// BORRAR
+app.delete('/cotizacion/:id', async (req, res) => {
+  try {
+    await Cotizacion.findByIdAndDelete(req.params.id)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Error borrando cotizacion' })
+  }
+})
+
 
 // ================= START =================
-server.listen(3000, () => {
-  console.log('Servidor corriendo en http://localhost:3000')
+const PORT = process.env.PORT || 3000
+
+server.listen(PORT, () => {
+  console.log('Servidor corriendo en puerto', PORT)
 })
