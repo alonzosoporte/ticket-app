@@ -144,6 +144,17 @@ async function cargar() {
   }
 
   const mesSeleccionado = select.value
+  // 🔥 FILTRAR COTIZACIONES POR MES (PRO)
+if (mesSeleccionado !== 'todos') {
+  cotizaciones = cotizaciones.filter(c => {
+
+    const fecha = new Date(c.fecha)
+    if (isNaN(fecha)) return false
+
+    const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
+    return key === mesSeleccionado
+  })
+}
 
   // 🔥 FILTRO MES TICKETS
   if (mesSeleccionado !== 'todos') {

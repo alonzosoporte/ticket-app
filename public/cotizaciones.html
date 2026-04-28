@@ -333,16 +333,26 @@ function cancelar(){
 }
 
 function limpiar(){
-  editando=null
-  nombre.value=''
-  celular.value=''
-  producto.value=''
-  proveedor.value=''
-  costoProveedor.value=''
-  precioCliente.value=''
-  descripcion.value=''
-  ganancia.value=''
-  document.getElementById('form').style.display='none'
+  editando = null
+
+  fotoBase64 = ''
+  garantiaBase64 = ''
+
+  nombre.value = ''
+  celular.value = ''
+  producto.value = ''
+  costoProveedor.value = ''
+  precioCliente.value = ''
+  descripcion.value = ''
+  ganancia.value = ''
+
+  proveedor.value = ''
+  garantiaFecha.value = ''
+
+  document.getElementById('foto').value = ''
+  document.getElementById('garantiaFoto').value = ''
+
+  document.getElementById('form').style.display = 'none'
 }
 
 // INIT
