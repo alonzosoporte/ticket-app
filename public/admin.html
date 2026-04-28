@@ -25,7 +25,6 @@ input {
   padding:8px 10px;
   border-radius:10px;
   border:1px solid #ccc;
-  width:100%;
   max-width:240px;
 }
 
@@ -56,10 +55,6 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.ticket input, .ticket textarea {
-  width:100%;
-}
-
 .resumen {
   background:#fff;
   padding:15px;
@@ -73,17 +68,23 @@ button {
 <body>
 
 <div class="topbar">
-  <button class="btn-secondary" onclick="irCotizaciones()">📊 Cotizaciones</button>
-  <button class="btn-secondary" onclick="irGarantias()">🛡️ Garantías</button>
+
+  <button class="btn-secondary" onclick="location.href='cotizaciones.html'">📊 Cotizaciones</button>
+  <button class="btn-secondary" onclick="location.href='garantias.html'">🛡️ Garantías</button>
 
   <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
 
   <select id="filtroMes" onchange="cargar()">
-    <option value="todos">📅 Todos</option>
+    <option value="todos">📅 Reparaciones</option>
+  </select>
+
+  <select id="filtroMesVentas" onchange="cargar()">
+    <option value="todos">🛒 Ventas</option>
   </select>
 
   <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
   <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
+
 </div>
 
 <h2>🧾 Sistema De Tickets</h2>
@@ -96,213 +97,165 @@ button {
 let modo = 'pendientes'
 const socket = io()
 
-function irGarantias() {
-  window.location.href = 'garantias.html'
-}
-
-function irCotizaciones() {
-  window.location.href = 'cotizaciones.html'
-}
-
-// ================= CARGAR =================
 async function cargar() {
 
   const res = await fetch('/tickets')
-  let data = await res.json()
+  let tickets = await res.json()
 
   const resCot = await fetch('/cotizaciones')
   let cotizaciones = await resCot.json()
 
-  // ================= FILTRO MES =================
+  // ===== MESES REPARACIONES =====
   let listaMeses = {}
 
-  data.forEach(t => {
+  tickets.forEach(t => {
     if (!t.fecha) return
     const f = new Date(t.fecha)
     if (isNaN(f)) return
 
     const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-    listaMeses[key] = f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+    listaMeses[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
 
   const select = document.getElementById('filtroMes')
 
   if (select.options.length <= 1) {
-    Object.entries(listaMeses).reverse().forEach(([key,txt])=>{
-      const opt=document.createElement('option')
-      opt.value=key
-      opt.textContent=txt
+    Object.entries(listaMeses).reverse().forEach(([k, txt]) => {
+      const opt = document.createElement('option')
+      opt.value = k
+      opt.textContent = txt
       select.appendChild(opt)
     })
   }
 
-  const hoy = new Date()
-  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
+  // ===== MESES VENTAS =====
+  let listaMesesVentas = {}
 
-  if (select.value === 'todos') {
-    select.value = mesActualKey
-  }
+  cotizaciones.forEach(c => {
+    if (!c.fecha) return
+    const f = new Date(c.fecha)
+    if (isNaN(f)) return
 
-  const mesSeleccionado = select.value
-  // 🔥 FILTRAR COTIZACIONES POR MES (PRO)
-if (mesSeleccionado !== 'todos') {
-  cotizaciones = cotizaciones.filter(c => {
-
-    const fecha = new Date(c.fecha)
-    if (isNaN(fecha)) return false
-
-    const key = fecha.getFullYear() + '-' + (fecha.getMonth() + 1)
-    return key === mesSeleccionado
+    const key = f.getFullYear() + '-' + (f.getMonth() + 1)
+    listaMesesVentas[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
-}
 
-  // 🔥 FILTRO MES TICKETS
-  if (mesSeleccionado !== 'todos') {
-    data = data.filter(t => {
-      const f = new Date(t.fecha)
-      if (isNaN(f)) return false
-      return (f.getFullYear()+'-'+(f.getMonth()+1)) === mesSeleccionado
+  const selectVentas = document.getElementById('filtroMesVentas')
+
+  if (selectVentas.options.length <= 1) {
+    Object.entries(listaMesesVentas).reverse().forEach(([k, txt]) => {
+      const opt = document.createElement('option')
+      opt.value = k
+      opt.textContent = txt
+      selectVentas.appendChild(opt)
     })
   }
 
-  // 🔥 FILTRO MES COTIZACIONES
-  if (mesSeleccionado !== 'todos') {
+  // ===== FILTROS =====
+  const mes = select.value
+  const mesVentas = selectVentas.value
+
+  if (mes !== 'todos') {
+    tickets = tickets.filter(t => {
+      const f = new Date(t.fecha)
+      const key = f.getFullYear() + '-' + (f.getMonth() + 1)
+      return key === mes
+    })
+  }
+
+  if (mesVentas !== 'todos') {
     cotizaciones = cotizaciones.filter(c => {
       const f = new Date(c.fecha)
-      if (isNaN(f)) return false
-      return (f.getFullYear()+'-'+(f.getMonth()+1)) === mesSeleccionado
+      const key = f.getFullYear() + '-' + (f.getMonth() + 1)
+      return key === mesVentas
     })
   }
 
-  // ================= RESUMEN =================
+  // ===== RESUMEN =====
   let totalReparaciones = 0
   let totalVentas = 0
 
-  data.forEach(t => {
-    const gan = t.entregado === 'si' ? (parseFloat(t.ganancia)||0) : 0
-    totalReparaciones += gan
+  tickets.forEach(t => {
+    if (t.entregado === 'si') {
+      totalReparaciones += parseFloat(t.ganancia) || 0
+    }
   })
 
   cotizaciones.forEach(c => {
     if (c.confirmada === 'si') {
-      totalVentas += parseFloat(c.ganancia)||0
+      totalVentas += parseFloat(c.ganancia) || 0
     }
   })
-
-  const totalGeneral = totalReparaciones + totalVentas
 
   document.getElementById('resumen').innerHTML = `
     <div class="resumen">
       <b>💰 Panel de Ganancias</b><br><br>
       🔧 Reparaciones: $${totalReparaciones}<br>
       🛒 Ventas: $${totalVentas}<br><br>
-      <b>🧮 TOTAL GENERAL: $${totalGeneral}</b>
+      <b>🧮 TOTAL: $${totalReparaciones + totalVentas}</b>
     </div>
   `
 
-  // ================= FILTRO BUSQUEDA =================
+  // ===== LISTA =====
   if (modo === 'pendientes') {
-    data = data.filter(t => t.entregado !== 'si')
+    tickets = tickets.filter(t => t.entregado !== 'si')
   }
 
   const filtro = document.getElementById('busqueda').value.toLowerCase()
 
-  data = data.filter(t =>
-    (t.nombre||'').toLowerCase().includes(filtro) ||
-    (t.telefono||'').includes(filtro) ||
-    (t.numero||'').toLowerCase().includes(filtro)
+  tickets = tickets.filter(t =>
+    (t.nombre || '').toLowerCase().includes(filtro) ||
+    (t.telefono || '').includes(filtro) ||
+    (t.numero || '').toLowerCase().includes(filtro)
   )
 
-  // ================= LISTA =================
   const lista = document.getElementById('lista')
-  lista.innerHTML=''
+  lista.innerHTML = ''
 
-  data.reverse().forEach(t => {
+  tickets.reverse().forEach(t => {
     lista.innerHTML += `
       <div class="ticket">
         <b>${t.numero}</b><br>
         ${t.nombre} (${t.telefono})<br>
         ${t.problema}<br>
-        📅 ${formatearFecha(t.fecha)}<br><br>
+        📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
 
         💲 Precio:
-        <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+        <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
 
         💰 Ganancia:
-        <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+        <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
         <br><br>
 
-        <textarea onchange="guardar('${t.numero}','detalle',this.value)">${t.detalle||''}</textarea>
-
-        <br><br>
-
-        <button class="btn-success"
-        onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-        ✔ Listo + WhatsApp</button>
-
-        <button class="btn-secondary" onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
-
+        <button class="btn-success" onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
         <button class="btn-danger" onclick="borrar('${t.numero}')">❌</button>
       </div>
     `
   })
 }
 
-// ================= FUNCIONES =================
-function formatearFecha(f){
-  const d=new Date(f)
-  if(isNaN(d)) return f||''
-  return d.toLocaleString('es-UY')
-}
-
-async function guardar(id,campo,valor){
+async function guardar(id, campo, valor) {
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({[campo]:valor})
+    body: JSON.stringify({ [campo]: valor })
   })
 }
 
-async function marcarEntregado(id){
+async function marcarEntregado(id) {
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({entregado:'si'})
+    body: JSON.stringify({ entregado:'si' })
   })
 }
 
-async function borrar(id){
-  if(!confirm('Eliminar?'))return
+async function borrar(id) {
+  if (!confirm("Eliminar?")) return
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
-async function listoWhatsApp(id,nombre,telefono,precio){
-  let tel=telefono.replace(/\D/g,'')
-  if(tel.startsWith('0')) tel='598'+tel.substring(1)
-  if(!tel.startsWith('598')) tel='598'+tel
-
-  const res=await fetch('/tickets')
-  const data=await res.json()
-  const t=data.find(x=>x.numero===id)
-
-  const fecha=new Date(t.fecha).toLocaleString('es-UY')
-
-  const msg=`Hola ${nombre} 👋
-
-Tu equipo ya está listo para retirar ✅
-
-📅 Fecha solicitud: ${fecha}
-
-🧾 Ticket: ${id}
-💲 Precio: ${precio||'A confirmar'}
-
-Favor coordinar para retirarlo.`
-
-  window.location.href="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(msg)
-}
-
-// ================= SOCKET =================
 socket.on('actualizar', cargar)
 
 cargar()
