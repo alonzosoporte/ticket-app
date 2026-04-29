@@ -192,6 +192,8 @@ app.delete('/proveedores/:nombre', async (req, res) => {
 app.post('/cotizacion', async (req, res) => {
   try {
 
+    console.log("🔥 VALIDACION ACTIVA", req.body)
+
     const {
       nombre,
       celular,
@@ -202,9 +204,19 @@ app.post('/cotizacion', async (req, res) => {
       descripcion
     } = req.body
 
-    // 🚨 VALIDACIÓN REAL
-    if (!nombre || !celular || !producto || !proveedor || !costoProveedor || !precioCliente || !descripcion) {
-      return res.status(400).json({ error: 'Faltan datos obligatorios' })
+    // 🚨 VALIDACIÓN FUERTE (NO PASA VACÍOS)
+    if (
+      !nombre?.trim() ||
+      !celular?.trim() ||
+      !producto?.trim() ||
+      !proveedor?.trim() ||
+      !costoProveedor?.toString().trim() ||
+      !precioCliente?.toString().trim() ||
+      !descripcion?.trim()
+    ) {
+      return res.status(400).json({
+        error: 'Faltan datos obligatorios'
+      })
     }
 
     const costo = parseFloat(costoProveedor) || 0
@@ -224,6 +236,7 @@ app.post('/cotizacion', async (req, res) => {
     res.status(500).json({ error: 'Error creando cotizacion' })
   }
 })
+
 // LISTAR
 app.get('/cotizaciones', async (req, res) => {
   try {
