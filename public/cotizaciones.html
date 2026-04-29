@@ -46,13 +46,9 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.fila-precios {
-  display:flex;
-  gap:10px;
-}
-
-.fila-precios div {
-  flex:1;
+.fila-precios input {
+  text-align:center;
+  font-weight:bold;
 }
 
 label {
@@ -229,10 +225,21 @@ async function guardar() {
 
 // ===== CONFIRMAR =====
 async function confirmar(id){
+
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+  const c = data.find(x => x._id === id)
+
+  if (!c) return
+
   await fetch('/cotizacion/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ confirmada:'si' })
+    body: JSON.stringify({
+      confirmada:'si',
+      costoProveedor: c.costoProveedor,
+      precioCliente: c.precioCliente
+    })
   })
 
   cargar()
