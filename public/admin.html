@@ -13,7 +13,6 @@ body {
   padding:20px;
 }
 
-/* ===== TOPBAR ===== */
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -26,7 +25,6 @@ input {
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
-  max-width:240px;
 }
 
 button {
@@ -42,7 +40,6 @@ button {
 .btn-danger { background:#dc3545; color:white; }
 .btn-secondary { background:#6c757d; color:white; }
 
-/* ===== PANEL PREMIUM ===== */
 .panel {
   display:flex;
   gap:15px;
@@ -59,16 +56,6 @@ button {
   min-width:220px;
 }
 
-.card h4 {
-  margin:0 0 10px 0;
-}
-
-.fila {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
 .monto {
   font-size:22px;
   font-weight:bold;
@@ -76,11 +63,10 @@ button {
 
 .total {
   background:#f1f3f5;
-  font-size:18px;
   text-align:center;
+  font-size:18px;
 }
 
-/* ===== TICKETS ===== */
 .ticket {
   background:white;
   padding:14px;
@@ -159,10 +145,13 @@ async function cargar(){
   const resCot = await fetch('/cotizaciones')
   let cotizaciones = await resCot.json()
 
+  const hoy = new Date()
+  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
+
   // ===== MESES =====
   let meses = {}
   tickets.forEach(t=>{
-    if(!t.fecha)return
+    if(!t.fecha) return
     const f=new Date(t.fecha)
     const key=f.getFullYear()+'-'+(f.getMonth()+1)
     meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
@@ -170,12 +159,31 @@ async function cargar(){
 
   let mesesV={}
   cotizaciones.forEach(c=>{
-    if(!c.fecha)return
+    if(!c.fecha) return
     const f=new Date(c.fecha)
     const key=f.getFullYear()+'-'+(f.getMonth()+1)
     mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
+  const mesSeleccionado = document.getElementById('filtroMes')?.value || mesActualKey
+  const mesVentasSeleccionado = document.getElementById('filtroMesVentas')?.value || mesActualKey
+
+  // ===== FILTROS =====
+  if(mesSeleccionado !== 'todos'){
+    tickets = tickets.filter(t=>{
+      const f=new Date(t.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSeleccionado
+    })
+  }
+
+  if(mesVentasSeleccionado !== 'todos'){
+    cotizaciones = cotizaciones.filter(c=>{
+      const f=new Date(c.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesVentasSeleccionado
+    })
+  }
+
+  // ===== TOTALES =====
   let rep=0, ven=0
 
   tickets.forEach(t=>{
@@ -186,39 +194,40 @@ async function cargar(){
     if(c.confirmada==='si') ven+=parseFloat(c.ganancia)||0
   })
 
-  // ===== PANEL PREMIUM =====
+  // ===== PANEL =====
   document.getElementById('resumen').innerHTML = `
   <div class="panel">
 
     <div class="card">
-      <h4>🔧 Reparaciones</h4>
-      <div class="fila">
-        <select id="filtroMes" onchange="cargar()">
-          <option value="todos">Todos</option>
-          ${Object.entries(meses).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
-        </select>
-        <span class="monto">$${rep}</span>
-      </div>
+      <b>🔧 Reparaciones</b><br><br>
+      <select id="filtroMes" onchange="cargar()">
+        <option value="todos">Todos</option>
+        ${Object.entries(meses).map(([k,v])=>`
+          <option value="${k}" ${k===mesSeleccionado?'selected':''}>${v}</option>
+        `).join('')}
+      </select>
+      <div class="monto">$${rep}</div>
     </div>
 
     <div class="card">
-      <h4>🛒 Ventas</h4>
-      <div class="fila">
-        <select id="filtroMesVentas" onchange="cargar()">
-          <option value="todos">Todos</option>
-          ${Object.entries(mesesV).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
-        </select>
-        <span class="monto">$${ven}</span>
-      </div>
+      <b>🛒 Ventas</b><br><br>
+      <select id="filtroMesVentas" onchange="cargar()">
+        <option value="todos">Todos</option>
+        ${Object.entries(mesesV).map(([k,v])=>`
+          <option value="${k}" ${k===mesVentasSeleccionado?'selected':''}>${v}</option>
+        `).join('')}
+      </select>
+      <div class="monto">$${ven}</div>
     </div>
 
     <div class="card total">
-      🧮 Total: $${rep + ven}
+      <b>Total: $${rep+ven}</b>
     </div>
 
   </div>
   `
 
+  // ===== LISTA =====
   if(modo==='pendientes'){
     tickets=tickets.filter(t=>t.entregado!=='si')
   }
