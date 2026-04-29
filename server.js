@@ -177,8 +177,17 @@ app.delete('/ticket/:numero', async (req, res) => {
   }
 })
 
+
 // ================= COTIZACIONES =================
 
+app.delete('/proveedores/:nombre', async (req, res) => {
+  try {
+    await Proveedor.deleteOne({ nombre: req.params.nombre })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Error eliminando proveedor' })
+  }
+})
 // CREAR
 app.post('/cotizacion', async (req, res) => {
   try {

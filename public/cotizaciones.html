@@ -101,6 +101,9 @@ button {
 
 <select id="proveedor"></select>
 
+<select id="proveedor"></select>
+<button class="btn-danger" onclick="eliminarProveedor()">❌</button>
+
 <input id="nuevoProveedor" placeholder="Nuevo proveedor">
 <button class="btn" onclick="agregarProveedor()">➕</button>
 
@@ -200,7 +203,20 @@ async function agregarProveedor(){
   await cargarProveedores()
   proveedor.value = nombre
 }
+async function eliminarProveedor(){
 
+  const nombre = proveedor.value
+
+  if(!nombre) return alert('Seleccioná proveedor')
+
+  if(!confirm('Eliminar proveedor "'+nombre+'"?')) return
+
+  await fetch('/proveedores/'+encodeURIComponent(nombre), {
+    method: 'DELETE'
+  })
+
+  await cargarProveedores()
+}
 // ================= GUARDAR =================
 async function guardar() {
 
