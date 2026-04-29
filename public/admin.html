@@ -13,6 +13,7 @@ body {
   padding:20px;
 }
 
+/* ===== TOPBAR ===== */
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -22,22 +23,16 @@ body {
 }
 
 input {
-  padding:8px 10px;
+  padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
   max-width:240px;
 }
 
-select {
-  padding:8px;
-  border-radius:10px;
-  border:1px solid #ccc;
-}
-
 button {
-  padding:8px 12px;
+  padding:10px 14px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
   font-weight:bold;
 }
@@ -47,6 +42,45 @@ button {
 .btn-danger { background:#dc3545; color:white; }
 .btn-secondary { background:#6c757d; color:white; }
 
+/* ===== PANEL PREMIUM ===== */
+.panel {
+  display:flex;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  border-radius:14px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  flex:1;
+  min-width:220px;
+}
+
+.card h4 {
+  margin:0 0 10px 0;
+}
+
+.fila {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.monto {
+  font-size:22px;
+  font-weight:bold;
+}
+
+.total {
+  background:#f1f3f5;
+  font-size:18px;
+  text-align:center;
+}
+
+/* ===== TICKETS ===== */
 .ticket {
   background:white;
   padding:14px;
@@ -55,20 +89,11 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.resumen {
-  background:#fff;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.08);
-}
-
 textarea {
   width:100%;
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
-  font-family: Arial;
   resize:none;
   overflow:hidden;
 }
@@ -88,14 +113,6 @@ textarea {
 
   <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
 
-  <select id="filtroMes" onchange="cargar()">
-    <option value="todos">📅 Reparaciones</option>
-  </select>
-
-  <select id="filtroMesVentas" onchange="cargar()">
-    <option value="todos">🛒 Ventas</option>
-  </select>
-
   <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
   <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
 </div>
@@ -113,13 +130,11 @@ const socket = io()
 let timerGuardar = {}
 let escribiendo = false
 
-// ===== AUTO RESIZE =====
 function autoResize(el){
-  el.style.height = "auto"
-  el.style.height = (el.scrollHeight) + "px"
+  el.style.height="auto"
+  el.style.height=el.scrollHeight+"px"
 }
 
-// ===== GUARDADO CON DELAY =====
 function guardarDelay(id, el){
   escribiendo = true
   autoResize(el)
@@ -131,13 +146,11 @@ function guardarDelay(id, el){
 
   timerGuardar[id] = setTimeout(async () => {
     await guardar(id,'detalle',el.value)
-
     if(estado) estado.innerText = "✅ Guardado"
     escribiendo = false
   }, 800)
 }
 
-// ===== CARGAR =====
 async function cargar(){
 
   const res = await fetch('/tickets')
@@ -155,12 +168,6 @@ async function cargar(){
     meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  const select=document.getElementById('filtroMes')
-  select.innerHTML=`<option value="todos">📅 Reparaciones</option>`
-  Object.entries(meses).reverse().forEach(([k,v])=>{
-    select.innerHTML+=`<option value="${k}">${v}</option>`
-  })
-
   let mesesV={}
   cotizaciones.forEach(c=>{
     if(!c.fecha)return
@@ -169,30 +176,6 @@ async function cargar(){
     mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  const selectV=document.getElementById('filtroMesVentas')
-  selectV.innerHTML=`<option value="todos">🛒 Ventas</option>`
-  Object.entries(mesesV).reverse().forEach(([k,v])=>{
-    selectV.innerHTML+=`<option value="${k}">${v}</option>`
-  })
-
-  const mes=select.value
-  const mesV=selectV.value
-
-  if(mes!=='todos'){
-    tickets=tickets.filter(t=>{
-      const f=new Date(t.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mes
-    })
-  }
-
-  if(mesV!=='todos'){
-    cotizaciones=cotizaciones.filter(c=>{
-      const f=new Date(c.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mesV
-    })
-  }
-
-  // ===== RESUMEN =====
   let rep=0, ven=0
 
   tickets.forEach(t=>{
@@ -203,14 +186,39 @@ async function cargar(){
     if(c.confirmada==='si') ven+=parseFloat(c.ganancia)||0
   })
 
-  document.getElementById('resumen').innerHTML=`
-  <div class="resumen">
-    🔧 Reparaciones: $${rep}<br>
-    🛒 Ventas: $${ven}<br><br>
-    <b>Total: $${rep+ven}</b>
-  </div>`
+  // ===== PANEL PREMIUM =====
+  document.getElementById('resumen').innerHTML = `
+  <div class="panel">
 
-  // ===== FILTRO =====
+    <div class="card">
+      <h4>🔧 Reparaciones</h4>
+      <div class="fila">
+        <select id="filtroMes" onchange="cargar()">
+          <option value="todos">Todos</option>
+          ${Object.entries(meses).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+        </select>
+        <span class="monto">$${rep}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🛒 Ventas</h4>
+      <div class="fila">
+        <select id="filtroMesVentas" onchange="cargar()">
+          <option value="todos">Todos</option>
+          ${Object.entries(mesesV).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+        </select>
+        <span class="monto">$${ven}</span>
+      </div>
+    </div>
+
+    <div class="card total">
+      🧮 Total: $${rep + ven}
+    </div>
+
+  </div>
+  `
+
   if(modo==='pendientes'){
     tickets=tickets.filter(t=>t.entregado!=='si')
   }
@@ -223,14 +231,11 @@ async function cargar(){
     (t.numero||'').toLowerCase().includes(filtro)
   )
 
-  // ===== LISTA =====
   lista.innerHTML=''
 
   tickets.reverse().forEach(t=>{
-
     lista.innerHTML+=`
     <div class="ticket">
-
       <b>${t.numero}</b><br>
       ${t.nombre} (${t.telefono})<br>
       ${t.problema}<br>
@@ -245,9 +250,7 @@ async function cargar(){
       <br><br>
 
       📝 Detalle:
-      <textarea 
-      oninput="guardarDelay('${t.numero}',this)"
-      >${(t.detalle||'').trim()}</textarea>
+      <textarea oninput="guardarDelay('${t.numero}',this)">${(t.detalle||'').trim()}</textarea>
 
       <div class="estado-guardado" id="estado-${t.numero}"></div>
 
@@ -262,13 +265,11 @@ async function cargar(){
 
       <button class="btn-danger"
       onclick="borrar('${t.numero}')">❌</button>
-
     </div>
     `
   })
 }
 
-// ===== FUNCIONES =====
 async function guardar(id,campo,valor){
   await fetch('/ticket/'+id,{
     method:'PUT',
@@ -316,7 +317,6 @@ Tu equipo está listo ✅
   await guardar(id,'estado','listo')
 }
 
-// 🔥 SOCKET CONTROLADO
 socket.on('actualizar',()=>{
   if(!escribiendo) cargar()
 })
