@@ -36,7 +36,6 @@ const TicketSchema = new mongoose.Schema({
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-
 // 📊 COTIZACIONES
 const CotizacionSchema = new mongoose.Schema({
   nombre: String,
@@ -56,14 +55,12 @@ const CotizacionSchema = new mongoose.Schema({
 
 const Cotizacion = mongoose.models.Cotizacion || mongoose.model('Cotizacion', CotizacionSchema)
 
-
-// 🏢 PROVEEDORES (PRO)
+// 🏢 PROVEEDORES
 const ProveedorSchema = new mongoose.Schema({
   nombre: { type: String, unique: true }
 })
 
 const Proveedor = mongoose.models.Proveedor || mongoose.model('Proveedor', ProveedorSchema)
-
 
 // 🔢 CONTADOR
 const CounterSchema = new mongoose.Schema({
@@ -71,16 +68,12 @@ const CounterSchema = new mongoose.Schema({
   valor: Number
 })
 
-
-
 const Counter = mongoose.model('Counter', CounterSchema)
-
 
 // ================= SOCKET =================
 io.on('connection', () => {
   console.log('Cliente conectado')
 })
-
 
 // ================= TICKETS =================
 
@@ -127,7 +120,6 @@ app.post('/ticket', async (req, res) => {
     await nuevo.save()
 
     io.emit('actualizar')
-
     res.json(nuevo)
 
   } catch (err) {
@@ -149,18 +141,15 @@ app.get('/tickets', async (req, res) => {
 // ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
   try {
-
     await Ticket.findOneAndUpdate(
       { numero: req.params.numero },
       { $set: req.body }
     )
 
     io.emit('actualizar')
-
     res.json({ ok: true })
 
   } catch (err) {
-    console.error(err)
     res.status(500).json({ error: 'Error actualizando' })
   }
 })
@@ -176,7 +165,6 @@ app.delete('/ticket/:numero', async (req, res) => {
   }
 })
 
-
 // ================= COTIZACIONES =================
 
 // CREAR
@@ -188,11 +176,13 @@ app.post('/cotizacion', async (req, res) => {
 
     const nueva = new Cotizacion({
       ...req.body,
-      ganancia: precio - costo
+      ganancia: precio - costo,
+      fecha: new Date() // 🔥 clave para filtros por mes
     })
 
     await nueva.save()
 
+    io.emit('actualizar')
     res.json({ ok: true })
 
   } catch (err) {
@@ -217,26 +207,18 @@ app.put('/cotizacion/:id', async (req, res) => {
 
     const data = req.body
 
-    // 🔥 si viene confirmada, calculamos ganancia SI O SI
     if (data.confirmada === 'si') {
-
       const costo = parseFloat(data.costoProveedor) || 0
       const precio = parseFloat(data.precioCliente) || 0
-
       data.ganancia = precio - costo
     }
 
-    await Cotizacion.findByIdAndUpdate(
-      req.params.id,
-      { $set: data }
-    )
+    await Cotizacion.findByIdAndUpdate(req.params.id, { $set: data })
 
     io.emit('actualizar')
-
     res.json({ ok: true })
 
   } catch (err) {
-    console.error(err)
     res.status(500).json({ error: 'Error actualizando cotización' })
   }
 })
@@ -245,12 +227,12 @@ app.put('/cotizacion/:id', async (req, res) => {
 app.delete('/cotizacion/:id', async (req, res) => {
   try {
     await Cotizacion.findByIdAndDelete(req.params.id)
+    io.emit('actualizar')
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: 'Error borrando cotizacion' })
   }
 })
-
 
 // ================= PROVEEDORES =================
 
@@ -271,45 +253,12 @@ app.post('/proveedores', async (req, res) => {
     const nombre = req.body.nombre?.trim()
 
     if (!nombre) {
-      return res.json({ error: 'Nombre requerido' })
+      return res.status(400).json({ error: 'Nombre requerido' })
     }
 
     const existe = await Proveedor.findOne({ nombre })
 
-    if (existe) {
-      return res.json({ ok: true })
-    }
-
-    const nuevo = new Proveedor({ nombre })
-
-    await nuevo.save()
-
-    res.json({ ok: true })
-
-  } catch (err) {
-    res.status(500).json({ error: 'Error creando proveedor' })
-  }
-})
-// ================= PROVEEDORES =================
-
-// LISTAR
-app.get('/proveedores', async (req, res) => {
-  try {
-    const data = await Proveedor.find()
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo proveedores' })
-  }
-})
-
-// CREAR
-app.post('/proveedores', async (req, res) => {
-  try {
-    const { nombre } = req.body
-
-    if (!nombre) {
-      return res.status(400).json({ error: 'Nombre requerido' })
-    }
+    if (existe) return res.json({ ok: true })
 
     const nuevo = new Proveedor({ nombre })
     await nuevo.save()
@@ -320,7 +269,6 @@ app.post('/proveedores', async (req, res) => {
     res.status(500).json({ error: 'Error creando proveedor' })
   }
 })
-
 
 // ================= START =================
 const PORT = process.env.PORT || 3000
