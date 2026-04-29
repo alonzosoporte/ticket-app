@@ -10,14 +10,7 @@ body {
   background:#eef2f7;
   padding:20px;
 }
-.fila-precios input {
-  width: 100%;
-}
 
-.fila-precios label {
-  font-size: 12px;
-  color: #666;
-}
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -55,27 +48,16 @@ button {
 
 .fila-precios {
   display:flex;
-  gap:12px;
-  flex-wrap:wrap;
+  gap:10px;
 }
 
-.campo {
+.fila-precios div {
   flex:1;
-  min-width:150px;
 }
 
-.thumb {
-  width:60px;
-  height:60px;
-  object-fit:cover;
-  border-radius:6px;
-  margin:3px;
-  cursor:pointer;
-}
-
-.vencida {
-  color:red;
-  font-weight:bold;
+label {
+  font-size:12px;
+  color:#666;
 }
 </style>
 </head>
@@ -85,13 +67,16 @@ button {
 <h2>📊 Cotizaciones</h2>
 
 <div class="topbar">
-  <button class="btn-secondary" onclick="location.href='admin.html'">⬅ Volver</button>
+  <button class="btn-secondary" onclick="location.href='admin.html'">⬅️ Volver</button>
+
   <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
+
   <select id="filtroEstado" onchange="cargar()">
-  <option value="pendientes">⏳ Pendientes</option>
-  <option value="confirmadas">✅ Confirmadas</option>
-  <option value="todas">📋 Todas</option>
-</select>
+    <option value="pendientes">⏳ Pendientes</option>
+    <option value="confirmadas">✅ Confirmadas</option>
+    <option value="todas">📋 Todas</option>
+  </select>
+
   <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
 </div>
 
@@ -107,8 +92,6 @@ button {
 <br><br>
 
 <select id="proveedor"></select>
-
-<select id="proveedor"></select>
 <button type="button" class="btn-danger" onclick="eliminarProveedor()">❌</button>
 
 <input id="nuevoProveedor" placeholder="Nuevo proveedor">
@@ -117,39 +100,20 @@ button {
 <br><br>
 
 <div class="fila-precios">
-<div class="fila-precios" style="gap:8px">
-
-  <div style="flex:1">
+  <div>
     <label>Costo</label>
     <input id="costoProveedor">
   </div>
 
-  <div style="flex:1">
+  <div>
     <label>Cliente</label>
     <input id="precioCliente">
   </div>
 
-  <div style="flex:1">
+  <div>
     <label>Ganancia</label>
     <input id="ganancia" readonly>
   </div>
-
-</div>
-  <div class="campo">
-    <label>Precio costo:</label>
-    <input id="costoProveedor">
-  </div>
-
-  <div class="campo">
-    <label>Precio cliente:</label>
-    <input id="precioCliente">
-  </div>
-
-  <div class="campo">
-    <label>Ganancia:</label>
-    <input id="ganancia" readonly>
-  </div>
-
 </div>
 
 <br>
@@ -159,7 +123,6 @@ button {
 <br><br>
 
 📸 <input type="file" id="foto">
-
 
 <br><br>
 
@@ -174,9 +137,8 @@ button {
 
 let editando = null
 let fotoBase64 = ''
-let garantiaBase64 = ''
 
-// ================= GANANCIA =================
+// ===== GANANCIA =====
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -186,20 +148,14 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// ================= IMÁGENES =================
+// ===== FOTO =====
 foto.onchange = e => {
   const r = new FileReader()
   r.onload = () => fotoBase64 = r.result
   r.readAsDataURL(e.target.files[0])
 }
 
-garantiaFoto.onchange = e => {
-  const r = new FileReader()
-  r.onload = () => garantiaBase64 = r.result
-  r.readAsDataURL(e.target.files[0])
-}
-
-// ================= PROVEEDORES =================
+// ===== PROVEEDORES =====
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
@@ -225,21 +181,21 @@ async function agregarProveedor(){
   await cargarProveedores()
   proveedor.value = nombre
 }
+
 async function eliminarProveedor(){
-
   const nombre = proveedor.value
-
   if(!nombre) return alert('Seleccioná proveedor')
 
   if(!confirm('Eliminar proveedor "'+nombre+'"?')) return
 
   await fetch('/proveedores/'+encodeURIComponent(nombre), {
-    method: 'DELETE'
+    method:'DELETE'
   })
 
-  await cargarProveedores()
+  cargarProveedores()
 }
-// ================= GUARDAR =================
+
+// ===== GUARDAR =====
 async function guardar() {
 
   const data = {
@@ -250,60 +206,55 @@ async function guardar() {
     costoProveedor: costoProveedor.value,
     precioCliente: precioCliente.value,
     descripcion: descripcion.value,
-    foto: fotoBase64 || '',
-    
+    foto: fotoBase64 || ''
   }
 
   if (editando) {
-    await fetch('/cotizacion/' + editando,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    await fetch('/cotizacion/' + editando,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    })
   } else {
-    await fetch('/cotizacion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    await fetch('/cotizacion',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    })
   }
 
   limpiar()
   cargar()
 }
 
-// ================= CONFIRMAR =================
+// ===== CONFIRMAR =====
 async function confirmar(id){
-
-  const res = await fetch('/cotizaciones')
-  const data = await res.json()
-  const c = data.find(x => x._id === id)
-
-  if (!c) return
-
   await fetch('/cotizacion/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      confirmada:'si',
-      costoProveedor: c.costoProveedor,
-      precioCliente: c.precioCliente
-    })
+    body: JSON.stringify({ confirmada:'si' })
   })
-
-  alert('✅ Venta confirmada')
 
   cargar()
 }
 
-// ================= LISTAR =================
+// ===== LISTAR =====
 async function cargar() {
 
   const res = await fetch('/cotizaciones')
   let data = await res.json()
-  const estado = document.getElementById('filtroEstado').value
 
-if (estado === 'pendientes') {
-  data = data.filter(c => c.confirmada !== 'si')
-}
+  const estado = filtroEstado.value
 
-if (estado === 'confirmadas') {
-  data = data.filter(c => c.confirmada === 'si')
-}
+  if (estado === 'pendientes') {
+    data = data.filter(c => c.confirmada !== 'si')
+  }
 
-  const filtro = (buscar.value || '').toLowerCase()
+  if (estado === 'confirmadas') {
+    data = data.filter(c => c.confirmada === 'si')
+  }
+
+  const filtro = buscar.value.toLowerCase()
 
   data = data.filter(c =>
     (c.nombre || '').toLowerCase().includes(filtro) ||
@@ -319,37 +270,37 @@ if (estado === 'confirmadas') {
     const gan = c.ganancia || (precio - costo)
 
     lista.innerHTML += `
-      <div class="card">
+    <div class="card">
 
-        📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
+      📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
 
-        <b>${c.producto}</b><br>
-        🏢 ${c.proveedor || 'Sin proveedor'}<br>
-        ${c.nombre} (${c.celular})<br>
+      <b>${c.producto}</b><br>
+      🏢 ${c.proveedor || 'Sin proveedor'}<br>
+      ${c.nombre} (${c.celular})<br>
 
-        💸 Costo $${costo} | 💰 Cliente $${precio}<br>
-        🧾 <b>Ganancia $${gan}</b><br><br>
+      💸 $${costo} → 💰 $${precio}<br>
+      🧾 <b>Ganancia $${gan}</b><br><br>
 
-        ${
-          c.confirmada === 'si'
-  ? `
-    <span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
-    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-  `
-  : `
-    <span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
-    <button class="btn" onclick="editar('${c._id}')">✏️</button>
-            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-            <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar venta</button>
-          `
-        }
+      ${
+        c.confirmada === 'si'
+        ? `
+          <span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
+          <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+        `
+        : `
+          <span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
+          <button class="btn" onclick="editar('${c._id}')">✏️</button>
+          <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+          <button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>
+        `
+      }
 
-      </div>
+    </div>
     `
   })
 }
 
-// ================= RESTO =================
+// ===== RESTO =====
 async function editar(id){
   const res = await fetch('/cotizaciones')
   const data = await res.json()
@@ -377,7 +328,7 @@ async function borrar(id){
 
 function mostrarForm(){
   limpiar()
-  document.getElementById('form').style.display = 'block'
+  form.style.display = 'block'
 }
 
 function cancelar(){
@@ -386,8 +337,8 @@ function cancelar(){
 
 function limpiar(){
   editando = null
-
   fotoBase64 = ''
+
   nombre.value = ''
   celular.value = ''
   producto.value = ''
@@ -397,8 +348,8 @@ function limpiar(){
   ganancia.value = ''
   proveedor.value = ''
 
-  document.getElementById('foto').value = ''
-  document.getElementById('form').style.display = 'none'
+  foto.value = ''
+  form.style.display = 'none'
 }
 
 // INIT
