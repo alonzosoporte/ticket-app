@@ -10,7 +10,14 @@ body {
   background:#eef2f7;
   padding:20px;
 }
+.fila-precios input {
+  width: 100%;
+}
 
+.fila-precios label {
+  font-size: 12px;
+  color: #666;
+}
 .topbar {
   display:flex;
   flex-wrap:wrap;
@@ -110,7 +117,24 @@ button {
 <br><br>
 
 <div class="fila-precios">
+<div class="fila-precios" style="gap:8px">
 
+  <div style="flex:1">
+    <label>Costo</label>
+    <input id="costoProveedor">
+  </div>
+
+  <div style="flex:1">
+    <label>Cliente</label>
+    <input id="precioCliente">
+  </div>
+
+  <div style="flex:1">
+    <label>Ganancia</label>
+    <input id="ganancia" readonly>
+  </div>
+
+</div>
   <div class="campo">
     <label>Precio costo:</label>
     <input id="costoProveedor">
@@ -132,12 +156,10 @@ button {
 
 <textarea id="descripcion" placeholder="Descripción"></textarea>
 
-<br>
+<br><br>
 
 📸 <input type="file" id="foto">
-<br>
-🛡️ <input type="date" id="garantiaFecha">
-📸 <input type="file" id="garantiaFoto">
+
 
 <br><br>
 
@@ -229,8 +251,7 @@ async function guardar() {
     precioCliente: precioCliente.value,
     descripcion: descripcion.value,
     foto: fotoBase64 || '',
-    garantiaFecha: garantiaFecha.value,
-    garantiaFoto: garantiaBase64 || ''
+    
   }
 
   if (editando) {
@@ -367,8 +388,6 @@ function limpiar(){
   editando = null
 
   fotoBase64 = ''
-  garantiaBase64 = ''
-
   nombre.value = ''
   celular.value = ''
   producto.value = ''
@@ -376,13 +395,9 @@ function limpiar(){
   precioCliente.value = ''
   descripcion.value = ''
   ganancia.value = ''
-
   proveedor.value = ''
-  garantiaFecha.value = ''
 
   document.getElementById('foto').value = ''
-  document.getElementById('garantiaFoto').value = ''
-
   document.getElementById('form').style.display = 'none'
 }
 
