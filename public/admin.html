@@ -62,16 +62,20 @@ button {
   margin-bottom:15px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
+
 textarea {
   width:100%;
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
-  font-family: Arial, sans-serif;
-  font-size:14px;
-  line-height:1.4;
-  resize:vertical;
-  white-space:pre-wrap;
+  font-family: Arial;
+  resize:none;
+  overflow:hidden;
+}
+
+.estado-guardado {
+  font-size:12px;
+  color:#888;
 }
 </style>
 </head>
@@ -79,7 +83,6 @@ textarea {
 <body>
 
 <div class="topbar">
-
   <button class="btn-secondary" onclick="location.href='cotizaciones.html'">📊 Cotizaciones</button>
   <button class="btn-secondary" onclick="location.href='garantias.html'">🛡️ Garantías</button>
 
@@ -95,7 +98,6 @@ textarea {
 
   <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
   <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
-
 </div>
 
 <h2>🧾 Sistema De Tickets</h2>
@@ -108,7 +110,35 @@ textarea {
 let modo = 'pendientes'
 const socket = io()
 
-async function cargar() {
+let timerGuardar = {}
+let escribiendo = false
+
+// ===== AUTO RESIZE =====
+function autoResize(el){
+  el.style.height = "auto"
+  el.style.height = (el.scrollHeight) + "px"
+}
+
+// ===== GUARDADO CON DELAY =====
+function guardarDelay(id, el){
+  escribiendo = true
+  autoResize(el)
+
+  const estado = document.getElementById("estado-"+id)
+  if(estado) estado.innerText = "💾 Guardando..."
+
+  clearTimeout(timerGuardar[id])
+
+  timerGuardar[id] = setTimeout(async () => {
+    await guardar(id,'detalle',el.value)
+
+    if(estado) estado.innerText = "✅ Guardado"
+    escribiendo = false
+  }, 800)
+}
+
+// ===== CARGAR =====
+async function cargar(){
 
   const res = await fetch('/tickets')
   let tickets = await res.json()
@@ -116,204 +146,180 @@ async function cargar() {
   const resCot = await fetch('/cotizaciones')
   let cotizaciones = await resCot.json()
 
-  // ===== MESES REPARACIONES =====
+  // ===== MESES =====
   let meses = {}
-
-  tickets.forEach(t => {
-    if (!t.fecha) return
-    const f = new Date(t.fecha)
-    if (isNaN(f)) return
-
-    const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-    meses[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+  tickets.forEach(t=>{
+    if(!t.fecha)return
+    const f=new Date(t.fecha)
+    const key=f.getFullYear()+'-'+(f.getMonth()+1)
+    meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  const select = document.getElementById('filtroMes')
-  select.innerHTML = `<option value="todos">📅 Reparaciones</option>`
-
-  Object.entries(meses).reverse().forEach(([k, txt]) => {
-    select.innerHTML += `<option value="${k}">${txt}</option>`
+  const select=document.getElementById('filtroMes')
+  select.innerHTML=`<option value="todos">📅 Reparaciones</option>`
+  Object.entries(meses).reverse().forEach(([k,v])=>{
+    select.innerHTML+=`<option value="${k}">${v}</option>`
   })
 
-  // ===== MESES VENTAS =====
-  let mesesVentas = {}
-
-  cotizaciones.forEach(c => {
-    if (!c.fecha) return
-    const f = new Date(c.fecha)
-    if (isNaN(f)) return
-
-    const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-    mesesVentas[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+  let mesesV={}
+  cotizaciones.forEach(c=>{
+    if(!c.fecha)return
+    const f=new Date(c.fecha)
+    const key=f.getFullYear()+'-'+(f.getMonth()+1)
+    mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  const selectVentas = document.getElementById('filtroMesVentas')
-  selectVentas.innerHTML = `<option value="todos">🛒 Ventas</option>`
-
-  Object.entries(mesesVentas).reverse().forEach(([k, txt]) => {
-    selectVentas.innerHTML += `<option value="${k}">${txt}</option>`
+  const selectV=document.getElementById('filtroMesVentas')
+  selectV.innerHTML=`<option value="todos">🛒 Ventas</option>`
+  Object.entries(mesesV).reverse().forEach(([k,v])=>{
+    selectV.innerHTML+=`<option value="${k}">${v}</option>`
   })
 
-  const mes = select.value
-  const mesVentas = selectVentas.value
+  const mes=select.value
+  const mesV=selectV.value
 
-  // ===== FILTRO =====
-  if (mes !== 'todos') {
-    tickets = tickets.filter(t => {
-      const f = new Date(t.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1) === mes
+  if(mes!=='todos'){
+    tickets=tickets.filter(t=>{
+      const f=new Date(t.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mes
     })
   }
 
-  if (mesVentas !== 'todos') {
-    cotizaciones = cotizaciones.filter(c => {
-      const f = new Date(c.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1) === mesVentas
+  if(mesV!=='todos'){
+    cotizaciones=cotizaciones.filter(c=>{
+      const f=new Date(c.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesV
     })
   }
 
   // ===== RESUMEN =====
-  let totalReparaciones = 0
-  let totalVentas = 0
+  let rep=0, ven=0
 
-  tickets.forEach(t => {
-    if (t.entregado === 'si') {
-      totalReparaciones += parseFloat(t.ganancia) || 0
-    }
+  tickets.forEach(t=>{
+    if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
   })
 
-  cotizaciones.forEach(c => {
-    if (c.confirmada === 'si') {
-      totalVentas += parseFloat(c.ganancia) || 0
-    }
+  cotizaciones.forEach(c=>{
+    if(c.confirmada==='si') ven+=parseFloat(c.ganancia)||0
   })
 
-  document.getElementById('resumen').innerHTML = `
-    <div class="resumen">
-      <b>💰 Panel de Ganancias</b><br><br>
-      🔧 Reparaciones: $${totalReparaciones}<br>
-      🛒 Ventas: $${totalVentas}<br><br>
-      <b>🧮 TOTAL: $${totalReparaciones + totalVentas}</b>
-    </div>
-  `
+  document.getElementById('resumen').innerHTML=`
+  <div class="resumen">
+    🔧 Reparaciones: $${rep}<br>
+    🛒 Ventas: $${ven}<br><br>
+    <b>Total: $${rep+ven}</b>
+  </div>`
 
-  // ===== LISTA =====
-  if (modo === 'pendientes') {
-    tickets = tickets.filter(t => t.entregado !== 'si')
+  // ===== FILTRO =====
+  if(modo==='pendientes'){
+    tickets=tickets.filter(t=>t.entregado!=='si')
   }
 
-  const filtro = document.getElementById('busqueda').value.toLowerCase()
+  const filtro=busqueda.value.toLowerCase()
 
-  tickets = tickets.filter(t =>
-    (t.nombre || '').toLowerCase().includes(filtro) ||
-    (t.telefono || '').includes(filtro) ||
-    (t.numero || '').toLowerCase().includes(filtro)
+  tickets=tickets.filter(t=>
+    (t.nombre||'').toLowerCase().includes(filtro) ||
+    (t.telefono||'').includes(filtro) ||
+    (t.numero||'').toLowerCase().includes(filtro)
   )
 
-  const lista = document.getElementById('lista')
-  lista.innerHTML = ''
+  // ===== LISTA =====
+  lista.innerHTML=''
 
-  tickets.reverse().forEach(t => {
+  tickets.reverse().forEach(t=>{
 
-    lista.innerHTML += `
-      <div class="ticket">
+    lista.innerHTML+=`
+    <div class="ticket">
 
-        <b>${t.numero}</b><br>
-        ${t.nombre} (${t.telefono})<br>
-        ${t.problema}<br>
-        📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br>
+      <b>${t.numero}</b><br>
+      ${t.nombre} (${t.telefono})<br>
+      ${t.problema}<br>
+      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
 
-        <br>
+      💲 Precio:
+      <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
 
-        💲 Precio:
-        <input value="${t.precio || ''}" oninput="guardar('${t.numero}','precio',this.value)">
+      💰 Ganancia:
+      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
-        💰 Ganancia:
-        <input value="${t.ganancia || ''}" oninput="guardar('${t.numero}','ganancia',this.value)">
+      <br><br>
 
-        <br><br>
+      📝 Detalle:
+      <textarea 
+      oninput="guardarDelay('${t.numero}',this)"
+      >${(t.detalle||'').trim()}</textarea>
 
-        📝 Detalle:<br>
-        <textarea style="height:60px"
-        oninput="guardar('${t.numero}','detalle',this.value)">${(t.detalle || '').trim()}</textarea>
+      <div class="estado-guardado" id="estado-${t.numero}"></div>
 
-        <br><br>
+      <br>
 
-        <button class="btn-success"
-        onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-        ✔️ Listo + WhatsApp</button>
+      <button class="btn-success"
+      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+      ✔️ Listo + WhatsApp</button>
 
-        <button class="btn-secondary"
-        onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+      <button class="btn-secondary"
+      onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
 
-        <button class="btn-danger"
-        onclick="borrar('${t.numero}')">❌</button>
+      <button class="btn-danger"
+      onclick="borrar('${t.numero}')">❌</button>
 
-      </div>
+    </div>
     `
   })
 }
 
 // ===== FUNCIONES =====
-
-async function guardar(id, campo, valor) {
+async function guardar(id,campo,valor){
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ [campo]: valor })
+    body: JSON.stringify({[campo]:valor})
   })
 }
 
-async function marcarEntregado(id) {
+async function marcarEntregado(id){
   await fetch('/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ entregado:'si' })
+    body: JSON.stringify({entregado:'si'})
   })
 }
 
-async function borrar(id) {
-  if (!confirm("Eliminar?")) return
+async function borrar(id){
+  if(!confirm("Eliminar?"))return
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
-async function listoWhatsApp(id, nombre, telefono, precio){
+async function listoWhatsApp(id,nombre,telefono,precio){
 
-  let tel = telefono.replace(/\D/g,'')
+  let tel=telefono.replace(/\D/g,'')
 
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
-  const res = await fetch('/tickets')
-  const data = await res.json()
-  const t = data.find(x => x.numero === id)
+  const res=await fetch('/tickets')
+  const data=await res.json()
+  const t=data.find(x=>x.numero===id)
 
-  const fecha = new Date(t.fecha).toLocaleString('es-UY')
+  const fecha=new Date(t.fecha).toLocaleString('es-UY')
 
-  const mensaje =
-`Hola ${nombre} 👋
+  const msg=`Hola ${nombre} 👋
 
-Tu equipo ya está listo para retirar ✅
+Tu equipo está listo ✅
 
-📅 Fecha solicitud: ${fecha}
+📅 ${fecha}
+🧾 ${id}
+💲 ${precio||'A confirmar'}`
 
-🧾 Ticket: ${id}
-💲 Precio: ${precio || 'A confirmar'}
+  window.location.href="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(msg)
 
-Favor coordinar para retirarlo.`
-
-  const url="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(mensaje)
-
-  window.location.href=url
-
-  await fetch('/ticket/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({estado:'listo'})
-  })
+  await guardar(id,'estado','listo')
 }
 
-socket.on('actualizar', cargar)
+// 🔥 SOCKET CONTROLADO
+socket.on('actualizar',()=>{
+  if(!escribiendo) cargar()
+})
 
 cargar()
 
