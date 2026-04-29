@@ -45,7 +45,16 @@ button {
   border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
+.input-error {
+  border:2px solid #dc3545 !important;
+  background:#fff5f5;
+}
 
+.error-msg {
+  color:#dc3545;
+  font-size:12px;
+  margin-top:4px;
+}
 .fila-precios input {
   text-align:center;
   font-weight:bold;
@@ -193,6 +202,17 @@ async function eliminarProveedor(){
 
 // ===== GUARDAR =====
 async function guardar() {
+ if (!validarCampos()) {
+    return
+  }
+  // 🚨 VALIDACIÓN
+  if (!nombre.value.trim()) return alert('Falta nombre')
+  if (!celular.value.trim()) return alert('Falta celular')
+  if (!producto.value.trim()) return alert('Falta producto')
+  if (!proveedor.value.trim()) return alert('Falta proveedor')
+  if (!costoProveedor.value.trim()) return alert('Falta precio costo')
+  if (!precioCliente.value.trim()) return alert('Falta precio cliente')
+  if (!descripcion.value.trim()) return alert('Falta descripción')
 
   const data = {
     nombre: nombre.value,
@@ -202,8 +222,27 @@ async function guardar() {
     costoProveedor: costoProveedor.value,
     precioCliente: precioCliente.value,
     descripcion: descripcion.value,
-    foto: fotoBase64 || ''
+    foto: fotoBase64 || '',
+    garantiaFoto: garantiaBase64 || ''
   }
+
+  if (editando) {
+    await fetch('/cotizacion/' + editando,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    })
+  } else {
+    await fetch('/cotizacion',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    })
+  }
+
+  limpiar()
+  cargar()
+}
 
   if (editando) {
     await fetch('/cotizacion/' + editando,{
@@ -358,6 +397,14 @@ function limpiar(){
   foto.value = ''
   form.style.display = 'none'
 }
+
+// INIT
+// limpiar error cuando el usuario escribe
+document.querySelectorAll('input, textarea, select').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    el.classList.remove('input-error')
+  })
+})
 
 // INIT
 cargar()
