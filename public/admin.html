@@ -106,7 +106,7 @@ async function cargar() {
   let cotizaciones = await resCot.json()
 
   // ===== MESES REPARACIONES =====
-  let listaMeses = {}
+  let meses = {}
 
   tickets.forEach(t => {
     if (!t.fecha) return
@@ -114,22 +114,18 @@ async function cargar() {
     if (isNaN(f)) return
 
     const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-    listaMeses[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+    meses[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
 
   const select = document.getElementById('filtroMes')
+  select.innerHTML = `<option value="todos">📅 Reparaciones</option>`
 
-  if (select.options.length <= 1) {
-    Object.entries(listaMeses).reverse().forEach(([k, txt]) => {
-      const opt = document.createElement('option')
-      opt.value = k
-      opt.textContent = txt
-      select.appendChild(opt)
-    })
-  }
+  Object.entries(meses).reverse().forEach(([k, txt]) => {
+    select.innerHTML += `<option value="${k}">${txt}</option>`
+  })
 
   // ===== MESES VENTAS =====
-  let listaMesesVentas = {}
+  let mesesVentas = {}
 
   cotizaciones.forEach(c => {
     if (!c.fecha) return
@@ -137,37 +133,31 @@ async function cargar() {
     if (isNaN(f)) return
 
     const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-    listaMesesVentas[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
+    mesesVentas[key] = f.toLocaleString('es-UY', { month: 'long', year: 'numeric' })
   })
 
   const selectVentas = document.getElementById('filtroMesVentas')
+  selectVentas.innerHTML = `<option value="todos">🛒 Ventas</option>`
 
-  if (selectVentas.options.length <= 1) {
-    Object.entries(listaMesesVentas).reverse().forEach(([k, txt]) => {
-      const opt = document.createElement('option')
-      opt.value = k
-      opt.textContent = txt
-      selectVentas.appendChild(opt)
-    })
-  }
+  Object.entries(mesesVentas).reverse().forEach(([k, txt]) => {
+    selectVentas.innerHTML += `<option value="${k}">${txt}</option>`
+  })
 
-  // ===== FILTROS =====
   const mes = select.value
   const mesVentas = selectVentas.value
 
+  // ===== FILTRO =====
   if (mes !== 'todos') {
     tickets = tickets.filter(t => {
       const f = new Date(t.fecha)
-      const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-      return key === mes
+      return f.getFullYear()+'-'+(f.getMonth()+1) === mes
     })
   }
 
   if (mesVentas !== 'todos') {
     cotizaciones = cotizaciones.filter(c => {
       const f = new Date(c.fecha)
-      const key = f.getFullYear() + '-' + (f.getMonth() + 1)
-      return key === mesVentas
+      return f.getFullYear()+'-'+(f.getMonth()+1) === mesVentas
     })
   }
 
@@ -213,12 +203,16 @@ async function cargar() {
   lista.innerHTML = ''
 
   tickets.reverse().forEach(t => {
+
     lista.innerHTML += `
       <div class="ticket">
+
         <b>${t.numero}</b><br>
         ${t.nombre} (${t.telefono})<br>
         ${t.problema}<br>
-        📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
+        📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br>
+
+        <br>
 
         💲 Precio:
         <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
@@ -228,12 +222,30 @@ async function cargar() {
 
         <br><br>
 
-        <button class="btn-success" onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
-        <button class="btn-danger" onclick="borrar('${t.numero}')">❌</button>
+        📝 Detalle:<br>
+        <textarea style="height:60px"
+        onchange="guardar('${t.numero}','detalle',this.value)">
+        ${t.detalle || ''}
+        </textarea>
+
+        <br><br>
+
+        <button class="btn-success"
+        onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+        ✔️ Listo + WhatsApp</button>
+
+        <button class="btn-secondary"
+        onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+
+        <button class="btn-danger"
+        onclick="borrar('${t.numero}')">❌</button>
+
       </div>
     `
   })
 }
+
+// ===== FUNCIONES =====
 
 async function guardar(id, campo, valor) {
   await fetch('/ticket/'+id,{
@@ -254,6 +266,42 @@ async function marcarEntregado(id) {
 async function borrar(id) {
   if (!confirm("Eliminar?")) return
   await fetch('/ticket/'+id,{method:'DELETE'})
+}
+
+async function listoWhatsApp(id, nombre, telefono, precio){
+
+  let tel = telefono.replace(/\D/g,'')
+
+  if(tel.startsWith('0')) tel='598'+tel.substring(1)
+  if(!tel.startsWith('598')) tel='598'+tel
+
+  const res = await fetch('/tickets')
+  const data = await res.json()
+  const t = data.find(x => x.numero === id)
+
+  const fecha = new Date(t.fecha).toLocaleString('es-UY')
+
+  const mensaje =
+`Hola ${nombre} 👋
+
+Tu equipo ya está listo para retirar ✅
+
+📅 Fecha solicitud: ${fecha}
+
+🧾 Ticket: ${id}
+💲 Precio: ${precio || 'A confirmar'}
+
+Favor coordinar para retirarlo.`
+
+  const url="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(mensaje)
+
+  window.location.href=url
+
+  await fetch('/ticket/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({estado:'listo'})
+  })
 }
 
 socket.on('actualizar', cargar)
