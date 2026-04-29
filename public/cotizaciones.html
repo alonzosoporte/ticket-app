@@ -80,6 +80,11 @@ button {
 <div class="topbar">
   <button class="btn-secondary" onclick="location.href='admin.html'">⬅ Volver</button>
   <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
+  <select id="filtroEstado" onchange="cargar()">
+  <option value="pendientes">⏳ Pendientes</option>
+  <option value="confirmadas">✅ Confirmadas</option>
+  <option value="todas">📋 Todas</option>
+</select>
   <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
 </div>
 
@@ -251,6 +256,15 @@ async function cargar() {
 
   const res = await fetch('/cotizaciones')
   let data = await res.json()
+  const estado = document.getElementById('filtroEstado').value
+
+if (estado === 'pendientes') {
+  data = data.filter(c => c.confirmada !== 'si')
+}
+
+if (estado === 'confirmadas') {
+  data = data.filter(c => c.confirmada === 'si')
+}
 
   const filtro = (buscar.value || '').toLowerCase()
 
@@ -281,12 +295,13 @@ async function cargar() {
 
         ${
           c.confirmada === 'si'
-          ? `
-            <span style="color:green;font-weight:bold">✔ Venta confirmada</span><br><br>
-            <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-          `
-          : `
-            <button class="btn" onclick="editar('${c._id}')">✏️</button>
+  ? `
+    <span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
+    <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+  `
+  : `
+    <span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
+    <button class="btn" onclick="editar('${c._id}')">✏️</button>
             <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
             <button class="btn-success" onclick="confirmar('${c._id}')">✔ Confirmar venta</button>
           `
