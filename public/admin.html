@@ -215,10 +215,10 @@ async function cargar() {
         <br>
 
         💲 Precio:
-        <input value="${t.precio || ''}" onchange="guardar('${t.numero}','precio',this.value)">
+        <input value="${t.precio || ''}" oninput="guardar('${t.numero}','precio',this.value)">
 
         💰 Ganancia:
-        <input value="${t.ganancia || ''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+        <input value="${t.ganancia || ''}" oninput="guardar('${t.numero}','ganancia',this.value)">
 
         <br><br>
 

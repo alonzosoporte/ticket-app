@@ -141,19 +141,26 @@ app.get('/tickets', async (req, res) => {
 // ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
   try {
-    await Ticket.findOneAndUpdate(
+
+    const actualizado = await Ticket.findOneAndUpdate(
       { numero: req.params.numero },
-      { $set: req.body }
+      { $set: req.body },
+      { new: true } // 🔥 devuelve actualizado
     )
 
+    if (!actualizado) {
+      return res.status(404).json({ error: 'Ticket no encontrado' })
+    }
+
     io.emit('actualizar')
-    res.json({ ok: true })
+
+    res.json(actualizado)
 
   } catch (err) {
+    console.error(err)
     res.status(500).json({ error: 'Error actualizando' })
   }
 })
-
 // BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
   try {
