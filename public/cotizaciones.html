@@ -45,16 +45,21 @@ button {
   border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
+
 .input-error {
   border:2px solid #dc3545 !important;
   background:#fff5f5;
 }
 
-.error-msg {
-  color:#dc3545;
-  font-size:12px;
-  margin-top:4px;
+.fila-precios {
+  display:flex;
+  gap:10px;
 }
+
+.fila-precios div {
+  flex:1;
+}
+
 .fila-precios input {
   text-align:center;
   font-weight:bold;
@@ -200,19 +205,36 @@ async function eliminarProveedor(){
   cargarProveedores()
 }
 
+// ===== VALIDACIÓN =====
+function validarCampos(){
+  let ok = true
+
+  const campos = [
+    nombre,
+    celular,
+    producto,
+    proveedor,
+    costoProveedor,
+    precioCliente,
+    descripcion
+  ]
+
+  campos.forEach(c=>{
+    if(!c.value.trim()){
+      c.classList.add('input-error')
+      ok = false
+    }
+  })
+
+  if(!ok) alert("⚠️ Completá todos los campos")
+
+  return ok
+}
+
 // ===== GUARDAR =====
 async function guardar() {
- if (!validarCampos()) {
-    return
-  }
-  // 🚨 VALIDACIÓN
-  if (!nombre.value.trim()) return alert('Falta nombre')
-  if (!celular.value.trim()) return alert('Falta celular')
-  if (!producto.value.trim()) return alert('Falta producto')
-  if (!proveedor.value.trim()) return alert('Falta proveedor')
-  if (!costoProveedor.value.trim()) return alert('Falta precio costo')
-  if (!precioCliente.value.trim()) return alert('Falta precio cliente')
-  if (!descripcion.value.trim()) return alert('Falta descripción')
+
+  if (!validarCampos()) return
 
   const data = {
     nombre: nombre.value,
@@ -222,8 +244,7 @@ async function guardar() {
     costoProveedor: costoProveedor.value,
     precioCliente: precioCliente.value,
     descripcion: descripcion.value,
-    foto: fotoBase64 || '',
-    garantiaFoto: garantiaBase64 || ''
+    foto: fotoBase64 || ''
   }
 
   if (editando) {
@@ -237,24 +258,6 @@ async function guardar() {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
-    })
-  }
-
-  limpiar()
-  cargar()
-}
-
-  if (editando) {
-    await fetch('/cotizacion/' + editando,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    })
-  } else {
-    await fetch('/cotizacion',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
     })
   }
 
@@ -274,11 +277,7 @@ async function confirmar(id){
   await fetch('/cotizacion/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      confirmada:'si',
-      costoProveedor: c.costoProveedor,
-      precioCliente: c.precioCliente
-    })
+    body: JSON.stringify({ confirmada:'si' })
   })
 
   cargar()
@@ -398,12 +397,11 @@ function limpiar(){
   form.style.display = 'none'
 }
 
-// INIT
-// limpiar error cuando el usuario escribe
-document.querySelectorAll('input, textarea, select').forEach(el=>{
-  el.addEventListener('input', ()=>{
-    el.classList.remove('input-error')
-  })
+// limpiar errores al escribir (PRO)
+document.addEventListener('input', (e)=>{
+  if(e.target.matches('input, textarea, select')){
+    e.target.classList.remove('input-error')
+  }
 })
 
 // INIT
@@ -413,4 +411,4 @@ cargarProveedores()
 </script>
 
 </body>
-</html>" " 
+</html>
