@@ -142,10 +142,15 @@ app.get('/tickets', async (req, res) => {
 app.put('/ticket/:numero', async (req, res) => {
   try {
 
+    // 🔥 LIMPIAR DETALLE
+    if (req.body.detalle !== undefined) {
+      req.body.detalle = (req.body.detalle || '').trim()
+    }
+
     const actualizado = await Ticket.findOneAndUpdate(
       { numero: req.params.numero },
       { $set: req.body },
-      { new: true } // 🔥 devuelve actualizado
+      { new: true }
     )
 
     if (!actualizado) {
