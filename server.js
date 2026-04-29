@@ -192,18 +192,31 @@ app.delete('/proveedores/:nombre', async (req, res) => {
 app.post('/cotizacion', async (req, res) => {
   try {
 
-    const costo = parseFloat(req.body.costoProveedor) || 0
-    const precio = parseFloat(req.body.precioCliente) || 0
+    const {
+      nombre,
+      celular,
+      producto,
+      proveedor,
+      costoProveedor,
+      precioCliente,
+      descripcion
+    } = req.body
+
+    // 🚨 VALIDACIÓN REAL
+    if (!nombre || !celular || !producto || !proveedor || !costoProveedor || !precioCliente || !descripcion) {
+      return res.status(400).json({ error: 'Faltan datos obligatorios' })
+    }
+
+    const costo = parseFloat(costoProveedor) || 0
+    const precio = parseFloat(precioCliente) || 0
 
     const nueva = new Cotizacion({
       ...req.body,
-      ganancia: precio - costo,
-      fecha: new Date() // 🔥 clave para filtros por mes
+      ganancia: precio - costo
     })
 
     await nueva.save()
 
-    io.emit('actualizar')
     res.json({ ok: true })
 
   } catch (err) {
@@ -211,7 +224,6 @@ app.post('/cotizacion', async (req, res) => {
     res.status(500).json({ error: 'Error creando cotizacion' })
   }
 })
-
 // LISTAR
 app.get('/cotizaciones', async (req, res) => {
   try {
