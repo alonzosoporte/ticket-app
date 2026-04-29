@@ -147,8 +147,8 @@ async function cargar(){
 
   const hoy = new Date()
   const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
+  const nombreMesActual = hoy.toLocaleString('es-UY',{month:'long',year:'numeric'})
 
-  // ===== MESES =====
   let meses = {}
   tickets.forEach(t=>{
     if(!t.fecha) return
@@ -168,7 +168,6 @@ async function cargar(){
   const mesSeleccionado = document.getElementById('filtroMes')?.value || mesActualKey
   const mesVentasSeleccionado = document.getElementById('filtroMesVentas')?.value || mesActualKey
 
-  // ===== FILTROS =====
   if(mesSeleccionado !== 'todos'){
     tickets = tickets.filter(t=>{
       const f=new Date(t.fecha)
@@ -183,7 +182,6 @@ async function cargar(){
     })
   }
 
-  // ===== TOTALES =====
   let rep=0, ven=0
 
   tickets.forEach(t=>{
@@ -194,7 +192,6 @@ async function cargar(){
     if(c.confirmada==='si') ven+=parseFloat(c.ganancia)||0
   })
 
-  // ===== PANEL =====
   document.getElementById('resumen').innerHTML = `
   <div class="panel">
 
@@ -212,7 +209,8 @@ async function cargar(){
     <div class="card">
       <b>🛒 Ventas</b><br><br>
       <select id="filtroMesVentas" onchange="cargar()">
-        <option value="todos">Todos</option>
+        <option value="${mesActualKey}">🛒 ${nombreMesActual}</option>
+        <option value="todos">📋 Todas</option>
         ${Object.entries(mesesV).map(([k,v])=>`
           <option value="${k}" ${k===mesVentasSeleccionado?'selected':''}>${v}</option>
         `).join('')}
@@ -227,7 +225,6 @@ async function cargar(){
   </div>
   `
 
-  // ===== LISTA =====
   if(modo==='pendientes'){
     tickets=tickets.filter(t=>t.entregado!=='si')
   }
