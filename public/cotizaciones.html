@@ -5,19 +5,9 @@
 <title>Cotizaciones PRO</title>
 
 <style>
-body {
-  font-family: Arial;
-  background:#eef2f7;
-  padding:20px;
-}
+body { font-family: Arial; background:#eef2f7; padding:20px; }
 
-.topbar {
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-bottom:15px;
-  align-items:center;
-}
+.topbar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; align-items:center; }
 
 input, select, textarea {
   padding:8px 10px;
@@ -51,14 +41,7 @@ button {
   background:#fff5f5;
 }
 
-.fila-precios {
-  display:flex;
-  gap:10px;
-}
-
-.fila-precios div {
-  flex:1;
-}
+.fila-precios { display:flex; gap:10px; }
 
 .thumb {
   width:70px;
@@ -139,6 +122,10 @@ button {
 <br><br>
 
 <select id="proveedor"></select>
+<button class="btn-danger" onclick="eliminarProveedor()">❌</button>
+
+<input id="nuevoProveedor" placeholder="Nuevo proveedor">
+<button class="btn" onclick="agregarProveedor()">➕</button>
 
 <br><br>
 
@@ -197,7 +184,7 @@ function calcularGanancia(){
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// ===== FOTO MULTIPLE =====
+// ===== FOTO =====
 foto.onchange = e=>{
   const files = e.target.files
 
@@ -213,7 +200,6 @@ foto.onchange = e=>{
 
 function renderPreview(){
   preview.innerHTML=''
-
   fotosBase64.forEach((f,i)=>{
     preview.innerHTML += `
       <div class="thumb-box">
@@ -238,7 +224,46 @@ function cerrarModal(){
   modal.style.display='none'
 }
 
-// ===== VALIDAR =====
+// ===== PROVEEDORES =====
+async function cargarProveedores(){
+  const res = await fetch('/proveedores')
+  const data = await res.json()
+
+  const select = document.getElementById('proveedor')
+  select.innerHTML = `<option value="">-- Seleccionar proveedor --</option>`
+
+  data.forEach(p=>{
+    select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`
+  })
+}
+
+async function agregarProveedor(){
+  const nombre = nuevoProveedor.value.trim()
+  if(!nombre) return alert('Escribí proveedor')
+
+  await fetch('/proveedores',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nombre })
+  })
+
+  nuevoProveedor.value=''
+  await cargarProveedores()
+  proveedor.value = nombre
+}
+
+async function eliminarProveedor(){
+  const nombre = proveedor.value
+  if(!nombre) return alert('Seleccioná proveedor')
+
+  if(!confirm('Eliminar proveedor "'+nombre+'"?')) return
+
+  await fetch('/proveedores/'+encodeURIComponent(nombre), { method:'DELETE' })
+
+  cargarProveedores()
+}
+
+// ===== VALIDACIÓN =====
 function validarCampos(){
   let ok=true
   const campos=[nombre,celular,producto,proveedor,costoProveedor,precioCliente,descripcion]
@@ -296,13 +321,7 @@ async function confirmar(id){
   })
   cargar()
 }
-function mostrarForm(){
-  limpiar()
-  document.getElementById('form').style.display = 'block'
-}
-function cancelar(){
-  limpiar()
-}
+
 // ===== LISTAR =====
 async function cargar(){
   const res = await fetch('/cotizaciones')
@@ -317,13 +336,15 @@ async function cargar(){
 
   data.reverse().forEach(c=>{
 
-    const fotos = c.fotos || []
+    const fotos = c.fotos || (c.foto ? [c.foto] : [])
 
     lista.innerHTML += `
     <div class="card">
 
+      📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
+
       <b>${c.producto}</b><br>
-      ${c.nombre}<br><br>
+      ${c.nombre} (${c.celular})<br><br>
 
       ${
         fotos.length
@@ -331,12 +352,12 @@ async function cargar(){
         : ''
       }
 
-      <br><br>
+      <br>
 
       ${
         c.confirmada==='si'
         ? `<span style="color:green">✔️ Confirmada</span>`
-        : `<button class="btn-success" onclick="confirmar('${c._id}')">Confirmar</button>`
+        : `<button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>`
       }
 
     </div>
@@ -344,7 +365,16 @@ async function cargar(){
   })
 }
 
-// ===== LIMPIAR =====
+// ===== UI =====
+function mostrarForm(){
+  limpiar()
+  document.getElementById('form').style.display = 'block'
+}
+
+function cancelar(){
+  limpiar()
+}
+
 function limpiar(){
   editando=null
   fotosBase64=[]
@@ -361,8 +391,16 @@ function limpiar(){
   document.getElementById('form').style.display = 'none'
 }
 
+// limpiar errores
+document.addEventListener('input',(e)=>{
+  if(e.target.matches('input, textarea, select')){
+    e.target.classList.remove('input-error')
+  }
+})
+
 // INIT
 cargar()
+cargarProveedores()
 
 </script>
 
