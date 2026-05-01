@@ -65,12 +65,6 @@ button {
   font-weight:bold;
 }
 
-label {
-  font-size:12px;
-  color:#666;
-}
-
-/* 🔥 GALERÍA */
 .preview {
   display:flex;
   gap:8px;
@@ -105,7 +99,6 @@ label {
   cursor:pointer;
 }
 
-/* MODAL */
 .modal {
   position:fixed;
   top:0;
@@ -187,7 +180,6 @@ label {
 <br><br>
 
 📸 <input type="file" id="foto" multiple>
-
 <div class="preview" id="preview"></div>
 
 <br><br>
@@ -199,7 +191,6 @@ label {
 
 <div id="lista"></div>
 
-<!-- MODAL -->
 <div class="modal" id="modal" onclick="this.style.display='none'">
   <img id="modalImg">
 </div>
@@ -209,7 +200,6 @@ label {
 let editando = null
 let fotos = []
 
-// ===== GANANCIA =====
 function calcularGanancia() {
   const costo = parseFloat(costoProveedor.value) || 0
   const precio = parseFloat(precioCliente.value) || 0
@@ -219,10 +209,8 @@ function calcularGanancia() {
 costoProveedor.oninput = calcularGanancia
 precioCliente.oninput = calcularGanancia
 
-// ===== MULTI FOTO =====
 foto.onchange = e => {
   const files = e.target.files
-
   for(let f of files){
     const r = new FileReader()
     r.onload = () => {
@@ -235,7 +223,6 @@ foto.onchange = e => {
 
 function renderPreview(){
   preview.innerHTML = ''
-
   fotos.forEach((img,i)=>{
     preview.innerHTML += `
       <div class="thumb-wrap">
@@ -256,7 +243,6 @@ function verImagen(src){
   modalImg.src = src
 }
 
-// ===== PROVEEDORES =====
 async function cargarProveedores() {
   const res = await fetch('/proveedores')
   const data = await res.json()
@@ -296,14 +282,9 @@ async function eliminarProveedor(){
   cargarProveedores()
 }
 
-// ===== VALIDACIÓN =====
 function validarCampos(){
   let ok = true
-
-  const campos = [
-    nombre, celular, producto, proveedor,
-    costoProveedor, precioCliente, descripcion
-  ]
+  const campos = [nombre,celular,producto,proveedor,costoProveedor,precioCliente,descripcion]
 
   campos.forEach(c=>{
     if(!c.value.trim()){
@@ -313,11 +294,9 @@ function validarCampos(){
   })
 
   if(!ok) alert("⚠️ Completá todos los campos")
-
   return ok
 }
 
-// ===== GUARDAR =====
 async function guardar() {
 
   if (!validarCampos()) return
@@ -351,7 +330,15 @@ async function guardar() {
   cargar()
 }
 
-// ===== LISTAR =====
+async function confirmar(id){
+  await fetch('/cotizacion/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ confirmada:'si' })
+  })
+  cargar()
+}
+
 async function cargar() {
 
   const res = await fetch('/cotizaciones')
@@ -359,13 +346,8 @@ async function cargar() {
 
   const estado = filtroEstado.value
 
-  if (estado === 'pendientes') {
-    data = data.filter(c => c.confirmada !== 'si')
-  }
-
-  if (estado === 'confirmadas') {
-    data = data.filter(c => c.confirmada === 'si')
-  }
+  if (estado === 'pendientes') data = data.filter(c => c.confirmada !== 'si')
+  if (estado === 'confirmadas') data = data.filter(c => c.confirmada === 'si')
 
   lista.innerHTML = ''
 
@@ -373,16 +355,19 @@ async function cargar() {
 
     const costo = parseFloat(c.costoProveedor) || 0
     const precio = parseFloat(c.precioCliente) || 0
-    const gan = c.ganancia || (precio - costo)
+    const gan = precio - costo
 
     lista.innerHTML += `
     <div class="card">
 
+      📅 ${c.fecha ? new Date(c.fecha).toLocaleString() : ''}<br>
+
       <b>${c.producto}</b><br>
+      🏢 ${c.proveedor || 'Sin proveedor'}<br>
       ${c.nombre} (${c.celular})<br>
 
       💸 $${costo} → 💰 $${precio}<br>
-      🧾 <b>$${gan}</b><br><br>
+      🧾 <b>Ganancia $${gan}</b><br><br>
 
       <div class="preview">
         ${(c.fotos || []).map(img=>`
@@ -390,12 +375,50 @@ async function cargar() {
         `).join('')}
       </div>
 
+      <br>
+
+      ${
+        c.confirmada === 'si'
+        ? `<span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
+           <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>`
+        : `<span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
+           <button class="btn" onclick="editar('${c._id}')">✏️</button>
+           <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+           <button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>`
+      }
+
     </div>
     `
   })
 }
 
-// ===== RESTO =====
+async function editar(id){
+  const res = await fetch('/cotizaciones')
+  const data = await res.json()
+  const c = data.find(x => x._id === id)
+
+  editando = c._id
+
+  nombre.value=c.nombre||''
+  celular.value=c.celular||''
+  producto.value=c.producto||''
+  proveedor.value=c.proveedor||''
+  costoProveedor.value=c.costoProveedor||''
+  precioCliente.value=c.precioCliente||''
+  descripcion.value=c.descripcion||''
+  fotos = c.fotos || []
+
+  renderPreview()
+  calcularGanancia()
+  form.style.display='block'
+}
+
+async function borrar(id){
+  if(!confirm('Eliminar?'))return
+  await fetch('/cotizacion/'+id,{method:'DELETE'})
+  cargar()
+}
+
 function mostrarForm(){
   limpiar()
   form.style.display = 'block'
@@ -423,14 +446,12 @@ function limpiar(){
   form.style.display = 'none'
 }
 
-// limpiar errores
 document.addEventListener('input', (e)=>{
   if(e.target.matches('input, textarea, select')){
     e.target.classList.remove('input-error')
   }
 })
 
-// INIT
 cargar()
 cargarProveedores()
 
