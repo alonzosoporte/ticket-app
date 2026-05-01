@@ -296,7 +296,13 @@ async function confirmar(id){
   })
   cargar()
 }
-
+function mostrarForm(){
+  limpiar()
+  document.getElementById('form').style.display = 'block'
+}
+function cancelar(){
+  limpiar()
+}
 // ===== LISTAR =====
 async function cargar(){
   const res = await fetch('/cotizaciones')
@@ -352,7 +358,7 @@ function limpiar(){
   descripcion.value=''
   proveedor.value=''
 
-  form.style.display='none'
+  document.getElementById('form').style.display = 'none'
 }
 
 // INIT
