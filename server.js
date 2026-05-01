@@ -36,7 +36,7 @@ const TicketSchema = new mongoose.Schema({
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// 📊 COTIZACIONES
+// 📊 COTIZACIONES (también usadas como garantías)
 const CotizacionSchema = new mongoose.Schema({
   nombre: String,
   celular: String,
@@ -142,7 +142,6 @@ app.get('/tickets', async (req, res) => {
 app.put('/ticket/:numero', async (req, res) => {
   try {
 
-    // 🔥 LIMPIAR DETALLE
     if (req.body.detalle !== undefined) {
       req.body.detalle = (req.body.detalle || '').trim()
     }
@@ -158,7 +157,6 @@ app.put('/ticket/:numero', async (req, res) => {
     }
 
     io.emit('actualizar')
-
     res.json(actualizado)
 
   } catch (err) {
@@ -166,6 +164,7 @@ app.put('/ticket/:numero', async (req, res) => {
     res.status(500).json({ error: 'Error actualizando' })
   }
 })
+
 // BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
   try {
@@ -177,22 +176,11 @@ app.delete('/ticket/:numero', async (req, res) => {
   }
 })
 
-
 // ================= COTIZACIONES =================
 
-app.delete('/proveedores/:nombre', async (req, res) => {
-  try {
-    await Proveedor.deleteOne({ nombre: req.params.nombre })
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: 'Error eliminando proveedor' })
-  }
-})
 // CREAR
 app.post('/cotizacion', async (req, res) => {
   try {
-
-    console.log("🔥 VALIDACION ACTIVA", req.body)
 
     const {
       nombre,
@@ -204,7 +192,6 @@ app.post('/cotizacion', async (req, res) => {
       descripcion
     } = req.body
 
-    // 🚨 VALIDACIÓN FUERTE (NO PASA VACÍOS)
     if (
       !nombre?.trim() ||
       !celular?.trim() ||
@@ -247,7 +234,7 @@ app.get('/cotizaciones', async (req, res) => {
   }
 })
 
-// ACTUALIZAR
+// ACTUALIZAR (CONFIRMAR + GANANCIA)
 app.put('/cotizacion/:id', async (req, res) => {
   try {
 
@@ -277,6 +264,35 @@ app.delete('/cotizacion/:id', async (req, res) => {
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: 'Error borrando cotizacion' })
+  }
+})
+
+// ================= GARANTIAS =================
+
+// LISTAR GARANTIAS (cotizaciones confirmadas)
+app.get('/garantias', async (req, res) => {
+  try {
+    const data = await Cotizacion.find({ confirmada: 'si' }).sort({ _id: -1 })
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo garantías' })
+  }
+})
+
+// ACTUALIZAR GARANTIA
+app.put('/garantia/:id', async (req,res)=>{
+  try {
+    const { garantiaHasta, fotoGarantia } = req.body
+
+    await Cotizacion.findByIdAndUpdate(req.params.id,{
+      garantiaFecha: garantiaHasta,
+      garantiaFoto: fotoGarantia
+    })
+
+    res.json({ ok:true })
+
+  } catch (err) {
+    res.status(500).json({ error:'Error actualizando garantía' })
   }
 })
 
@@ -313,6 +329,16 @@ app.post('/proveedores', async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: 'Error creando proveedor' })
+  }
+})
+
+// BORRAR
+app.delete('/proveedores/:nombre', async (req, res) => {
+  try {
+    await Proveedor.deleteOne({ nombre: req.params.nombre })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Error eliminando proveedor' })
   }
 })
 

@@ -113,6 +113,8 @@ function cerrarModal(){
 
 // ===== FOTO GARANTIA =====
 async function subirFoto(id, file){
+  if(!file) return
+
   const r = new FileReader()
   r.onload = async () => {
     await fetch('/garantia/'+id,{
@@ -140,21 +142,23 @@ async function cargar(){
   const res = await fetch('/garantias')
   let data = await res.json()
 
-  const filtro = buscar.value.toLowerCase()
+  const filtroTexto = buscar.value.toLowerCase()
   const estado = filtroEstado.value
   const hoy = new Date()
 
+  // 🔍 BUSCADOR
   data = data.filter(g =>
-    (g.nombre||'').toLowerCase().includes(filtro) ||
-    (g.celular||'').includes(filtro) ||
-    (g.producto||'').toLowerCase().includes(filtro)
+    (g.nombre||'').toLowerCase().includes(filtroTexto) ||
+    (g.celular||'').includes(filtroTexto) ||
+    (g.producto||'').toLowerCase().includes(filtroTexto)
   )
 
+  // 🔽 FILTRO ESTADO
   data = data.filter(g => {
 
-    if(!g.garantiaHasta) return estado !== 'vencidas'
+    if(!g.garantiaFecha) return estado !== 'vencidas'
 
-    const f = new Date(g.garantiaHasta)
+    const f = new Date(g.garantiaFecha)
 
     if(estado === 'vigentes') return f >= hoy
     if(estado === 'vencidas') return f < hoy
@@ -166,8 +170,8 @@ async function cargar(){
 
   data.reverse().forEach(g=>{
 
-    const vencimiento = g.garantiaHasta ? new Date(g.garantiaHasta) : null
-    const vencida = vencimiento && vencimiento < hoy
+    const fechaGarantia = g.garantiaFecha ? new Date(g.garantiaFecha) : null
+    const vencida = fechaGarantia && fechaGarantia < hoy
 
     lista.innerHTML += `
     <div class="card">
@@ -181,35 +185,38 @@ async function cargar(){
       💸 $${g.costoProveedor || 0} → 💰 $${g.precioCliente || 0}<br>
       🧾 Ganancia $${g.ganancia || (g.precioCliente - g.costoProveedor)}<br><br>
 
-      🛡️ Garantía hasta:<br>
-      <input type="date" value="${g.garantiaHasta ? g.garantiaHasta.split('T')[0] : ''}"
+      🛡️ <b>Garantía hasta:</b><br>
+
+      <input type="date"
+      value="${g.garantiaFecha ? g.garantiaFecha.split('T')[0] : ''}"
       onchange="guardarFecha('${g._id}', this.value)">
-      
+
       <span class="${vencida ? 'vencida':'vigente'}">
-        ${vencimiento ? vencimiento.toLocaleDateString() : 'Sin fecha'}
+        ${fechaGarantia ? fechaGarantia.toLocaleDateString() : 'Sin fecha'}
       </span>
+
       <br><br>
 
+      <!-- 📸 FOTOS PRODUCTO -->
       ${
-        g.foto
+        g.fotos && g.fotos.length
         ? `
-          <div>
-            ${
-              Array.isArray(g.foto)
-              ? g.foto.map(f => `<img src="${f}" class="thumb" onclick="abrirModal('${f}')">`).join('')
-              : `<img src="${g.foto}" class="thumb" onclick="abrirModal('${g.foto}')">`
-            }
-          </div><br>
+          <b>📦 Producto:</b><br>
+          ${g.fotos.map(f => `
+            <img src="${f}" class="thumb" onclick="abrirModal('${f}')">
+          `).join('')}
+          <br><br>
         `
         : ''
       }
 
-      <b>📸 Foto garantía:</b><br>
+      <!-- 📸 FOTO GARANTIA -->
+      <b>📸 Garantía:</b><br>
 
       ${
         g.fotoGarantia
         ? `<img src="${g.fotoGarantia}" class="thumb" onclick="abrirModal('${g.fotoGarantia}')"><br>`
-        : ''
+        : '<span style="color:#888">Sin foto</span><br>'
       }
 
       <input type="file" onchange="subirFoto('${g._id}', this.files[0])">
