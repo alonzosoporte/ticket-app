@@ -8,7 +8,7 @@ const server = http.createServer(app)
 const io = new Server(server)
 
 // ================= CONFIG =================
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '20mb' }))
 app.use(express.static('public'))
 
 // ================= MONGODB =================
@@ -30,13 +30,12 @@ const TicketSchema = new mongoose.Schema({
   ganancia: String,
   estado: String,
   entregado: String,
-  fecha: { type: Date, default: Date.now },
-  garantiaFecha: String
+  fecha: { type: Date, default: Date.now }
 })
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// 📊 COTIZACIONES (también usadas como garantías)
+// 📊 COTIZACIONES (VENTAS + GARANTÍAS)
 const CotizacionSchema = new mongoose.Schema({
   nombre: String,
   celular: String,
@@ -46,9 +45,17 @@ const CotizacionSchema = new mongoose.Schema({
   precioCliente: String,
   ganancia: Number,
   descripcion: String,
+
+  // 🔥 FOTOS PRODUCTO (MULTIPLE)
   fotos: [String],
+
+  // 🔥 COMPATIBILIDAD (viejo)
+  foto: String,
+
+  // 🔥 GARANTÍA
   garantiaFecha: String,
   garantiaFoto: String,
+
   confirmada: { type: String, default: 'no' },
   fecha: { type: Date, default: Date.now }
 })
@@ -130,51 +137,29 @@ app.post('/ticket', async (req, res) => {
 
 // LISTAR
 app.get('/tickets', async (req, res) => {
-  try {
-    const data = await Ticket.find().sort({ _id: -1 })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo tickets' })
-  }
+  const data = await Ticket.find().sort({ _id: -1 })
+  res.json(data)
 })
 
 // ACTUALIZAR
 app.put('/ticket/:numero', async (req, res) => {
-  try {
+  const actualizado = await Ticket.findOneAndUpdate(
+    { numero: req.params.numero },
+    { $set: req.body },
+    { new: true }
+  )
 
-    if (req.body.detalle !== undefined) {
-      req.body.detalle = (req.body.detalle || '').trim()
-    }
-
-    const actualizado = await Ticket.findOneAndUpdate(
-      { numero: req.params.numero },
-      { $set: req.body },
-      { new: true }
-    )
-
-    if (!actualizado) {
-      return res.status(404).json({ error: 'Ticket no encontrado' })
-    }
-
-    io.emit('actualizar')
-    res.json(actualizado)
-
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Error actualizando' })
-  }
+  io.emit('actualizar')
+  res.json(actualizado)
 })
 
 // BORRAR
 app.delete('/ticket/:numero', async (req, res) => {
-  try {
-    await Ticket.findOneAndDelete({ numero: req.params.numero })
-    io.emit('actualizar')
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: 'Error borrando' })
-  }
+  await Ticket.findOneAndDelete({ numero: req.params.numero })
+  io.emit('actualizar')
+  res.json({ ok: true })
 })
+
 
 // ================= COTIZACIONES =================
 
@@ -192,6 +177,7 @@ app.post('/cotizacion', async (req, res) => {
       descripcion
     } = req.body
 
+    // 🚨 VALIDACIÓN
     if (
       !nombre?.trim() ||
       !celular?.trim() ||
@@ -226,20 +212,30 @@ app.post('/cotizacion', async (req, res) => {
 
 // LISTAR
 app.get('/cotizaciones', async (req, res) => {
+  const data = await Cotizacion.find().sort({ _id: -1 })
+  res.json(data)
+})
+
+// 🔥 GARANTÍAS (VENTAS CONFIRMADAS)
+app.get('/garantias', async (req, res) => {
   try {
-    const data = await Cotizacion.find().sort({ _id: -1 })
+    const data = await Cotizacion.find({
+      confirmada: 'si'
+    }).sort({ _id: -1 })
+
     res.json(data)
   } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo cotizaciones' })
+    res.status(500).json({ error: 'Error obteniendo garantías' })
   }
 })
 
-// ACTUALIZAR (CONFIRMAR + GANANCIA)
+// ACTUALIZAR COTIZACION
 app.put('/cotizacion/:id', async (req, res) => {
   try {
 
     const data = req.body
 
+    // 🔥 recalcular ganancia al confirmar
     if (data.confirmada === 'si') {
       const costo = parseFloat(data.costoProveedor) || 0
       const precio = parseFloat(data.precioCliente) || 0
@@ -256,90 +252,73 @@ app.put('/cotizacion/:id', async (req, res) => {
   }
 })
 
-// BORRAR
-app.delete('/cotizacion/:id', async (req, res) => {
-  try {
-    await Cotizacion.findByIdAndDelete(req.params.id)
-    io.emit('actualizar')
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: 'Error borrando cotizacion' })
-  }
-})
-
-// ================= GARANTIAS =================
-
-// LISTAR GARANTIAS (cotizaciones confirmadas)
-app.get('/garantias', async (req, res) => {
-  try {
-    const data = await Cotizacion.find({ confirmada: 'si' }).sort({ _id: -1 })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo garantías' })
-  }
-})
-
-// ACTUALIZAR GARANTIA
+// 🔥 GUARDAR GARANTÍA
 app.put('/garantia/:id', async (req,res)=>{
   try {
-    const { garantiaHasta, fotoGarantia } = req.body
+
+    const data = {}
+
+    if(req.body.garantiaHasta){
+      data.garantiaFecha = req.body.garantiaHasta
+    }
+
+    if(req.body.fotoGarantia){
+      data.garantiaFoto = req.body.fotoGarantia
+    }
 
     await Cotizacion.findByIdAndUpdate(req.params.id,{
-      garantiaFecha: garantiaHasta,
-      garantiaFoto: fotoGarantia
+      $set: data
     })
+
+    io.emit('actualizar')
 
     res.json({ ok:true })
 
-  } catch (err) {
-    res.status(500).json({ error:'Error actualizando garantía' })
+  } catch(err){
+    console.error(err)
+    res.status(500).json({ error:'Error guardando garantía' })
   }
 })
+
+// BORRAR
+app.delete('/cotizacion/:id', async (req, res) => {
+  await Cotizacion.findByIdAndDelete(req.params.id)
+  io.emit('actualizar')
+  res.json({ ok: true })
+})
+
 
 // ================= PROVEEDORES =================
 
 // LISTAR
 app.get('/proveedores', async (req, res) => {
-  try {
-    const data = await Proveedor.find().sort({ nombre: 1 })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo proveedores' })
-  }
+  const data = await Proveedor.find().sort({ nombre: 1 })
+  res.json(data)
 })
 
 // CREAR
 app.post('/proveedores', async (req, res) => {
-  try {
 
-    const nombre = req.body.nombre?.trim()
+  const nombre = req.body.nombre?.trim()
 
-    if (!nombre) {
-      return res.status(400).json({ error: 'Nombre requerido' })
-    }
-
-    const existe = await Proveedor.findOne({ nombre })
-
-    if (existe) return res.json({ ok: true })
-
-    const nuevo = new Proveedor({ nombre })
-    await nuevo.save()
-
-    res.json({ ok: true })
-
-  } catch (err) {
-    res.status(500).json({ error: 'Error creando proveedor' })
+  if (!nombre) {
+    return res.status(400).json({ error: 'Nombre requerido' })
   }
+
+  const existe = await Proveedor.findOne({ nombre })
+
+  if (existe) return res.json({ ok: true })
+
+  const nuevo = new Proveedor({ nombre })
+  await nuevo.save()
+
+  res.json({ ok: true })
 })
 
 // BORRAR
 app.delete('/proveedores/:nombre', async (req, res) => {
-  try {
-    await Proveedor.deleteOne({ nombre: req.params.nombre })
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: 'Error eliminando proveedor' })
-  }
+  await Proveedor.deleteOne({ nombre: req.params.nombre })
+  res.json({ ok: true })
 })
 
 // ================= START =================
