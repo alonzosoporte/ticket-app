@@ -157,13 +157,12 @@ async function cargar(){
     meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
   })
 
-  let mesesV={}
+let mesesV={}
 cotizaciones.forEach(c=>{
-  if(c.confirmada === 'si'){
-    const costo = parseFloat(c.costoProveedor) || 0
-    const precio = parseFloat(c.precioCliente) || 0
-    ven += (precio - costo)
-  }
+  if(!c.fecha) return
+  const f=new Date(c.fecha)
+  const key=f.getFullYear()+'-'+(f.getMonth()+1)
+  mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
 })
 
   const mesSeleccionado = document.getElementById('filtroMes')?.value || mesActualKey
@@ -189,9 +188,13 @@ cotizaciones.forEach(c=>{
     if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
   })
 
-  cotizaciones.forEach(c=>{
-    if(c.confirmada==='si') ven+=parseFloat(c.ganancia)||0
-  })
+cotizaciones.forEach(c=>{
+  if(c.confirmada === 'si'){
+    const costo = parseFloat(c.costoProveedor) || 0
+    const precio = parseFloat(c.precioCliente) || 0
+    ven += (precio - costo)
+  }
+})
 
   document.getElementById('resumen').innerHTML = `
   <div class="panel">
