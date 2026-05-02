@@ -136,7 +136,69 @@ function guardarDelay(id, el){
     escribiendo = false
   }, 800)
 }
+async function descargarPDF(numero){
 
+  const res = await fetch('/tickets')
+  const data = await res.json()
+
+  const t = data.find(x => x.numero === numero)
+  if(!t) return alert('No encontrado')
+
+  const { jsPDF } = window.jspdf
+  const doc = new jsPDF()
+
+  let y = 20
+
+  // 🔥 CARGAR LOGO DESDE /public
+  const img = new Image()
+  img.src = '/logo.png'
+
+  img.onload = () => {
+
+    // LOGO
+    doc.addImage(img, 'PNG', 10, 10, 50, 25)
+
+    // TITULO
+    doc.setFontSize(16)
+    doc.text("FACTURA DE SERVICIO", 70, 20)
+
+    y = 45
+
+    doc.setFontSize(12)
+
+    // DATOS CLIENTE
+    doc.text("Cliente: " + (t.nombre || ''), 10, y)
+    y += 8
+
+    doc.text("Teléfono: " + (t.telefono || ''), 10, y)
+    y += 8
+
+    // PROBLEMA
+    doc.text("Problema:", 10, y)
+    y += 8
+
+    doc.text(t.problema || '', 10, y, { maxWidth: 180 })
+    y += 12
+
+    // DESCRIPCIÓN
+    doc.text("Descripción técnica:", 10, y)
+    y += 8
+
+    doc.text(t.descripcion || '', 10, y, { maxWidth: 180 })
+    y += 20
+
+    // TOTAL
+    doc.setFontSize(14)
+    doc.text("TOTAL: $" + (t.precio || 0), 10, y)
+
+    y += 10
+    doc.setFontSize(10)
+    doc.text("Fecha: " + new Date().toLocaleDateString(), 10, y)
+
+    // DESCARGAR
+    doc.save(`Factura_${t.numero}.pdf`)
+  }
+}
 async function cargar(){
 
   const res = await fetch('/tickets')
@@ -241,44 +303,47 @@ cotizaciones.forEach(c=>{
     (t.numero||'').toLowerCase().includes(filtro)
   )
 
-  lista.innerHTML=''
+ lista.innerHTML=''
 
-  tickets.reverse().forEach(t=>{
-    lista.innerHTML+=`
-    <div class="ticket">
-      <b>${t.numero}</b><br>
-      ${t.nombre} (${t.telefono})<br>
-      ${t.problema}<br>
-      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
+tickets.reverse().forEach(t=>{
+  lista.innerHTML+=`
+  <div class="ticket">
+    <b>${t.numero}</b><br>
+    ${t.nombre} (${t.telefono})<br>
+    ${t.problema}<br>
+    📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
 
-      💲 Precio:
-      <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+    💲 Precio:
+    <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
 
-      💰 Ganancia:
-      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+    💰 Ganancia:
+    <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
-      <br><br>
+    <br><br>
 
-      📝 Detalle:
-      <textarea oninput="guardarDelay('${t.numero}',this)">${(t.detalle||'').trim()}</textarea>
+    📝 Detalle:
+    <textarea oninput="guardarDelay('${t.numero}',this)">${(t.detalle||'').trim()}</textarea>
 
-      <div class="estado-guardado" id="estado-${t.numero}"></div>
+    <div class="estado-guardado" id="estado-${t.numero}"></div>
 
-      <br>
+    <br>
 
-      <button class="btn-success"
-      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-      ✔️ Listo + WhatsApp</button>
+    <button class="btn-success"
+    onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+    ✔️ Listo + WhatsApp</button>
 
-      <button class="btn-secondary"
-      onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+    <button class="btn-secondary"
+    onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
 
-      <button class="btn-danger"
-      onclick="borrar('${t.numero}')">❌</button>
-    </div>
-    `
-  })
-}
+    <!-- 🔥 BOTÓN PDF (ACÁ VA) -->
+    <button class="btn"
+    onclick="descargarPDF('${t.numero}')">📄 PDF</button>
+
+    <button class="btn-danger"
+    onclick="borrar('${t.numero}')">❌</button>
+  </div>
+  `
+})
 
 async function guardar(id,campo,valor){
   await fetch('/ticket/'+id,{
