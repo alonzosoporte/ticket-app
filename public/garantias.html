@@ -194,7 +194,7 @@ async function cargar(){
 
   data.reverse().forEach(g=>{
 
-    const fechaGarantia = g.garantiaHasta ? new Date(g.garantiaHasta) : null
+    const fechaGarantia = g.garantiaHasta
     const vencida = fechaGarantia && fechaGarantia < hoy
 
     const fotos = g.fotos || (g.foto ? [g.foto] : [])
@@ -219,7 +219,7 @@ async function cargar(){
       style="border:2px solid #007bff">
 
       <span class="${vencida ? 'vencida':'vigente'}">
-        ${fechaGarantia ? fechaGarantia.toLocaleDateString() : 'Sin fecha'}
+        ${fechaGarantia ? fechaGarantia : 'Sin fecha'}
       </span>
 
       <br><br>
