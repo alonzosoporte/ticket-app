@@ -53,11 +53,10 @@ const CotizacionSchema = new mongoose.Schema({
   foto: String,
 
   // 🔥 GARANTÍA
-  garantiaFecha: String,
+  garantiaHasta: String,
   garantiaFoto: String,
 
-  confirmada: { type: String, default: 'no' },
-  fecha: { type: Date, default: Date.now }
+,  fecha: { type: Date, default: Date.now }
 })
 
 const Cotizacion = mongoose.models.Cotizacion || mongoose.model('Cotizacion', CotizacionSchema)
@@ -254,30 +253,14 @@ app.put('/cotizacion/:id', async (req, res) => {
 
 // 🔥 GUARDAR GARANTÍA
 app.put('/garantia/:id', async (req,res)=>{
-  try {
+  const { garantiaFecha, fotoGarantia } = req.body
 
-    const data = {}
+  await Cotizacion.findByIdAndUpdate(req.params.id,{
+    garantiaFecha,
+    fotoGarantia
+  })
 
-    if(req.body.garantiaHasta){
-      data.garantiaFecha = req.body.garantiaHasta
-    }
-
-    if(req.body.fotoGarantia){
-      data.garantiaFoto = req.body.fotoGarantia
-    }
-
-    await Cotizacion.findByIdAndUpdate(req.params.id,{
-      $set: data
-    })
-
-    io.emit('actualizar')
-
-    res.json({ ok:true })
-
-  } catch(err){
-    console.error(err)
-    res.status(500).json({ error:'Error guardando garantía' })
-  }
+  res.sendStatus(200)
 })
 
 // BORRAR
