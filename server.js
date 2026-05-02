@@ -56,7 +56,10 @@ const CotizacionSchema = new mongoose.Schema({
   garantiaHasta: String,
   garantiaFoto: String,
 
-,  fecha: { type: Date, default: Date.now }
+  // 🔥 CONFIRMACION
+  confirmada: { type: String, default: 'no' },
+
+  fecha: { type: Date, default: Date.now }
 })
 
 const Cotizacion = mongoose.models.Cotizacion || mongoose.model('Cotizacion', CotizacionSchema)
@@ -176,7 +179,6 @@ app.post('/cotizacion', async (req, res) => {
       descripcion
     } = req.body
 
-    // 🚨 VALIDACIÓN
     if (
       !nombre?.trim() ||
       !celular?.trim() ||
@@ -215,7 +217,7 @@ app.get('/cotizaciones', async (req, res) => {
   res.json(data)
 })
 
-// 🔥 GARANTÍAS (VENTAS CONFIRMADAS)
+// 🔥 GARANTÍAS (solo confirmadas)
 app.get('/garantias', async (req, res) => {
   try {
     const data = await Cotizacion.find({
@@ -234,7 +236,6 @@ app.put('/cotizacion/:id', async (req, res) => {
 
     const data = req.body
 
-    // 🔥 recalcular ganancia al confirmar
     if (data.confirmada === 'si') {
       const costo = parseFloat(data.costoProveedor) || 0
       const precio = parseFloat(data.precioCliente) || 0
@@ -251,15 +252,16 @@ app.put('/cotizacion/:id', async (req, res) => {
   }
 })
 
-// 🔥 GUARDAR GARANTÍA
+// 🔥 GUARDAR GARANTÍA (ARREGLADO)
 app.put('/garantia/:id', async (req, res) => {
   try {
-    const { garantiaFecha, fotoGarantia } = req.body
+
+    const { garantiaHasta, fotoGarantia } = req.body
 
     const update = {}
 
-    if (garantiaFecha !== undefined) update.garantiaFecha = garantiaFecha
-    if (fotoGarantia !== undefined) update.fotoGarantia = fotoGarantia
+    if (garantiaHasta !== undefined) update.garantiaHasta = garantiaHasta
+    if (fotoGarantia !== undefined) update.garantiaFoto = fotoGarantia
 
     await Cotizacion.findByIdAndUpdate(req.params.id, {
       $set: update
