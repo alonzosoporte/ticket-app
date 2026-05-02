@@ -54,7 +54,7 @@ const CotizacionSchema = new mongoose.Schema({
 
   // 🔥 GARANTÍA
   garantiaHasta: String,
-  garantiaFoto: String,
+  fotoGarantia: String,
 
   // 🔥 CONFIRMACION
   confirmada: { type: String, default: 'no' },
@@ -261,7 +261,7 @@ app.put('/garantia/:id', async (req, res) => {
     const update = {}
 
     if (garantiaHasta !== undefined) update.garantiaHasta = garantiaHasta
-    if (fotoGarantia !== undefined) update.garantiaFoto = fotoGarantia
+    if (fotoGarantia !== undefined) update.fotoGarantia = fotoGarantia
 
     await Cotizacion.findByIdAndUpdate(req.params.id, {
       $set: update
