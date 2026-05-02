@@ -5,6 +5,7 @@
 <title>Admin Tickets PRO</title>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {
@@ -81,7 +82,6 @@ textarea {
   border-radius:10px;
   border:1px solid #ccc;
   resize:none;
-  overflow:hidden;
 }
 
 .estado-guardado {
@@ -116,26 +116,7 @@ const socket = io()
 let timerGuardar = {}
 let escribiendo = false
 
-function autoResize(el){
-  el.style.height="auto"
-  el.style.height=el.scrollHeight+"px"
-}
-
-function guardarDelay(id, el){
-  escribiendo = true
-  autoResize(el)
-
-  const estado = document.getElementById("estado-"+id)
-  if(estado) estado.innerText = "💾 Guardando..."
-
-  clearTimeout(timerGuardar[id])
-
-  timerGuardar[id] = setTimeout(async () => {
-    await guardar(id,'detalle',el.value)
-    if(estado) estado.innerText = "✅ Guardado"
-    escribiendo = false
-  }, 800)
-}
+// ===== PDF PRO =====
 async function descargarPDF(numero){
 
   const res = await fetch('/tickets')
@@ -147,204 +128,66 @@ async function descargarPDF(numero){
   const { jsPDF } = window.jspdf
   const doc = new jsPDF()
 
-  let y = 20
-
-  // 🔥 CARGAR LOGO DESDE /public
   const img = new Image()
   img.src = '/logo.png'
 
   img.onload = () => {
 
-    // LOGO
-    doc.addImage(img, 'PNG', 10, 10, 50, 25)
+    // 🔵 HEADER
+    doc.setFillColor(0,123,255)
+    doc.rect(0,0,210,30,'F')
 
-    // TITULO
+    doc.addImage(img,'PNG',10,5,30,20)
+
+    doc.setTextColor(255,255,255)
     doc.setFontSize(16)
-    doc.text("FACTURA DE SERVICIO", 70, 20)
+    doc.text("FACTURA", 160, 18)
 
-    y = 45
+    doc.setTextColor(0,0,0)
 
+    let y = 45
+
+    // 📄 INFO
     doc.setFontSize(12)
+    doc.text("N°: " + t.numero, 10, y)
+    doc.text("Fecha: " + new Date().toLocaleDateString(), 140, y)
 
-    // DATOS CLIENTE
-    doc.text("Cliente: " + (t.nombre || ''), 10, y)
-    y += 8
+    y+=10
 
-    doc.text("Teléfono: " + (t.telefono || ''), 10, y)
-    y += 8
+    doc.text("Cliente: " + (t.nombre||''), 10, y)
+    y+=8
 
-    // PROBLEMA
-    doc.text("Problema:", 10, y)
-    y += 8
+    doc.text("Teléfono: " + (t.telefono||''), 10, y)
+    y+=15
 
-    doc.text(t.problema || '', 10, y, { maxWidth: 180 })
-    y += 12
+    // 🔧 PROBLEMA
+    doc.setFontSize(13)
+    doc.text("Problema:",10,y)
+    y+=8
+    doc.setFontSize(11)
+    doc.text(t.problema||'',10,y,{maxWidth:180})
+    y+=15
 
-    // DESCRIPCIÓN
-    doc.text("Descripción técnica:", 10, y)
-    y += 8
+    // 📝 DESCRIPCIÓN
+    doc.setFontSize(13)
+    doc.text("Detalle técnico:",10,y)
+    y+=8
+    doc.setFontSize(11)
+    doc.text(t.detalle||'',10,y,{maxWidth:180})
+    y+=20
 
-    doc.text(t.descripcion || '', 10, y, { maxWidth: 180 })
-    y += 20
+    // 💰 TOTAL
+    doc.setFillColor(240,240,240)
+    doc.rect(10,y,190,15,'F')
 
-    // TOTAL
     doc.setFontSize(14)
-    doc.text("TOTAL: $" + (t.precio || 0), 10, y)
+    doc.text("TOTAL: $" + (t.precio||0), 140, y+10)
 
-    y += 10
-    doc.setFontSize(10)
-    doc.text("Fecha: " + new Date().toLocaleDateString(), 10, y)
-
-    // DESCARGAR
-    doc.save(`Factura_${t.numero}.pdf`)
+    doc.save("Factura_"+t.numero+".pdf")
   }
 }
-async function cargar(){
 
-  const res = await fetch('/tickets')
-  let tickets = await res.json()
-
-  const resCot = await fetch('/cotizaciones')
-  let cotizaciones = await resCot.json()
-
-  const hoy = new Date()
-  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
-  const nombreMesActual = hoy.toLocaleString('es-UY',{month:'long',year:'numeric'})
-
-  let meses = {}
-  tickets.forEach(t=>{
-    if(!t.fecha) return
-    const f=new Date(t.fecha)
-    const key=f.getFullYear()+'-'+(f.getMonth()+1)
-    meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
-  })
-
-let mesesV={}
-cotizaciones.forEach(c=>{
-  if(!c.fecha) return
-  const f=new Date(c.fecha)
-  const key=f.getFullYear()+'-'+(f.getMonth()+1)
-  mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
-})
-
-  const mesSeleccionado = document.getElementById('filtroMes')?.value || mesActualKey
-  const mesVentasSeleccionado = document.getElementById('filtroMesVentas')?.value || mesActualKey
-
-  if(mesSeleccionado !== 'todos'){
-    tickets = tickets.filter(t=>{
-      const f=new Date(t.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSeleccionado
-    })
-  }
-
-  if(mesVentasSeleccionado !== 'todos'){
-    cotizaciones = cotizaciones.filter(c=>{
-      const f=new Date(c.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mesVentasSeleccionado
-    })
-  }
-
-  let rep=0, ven=0
-
-  tickets.forEach(t=>{
-    if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
-  })
-
-cotizaciones.forEach(c=>{
-  if(c.confirmada === 'si'){
-    const costo = parseFloat(c.costoProveedor) || 0
-    const precio = parseFloat(c.precioCliente) || 0
-    ven += (precio - costo)
-  }
-})
-
-  document.getElementById('resumen').innerHTML = `
-  <div class="panel">
-
-    <div class="card">
-      <b>🔧 Reparaciones</b><br><br>
-      <select id="filtroMes" onchange="cargar()">
-        <option value="todos">Todos</option>
-        ${Object.entries(meses).map(([k,v])=>`
-          <option value="${k}" ${k===mesSeleccionado?'selected':''}>${v}</option>
-        `).join('')}
-      </select>
-      <div class="monto">$${rep}</div>
-    </div>
-
-    <div class="card">
-      <b>🛒 Ventas</b><br><br>
-      <select id="filtroMesVentas" onchange="cargar()">
-        <option value="${mesActualKey}">🛒 ${nombreMesActual}</option>
-        <option value="todos">📋 Todas</option>
-        ${Object.entries(mesesV).map(([k,v])=>`
-          <option value="${k}" ${k===mesVentasSeleccionado?'selected':''}>${v}</option>
-        `).join('')}
-      </select>
-      <div class="monto">$${ven}</div>
-    </div>
-
-    <div class="card total">
-      <b>Total: $${rep+ven}</b>
-    </div>
-
-  </div>
-  `
-
-  if(modo==='pendientes'){
-    tickets=tickets.filter(t=>t.entregado!=='si')
-  }
-
-  const filtro=busqueda.value.toLowerCase()
-
-  tickets=tickets.filter(t=>
-    (t.nombre||'').toLowerCase().includes(filtro) ||
-    (t.telefono||'').includes(filtro) ||
-    (t.numero||'').toLowerCase().includes(filtro)
-  )
-
- lista.innerHTML=''
-
-tickets.reverse().forEach(t=>{
-  lista.innerHTML+=`
-  <div class="ticket">
-    <b>${t.numero}</b><br>
-    ${t.nombre} (${t.telefono})<br>
-    ${t.problema}<br>
-    📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
-
-    💲 Precio:
-    <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-
-    💰 Ganancia:
-    <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
-
-    <br><br>
-
-    📝 Detalle:
-    <textarea oninput="guardarDelay('${t.numero}',this)">${(t.detalle||'').trim()}</textarea>
-
-    <div class="estado-guardado" id="estado-${t.numero}"></div>
-
-    <br>
-
-    <button class="btn-success"
-    onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-    ✔️ Listo + WhatsApp</button>
-
-    <button class="btn-secondary"
-    onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
-
-    <!-- 🔥 BOTÓN PDF (ACÁ VA) -->
-    <button class="btn"
-    onclick="descargarPDF('${t.numero}')">📄 PDF</button>
-
-    <button class="btn-danger"
-    onclick="borrar('${t.numero}')">❌</button>
-  </div>
-  `
-})
-
+// ===== GUARDAR =====
 async function guardar(id,campo,valor){
   await fetch('/ticket/'+id,{
     method:'PUT',
@@ -366,6 +209,7 @@ async function borrar(id){
   await fetch('/ticket/'+id,{method:'DELETE'})
 }
 
+// ===== WHATSAPP =====
 async function listoWhatsApp(id,nombre,telefono,precio){
 
   let tel=telefono.replace(/\D/g,'')
@@ -373,17 +217,10 @@ async function listoWhatsApp(id,nombre,telefono,precio){
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
-  const res=await fetch('/tickets')
-  const data=await res.json()
-  const t=data.find(x=>x.numero===id)
-
-  const fecha=new Date(t.fecha).toLocaleString('es-UY')
-
   const msg=`Hola ${nombre} 👋
 
 Tu equipo está listo ✅
 
-📅 ${fecha}
 🧾 ${id}
 💲 ${precio||'A confirmar'}`
 
@@ -392,10 +229,71 @@ Tu equipo está listo ✅
   await guardar(id,'estado','listo')
 }
 
+// ===== CARGAR =====
+async function cargar(){
+
+  const res = await fetch('/tickets')
+  let tickets = await res.json()
+
+  if(modo==='pendientes'){
+    tickets=tickets.filter(t=>t.entregado!=='si')
+  }
+
+  const filtro=busqueda.value.toLowerCase()
+
+  tickets=tickets.filter(t=>
+    (t.nombre||'').toLowerCase().includes(filtro) ||
+    (t.telefono||'').includes(filtro)
+  )
+
+  lista.innerHTML=''
+
+  tickets.reverse().forEach(t=>{
+    lista.innerHTML+=`
+    <div class="ticket">
+
+      <b>${t.numero}</b><br>
+      ${t.nombre} (${t.telefono})<br>
+      ${t.problema}<br>
+      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
+
+      💲 Precio:
+      <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+
+      💰 Ganancia:
+      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+      <br><br>
+
+      📝 Detalle:
+      <textarea oninput="guardar('${t.numero}','detalle',this.value)">${(t.detalle||'')}</textarea>
+
+      <br><br>
+
+      <button class="btn-success"
+      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+      ✔️ Listo + WhatsApp</button>
+
+      <button class="btn-secondary"
+      onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+
+      <button class="btn"
+      onclick="descargarPDF('${t.numero}')">📄 PDF</button>
+
+      <button class="btn-danger"
+      onclick="borrar('${t.numero}')">❌</button>
+
+    </div>
+    `
+  })
+}
+
+// SOCKET
 socket.on('actualizar',()=>{
   if(!escribiendo) cargar()
 })
 
+// INIT
 cargar()
 
 </script>
