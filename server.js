@@ -252,15 +252,25 @@ app.put('/cotizacion/:id', async (req, res) => {
 })
 
 // 🔥 GUARDAR GARANTÍA
-app.put('/garantia/:id', async (req,res)=>{
-  const { garantiaFecha, fotoGarantia } = req.body
+app.put('/garantia/:id', async (req, res) => {
+  try {
+    const { garantiaFecha, fotoGarantia } = req.body
 
-  await Cotizacion.findByIdAndUpdate(req.params.id,{
-    garantiaFecha,
-    fotoGarantia
-  })
+    const update = {}
 
-  res.sendStatus(200)
+    if (garantiaFecha !== undefined) update.garantiaFecha = garantiaFecha
+    if (fotoGarantia !== undefined) update.fotoGarantia = fotoGarantia
+
+    await Cotizacion.findByIdAndUpdate(req.params.id, {
+      $set: update
+    })
+
+    res.json({ ok: true })
+
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error actualizando garantía' })
+  }
 })
 
 // BORRAR
