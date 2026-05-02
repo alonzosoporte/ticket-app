@@ -55,10 +55,6 @@ button {
   border-radius:6px;
   margin:3px;
   cursor:pointer;
-  transition:0.2s;
-}
-.thumb:hover{
-  transform:scale(1.1);
 }
 
 /* MODAL */
@@ -69,16 +65,14 @@ button {
   left:0;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.85);
+  background:rgba(0,0,0,0.8);
   justify-content:center;
   align-items:center;
-  z-index:999;
 }
 
 .modal img {
   max-width:90%;
   max-height:90%;
-  border-radius:10px;
 }
 </style>
 </head>
@@ -133,30 +127,13 @@ async function subirFoto(id, file){
   r.readAsDataURL(file)
 }
 
-// ===== GUARDAR FECHA (PRO) =====
+// ===== GUARDAR FECHA (FIX IMPORTANTE) =====
 async function guardarFecha(id, valor){
-
-  if(!valor){
-    alert('⚠️ Seleccioná una fecha')
-    return
-  }
-
-  try {
-    const res = await fetch('/garantia/'+id,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ garantiaHasta: valor })
-    })
-
-    if(!res.ok) throw new Error()
-
-    alert('✅ Garantía actualizada')
-    cargar()
-
-  } catch(err){
-    console.error(err)
-    alert('❌ Error guardando fecha')
-  }
+  await fetch('/garantia/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ garantiaFecha: valor }) // 🔥 ESTE ERA EL ERROR
+  })
 }
 
 // ===== CARGAR =====
@@ -165,9 +142,12 @@ async function cargar(){
   const res = await fetch('/garantias')
   let data = await res.json()
 
-  const filtroTexto = document.getElementById('buscar').value.toLowerCase()
-  const estado = document.getElementById('filtroEstado').value
+  const filtroTexto = buscar.value.toLowerCase()
+  const estado = filtroEstado.value
   const hoy = new Date()
+
+  // 🔥 SOLO CONFIRMADAS
+  data = data.filter(g => g.confirmada === 'si')
 
   // 🔍 BUSCADOR
   data = data.filter(g =>
@@ -179,9 +159,11 @@ async function cargar(){
   // 🔽 FILTRO ESTADO
   data = data.filter(g => {
 
-    if(!g.garantiaHasta) return estado !== 'vencidas'
+    if(!g.garantiaFecha){
+      return estado === 'todas' || estado === 'vigentes'
+    }
 
-    const f = new Date(g.garantiaHasta)
+    const f = new Date(g.garantiaFecha)
 
     if(estado === 'vigentes') return f >= hoy
     if(estado === 'vencidas') return f < hoy
@@ -189,12 +171,11 @@ async function cargar(){
     return true
   })
 
-  const lista = document.getElementById('lista')
   lista.innerHTML=''
 
   data.reverse().forEach(g=>{
 
-    const fechaGarantia = g.garantiaHasta ? new Date(g.garantiaHasta) : null
+    const fechaGarantia = g.garantiaFecha ? new Date(g.garantiaFecha) : null
     const vencida = fechaGarantia && fechaGarantia < hoy
 
     const fotos = g.fotos || (g.foto ? [g.foto] : [])
@@ -214,9 +195,8 @@ async function cargar(){
       🛡️ <b>Garantía hasta:</b><br>
 
       <input type="date"
-      value="${g.garantiaHasta ? g.garantiaHasta.split('T')[0] : ''}"
-      onchange="guardarFecha('${g._id}', this.value)"
-      style="border:2px solid #007bff">
+      value="${g.garantiaFecha ? g.garantiaFecha.split('T')[0] : ''}"
+      onchange="guardarFecha('${g._id}', this.value)">
 
       <span class="${vencida ? 'vencida':'vigente'}">
         ${fechaGarantia ? fechaGarantia.toLocaleDateString() : 'Sin fecha'}
@@ -224,6 +204,7 @@ async function cargar(){
 
       <br><br>
 
+      <!-- 📸 FOTOS PRODUCTO -->
       ${
         fotos.length
         ? `
@@ -236,6 +217,7 @@ async function cargar(){
         : ''
       }
 
+      <!-- 📸 FOTO GARANTIA -->
       <b>📸 Garantía:</b><br>
 
       ${
