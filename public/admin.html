@@ -235,6 +235,95 @@ async function cargar(){
   const res = await fetch('/tickets')
   let tickets = await res.json()
 
+  const resCot = await fetch('/cotizaciones')
+  let cotizaciones = await resCot.json()
+
+  const hoy = new Date()
+  const mesActualKey = hoy.getFullYear() + '-' + (hoy.getMonth() + 1)
+  const nombreMesActual = hoy.toLocaleString('es-UY',{month:'long',year:'numeric'})
+
+  let meses = {}
+  tickets.forEach(t=>{
+    if(!t.fecha) return
+    const f=new Date(t.fecha)
+    const key=f.getFullYear()+'-'+(f.getMonth()+1)
+    meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+  })
+
+  let mesesV={}
+  cotizaciones.forEach(c=>{
+    if(!c.fecha) return
+    const f=new Date(c.fecha)
+    const key=f.getFullYear()+'-'+(f.getMonth()+1)
+    mesesV[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+  })
+
+  const mesSeleccionado = document.getElementById('filtroMes')?.value || mesActualKey
+  const mesVentasSeleccionado = document.getElementById('filtroMesVentas')?.value || mesActualKey
+
+  if(mesSeleccionado !== 'todos'){
+    tickets = tickets.filter(t=>{
+      const f=new Date(t.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSeleccionado
+    })
+  }
+
+  if(mesVentasSeleccionado !== 'todos'){
+    cotizaciones = cotizaciones.filter(c=>{
+      const f=new Date(c.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesVentasSeleccionado
+    })
+  }
+
+  let rep=0, ven=0
+
+  tickets.forEach(t=>{
+    if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
+  })
+
+  cotizaciones.forEach(c=>{
+    if(c.confirmada === 'si'){
+      const costo = parseFloat(c.costoProveedor) || 0
+      const precio = parseFloat(c.precioCliente) || 0
+      ven += (precio - costo)
+    }
+  })
+
+  // 🔥 RESUMEN (LO QUE TE FALTABA)
+  document.getElementById('resumen').innerHTML = `
+  <div class="panel">
+
+    <div class="card">
+      <b>🔧 Reparaciones</b><br><br>
+      <select id="filtroMes" onchange="cargar()">
+        <option value="todos">Todos</option>
+        ${Object.entries(meses).map(([k,v])=>`
+          <option value="${k}" ${k===mesSeleccionado?'selected':''}>${v}</option>
+        `).join('')}
+      </select>
+      <div class="monto">$${rep}</div>
+    </div>
+
+    <div class="card">
+      <b>🛒 Ventas</b><br><br>
+      <select id="filtroMesVentas" onchange="cargar()">
+        <option value="${mesActualKey}">🛒 ${nombreMesActual}</option>
+        <option value="todos">📋 Todas</option>
+        ${Object.entries(mesesV).map(([k,v])=>`
+          <option value="${k}" ${k===mesVentasSeleccionado?'selected':''}>${v}</option>
+        `).join('')}
+      </select>
+      <div class="monto">$${ven}</div>
+    </div>
+
+    <div class="card total">
+      <b>Total: $${rep+ven}</b>
+    </div>
+
+  </div>
+  `
+
+  // 🔽 FILTROS
   if(modo==='pendientes'){
     tickets=tickets.filter(t=>t.entregado!=='si')
   }
@@ -246,6 +335,7 @@ async function cargar(){
     (t.telefono||'').includes(filtro)
   )
 
+  // 🔽 LISTA
   lista.innerHTML=''
 
   tickets.reverse().forEach(t=>{
