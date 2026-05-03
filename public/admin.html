@@ -83,15 +83,9 @@ textarea {
   border:1px solid #ccc;
   resize:none;
   overflow:hidden;
-
-  box-sizing: border-box; /* 🔥 ESTO ARREGLA EL ESPACIO */
-  display:block;
+  box-sizing:border-box;
 }
 
-.estado-guardado {
-  font-size:12px;
-  color:#888;
-}
 </style>
 </head>
 
@@ -114,16 +108,15 @@ textarea {
 
 <script>
 
+const API = '' // si estás en otro dominio poné tu URL
+
 let modo = 'pendientes'
 const socket = io()
 
-let timerGuardar = {}
-let escribiendo = false
-
-// ===== PDF PRO =====
+// ===== PDF =====
 async function descargarPDF(numero){
 
-  const res = await fetch('/tickets')
+  const res = await fetch(API + '/tickets')
   const data = await res.json()
 
   const t = data.find(x => x.numero === numero)
@@ -137,7 +130,6 @@ async function descargarPDF(numero){
 
   img.onload = () => {
 
-    // 🔵 HEADER
     doc.setFillColor(0,123,255)
     doc.rect(0,0,210,30,'F')
 
@@ -151,7 +143,6 @@ async function descargarPDF(numero){
 
     let y = 45
 
-    // 📄 INFO
     doc.setFontSize(12)
     doc.text("N°: " + t.numero, 10, y)
     doc.text("Fecha: " + new Date().toLocaleDateString(), 140, y)
@@ -164,7 +155,6 @@ async function descargarPDF(numero){
     doc.text("Teléfono: " + (t.telefono||''), 10, y)
     y+=15
 
-    // 🔧 PROBLEMA
     doc.setFontSize(13)
     doc.text("Problema:",10,y)
     y+=8
@@ -172,7 +162,6 @@ async function descargarPDF(numero){
     doc.text(t.problema||'',10,y,{maxWidth:180})
     y+=15
 
-    // 📝 DESCRIPCIÓN
     doc.setFontSize(13)
     doc.text("Detalle técnico:",10,y)
     y+=8
@@ -180,7 +169,6 @@ async function descargarPDF(numero){
     doc.text(t.detalle||'',10,y,{maxWidth:180})
     y+=20
 
-    // 💰 TOTAL
     doc.setFillColor(240,240,240)
     doc.rect(10,y,190,15,'F')
 
@@ -193,7 +181,7 @@ async function descargarPDF(numero){
 
 // ===== GUARDAR =====
 async function guardar(id,campo,valor){
-  await fetch('/ticket/'+id,{
+  await fetch(API + '/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({[campo]:valor})
@@ -201,7 +189,7 @@ async function guardar(id,campo,valor){
 }
 
 async function marcarEntregado(id){
-  await fetch('/ticket/'+id,{
+  await fetch(API + '/ticket/'+id,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({entregado:'si'})
@@ -210,7 +198,7 @@ async function marcarEntregado(id){
 
 async function borrar(id){
   if(!confirm("Eliminar?"))return
-  await fetch('/ticket/'+id,{method:'DELETE'})
+  await fetch(API + '/ticket/'+id,{method:'DELETE'})
 }
 
 // ===== WHATSAPP =====
@@ -236,10 +224,10 @@ Tu equipo está listo ✅
 // ===== CARGAR =====
 async function cargar(){
 
-  const res = await fetch('/tickets')
+  const res = await fetch(API + '/tickets')
   let tickets = await res.json()
 
-  const resCot = await fetch('/cotizaciones')
+  const resCot = await fetch(API + '/cotizaciones')
   let cotizaciones = await resCot.json()
 
   const hoy = new Date()
@@ -293,41 +281,14 @@ async function cargar(){
     }
   })
 
-  // 🔥 RESUMEN (LO QUE TE FALTABA)
   document.getElementById('resumen').innerHTML = `
   <div class="panel">
-
-    <div class="card">
-      <b>🔧 Reparaciones</b><br><br>
-      <select id="filtroMes" onchange="cargar()">
-        <option value="todos">Todos</option>
-        ${Object.entries(meses).map(([k,v])=>`
-          <option value="${k}" ${k===mesSeleccionado?'selected':''}>${v}</option>
-        `).join('')}
-      </select>
-      <div class="monto">$${rep}</div>
-    </div>
-
-    <div class="card">
-      <b>🛒 Ventas</b><br><br>
-      <select id="filtroMesVentas" onchange="cargar()">
-        <option value="${mesActualKey}">🛒 ${nombreMesActual}</option>
-        <option value="todos">📋 Todas</option>
-        ${Object.entries(mesesV).map(([k,v])=>`
-          <option value="${k}" ${k===mesVentasSeleccionado?'selected':''}>${v}</option>
-        `).join('')}
-      </select>
-      <div class="monto">$${ven}</div>
-    </div>
-
-    <div class="card total">
-      <b>Total: $${rep+ven}</b>
-    </div>
-
+    <div class="card"><b>🔧 Reparaciones</b><div class="monto">$${rep}</div></div>
+    <div class="card"><b>🛒 Ventas</b><div class="monto">$${ven}</div></div>
+    <div class="card total"><b>Total: $${rep+ven}</b></div>
   </div>
   `
 
-  // 🔽 FILTROS
   if(modo==='pendientes'){
     tickets=tickets.filter(t=>t.entregado!=='si')
   }
@@ -339,7 +300,6 @@ async function cargar(){
     (t.telefono||'').includes(filtro)
   )
 
-  // 🔽 LISTA
   lista.innerHTML=''
 
   tickets.reverse().forEach(t=>{
@@ -362,9 +322,7 @@ async function cargar(){
       📝 Detalle:
       <textarea 
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-      onblur="guardar('${t.numero}','detalle',this.value)">
-      ${(t.detalle||'')}
-      </textarea>
+      onblur="guardar('${t.numero}','detalle',this.value)">${(t.detalle||'').trim()}</textarea>
 
       <br><br>
 
@@ -386,12 +344,8 @@ async function cargar(){
   })
 }
 
-// SOCKET
-socket.on('actualizar',()=>{
-  if(!escribiendo) cargar()
-})
+socket.on('actualizar',()=>cargar())
 
-// INIT
 cargar()
 
 </script>
