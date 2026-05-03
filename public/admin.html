@@ -85,20 +85,73 @@ textarea {
   overflow:hidden;
   box-sizing:border-box;
 }
+/* 🔝 NAV SUPERIOR */
+.nav-top {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+/* 🔽 HEADER PRO */
+.header-pro {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:white;
+  padding:15px 20px;
+  border-radius:14px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  margin-bottom:20px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+/* TÍTULO */
+.titulo {
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* ACCIONES (buscador + botones) */
+.acciones {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+/* INPUT PRO */
+.acciones input {
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  min-width:200px;
+}
 
 </style>
 </head>
 
 <body>
-
-<div class="topbar">
+<!-- 🔝 NAV SUPERIOR -->
+<div class="nav-top">
   <button class="btn-secondary" onclick="location.href='cotizaciones.html'">📊 Cotizaciones</button>
   <button class="btn-secondary" onclick="location.href='garantias.html'">🛡️ Garantías</button>
+</div>
 
-  <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
+<!-- 🔽 HEADER PRO -->
+<div class="header-pro">
 
-  <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
-  <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
+  <div class="titulo">
+    🧾 Sistema De Tickets
+  </div>
+
+  <div class="acciones">
+    <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
+
+    <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
+    <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
+  </div>
+
 </div>
 
 <h2>🧾 Sistema De Tickets</h2>
