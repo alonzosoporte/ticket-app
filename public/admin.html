@@ -130,7 +130,8 @@ async function descargarPDF(numero){
 
   img.onload = () => {
 
-    doc.setFillColor(0,123,255)
+    // 🔵 HEADER
+    doc.setFillColor(0, 51, 102) // color igual al logo
     doc.rect(0,0,210,30,'F')
 
     doc.addImage(img,'PNG',10,5,30,20)
