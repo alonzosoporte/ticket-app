@@ -356,7 +356,11 @@ async function cargar(){
       <br><br>
 
       📝 Detalle:
-      <textarea oninput="guardar('${t.numero}','detalle',this.value)">${(t.detalle||'')}</textarea>
+      <textarea 
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+      onblur="guardar('${t.numero}','detalle',this.value)">
+      ${(t.detalle||'')}
+      </textarea>
 
       <br><br>
 
