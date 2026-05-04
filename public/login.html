@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Login - ALONZO</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
   font-family: Arial;
@@ -17,44 +19,49 @@ body{
 
 .card{
   background:white;
-  padding:30px;
+  padding:25px;
   border-radius:16px;
-  width:300px;
+  width:90%;
+  max-width:320px;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
   text-align:center;
 }
 
+.logo{
+  width:70px;
+  margin-bottom:10px;
+}
+
 h2{
   margin-bottom:20px;
+  font-size:20px;
 }
 
 input{
   width:100%;
-  padding:10px;
-  margin:8px 0;
+  padding:12px;
+  margin:10px 0;
   border-radius:10px;
   border:1px solid #ccc;
+  font-size:16px;
 }
 
 button{
   width:100%;
-  padding:10px;
-  margin-top:10px;
+  padding:12px;
+  margin-top:12px;
   border:none;
   border-radius:10px;
   background:#007bff;
   color:white;
   font-weight:bold;
+  font-size:16px;
   cursor:pointer;
 }
 
-button:hover{
+button:active{
+  transform:scale(0.97);
   background:#0056b3;
-}
-
-.logo{
-  width:80px;
-  margin-bottom:10px;
 }
 </style>
 </head>
@@ -75,28 +82,36 @@ button:hover{
 </div>
 
 <script>
-const API = 'https://ticket-app.onrender.com'
+
+const API = 'https://ticket-pro-xmhs.onrender.com'
 
 async function login(){
 
   const usuario = document.getElementById('user').value
   const clave = document.getElementById('pass').value
 
-  const res = await fetch(API + '/login',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ usuario, clave })
-  })
+  try{
 
-  const data = await res.json()
+    const res = await fetch(API + '/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario, clave })
+    })
 
-  if(res.ok){
-    localStorage.setItem('token', data.token)
-    location.href = 'admin.html'
-  }else{
-    alert(data.error || 'Error login')
+    const data = await res.json()
+
+    if(res.ok){
+      localStorage.setItem('token', data.token)
+      location.href = 'admin.html'
+    }else{
+      alert(data.error || 'Error login')
+    }
+
+  }catch(e){
+    alert('Error de conexión')
   }
 }
+
 </script>
 
 </body>
