@@ -157,7 +157,12 @@ const socket = io()
 async function descargarPDF(numero){
 
   const res = await fetch(API + '/tickets')
-  const data = await res.json()
+  if(!res || !res.ok){
+  alert('Error o sesión no válida')
+  return
+}
+
+const data = await res.json()
 
   const t = data.find(x => x.numero === numero)
   if(!t) return alert('No encontrado')

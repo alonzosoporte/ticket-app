@@ -87,7 +87,14 @@ async function login(){
     body: JSON.stringify({ usuario, clave })
   })
 
-  const data = await res.json()
+  let data
+
+  try{
+    data = await res.json()
+  }catch(e){
+    alert('Error del servidor (no responde JSON)')
+    return
+  }
 
   if(res.ok){
     localStorage.setItem('token', data.token)

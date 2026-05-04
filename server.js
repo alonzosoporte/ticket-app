@@ -16,16 +16,33 @@ const USER = 'alonzo'
 const PASS = 'foofigh1987'
 const TOKEN = 'alonzo-123'
 
+
 // LOGIN
 app.post('/login', (req,res)=>{
   const { usuario, clave } = req.body
 
   if(usuario === USER && clave === PASS){
-    return res.json({ ok:true, token: TOKEN })
+
+    const token = Math.random().toString(36).substring(2)
+    sesiones[token] = true
+
+    return res.json({ ok:true, token })
   }
 
   res.status(401).json({ error:'Credenciales incorrectas' })
 })
+
+let sesiones = {}
+
+function auth(req, res, next){
+  const token = req.headers['authorization']
+
+  if(!token || !sesiones[token]){
+    return res.status(401).json({ error:'No autorizado' })
+  }
+
+  next()
+}
 
 // 🔐 MIDDLEWARE
 function auth(req,res,next){
