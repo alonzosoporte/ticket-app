@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Admin Tickets PRO</title>
 
-<script src="https://ticket-app.onrender.com/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -14,14 +14,12 @@ body {
   padding:20px;
 }
 
-/* NAV */
 .nav-top {
   display:flex;
   gap:10px;
   margin-bottom:15px;
 }
 
-/* HEADER */
 .header-pro {
   display:flex;
   align-items:center;
@@ -60,7 +58,10 @@ button {
   font-weight:bold;
 }
 
-.btn { background:#003366; color:white }
+.btn {
+  background:#003366;
+  color:white;
+}
 .btn-success { background:#28a745; color:white }
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
@@ -83,6 +84,11 @@ button {
 .monto {
   font-size:22px;
   font-weight:bold;
+}
+
+.total {
+  background:#f1f3f5;
+  text-align:center;
 }
 
 .ticket {
@@ -110,6 +116,7 @@ textarea {
 <div class="nav-top">
   <button class="btn-secondary" onclick="location.href='cotizaciones.html'">📊 Cotizaciones</button>
   <button class="btn-secondary" onclick="location.href='garantias.html'">🛡️ Garantías</button>
+  <button class="btn-danger" onclick="logout()">🚪 Salir</button>
 </div>
 
 <div class="header-pro">
@@ -126,28 +133,50 @@ textarea {
 <div id="lista"></div>
 
 <script>
+
 const API = 'https://ticket-app.onrender.com'
 
 // 🔐 PROTECCIÓN
 if(!localStorage.getItem('token')){
   location.href = 'login.html'
 }
-const API = 'https://ticket-app.onrender.com'
-let modo = 'pendientes'
 
-// 🔥 SOCKET CORREGIDO
-const socket = io(API)
+// 🔐 FETCH SEGURO
+async function fetchAuth(url, options = {}){
+
+  options.headers = {
+    ...(options.headers || {}),
+    'Authorization':'Bearer ' + localStorage.getItem('token'),
+    'Content-Type':'application/json'
+  }
+
+  const res = await fetch(API + url, options)
+
+  if(res.status === 401){
+    alert('Sesión expirada')
+    localStorage.removeItem('token')
+    location.href = 'login.html'
+    return null
+  }
+
+  return res
+}
+
+function logout(){
+  localStorage.removeItem('token')
+  location.href = 'login.html'
+}
+
+let modo = 'pendientes'
+const socket = io()
 
 // ===== PDF =====
 async function descargarPDF(numero){
 
-  const res = await fetch(API + '/tickets', {
-  headers:{
-    'Authorization':'Bearer ' + localStorage.getItem('token')
-  }
-})
-  const data = await res.json()
+  const res = await fetchAuth('/tickets')
+  if(!res) return
 
+  const data = await res.json()
   const t = data.find(x => x.numero === numero)
   if(!t) return alert('No encontrado')
 
@@ -155,7 +184,7 @@ async function descargarPDF(numero){
   const doc = new jsPDF()
 
   const img = new Image()
-  img.src = API + '/logo.png'
+  img.src = '/logo.png'
 
   img.onload = () => {
 
@@ -171,38 +200,46 @@ async function descargarPDF(numero){
     doc.setFontSize(11)
     doc.text("Servicio Técnico Profesional", 50, 25)
 
+    doc.setFontSize(16)
+    doc.text("FACTURA", 160, 20)
+
     doc.setTextColor(0,0,0)
 
     let y = 50
 
-    doc.text("Factura N°: " + t.numero, 10, y)
-    y+=10
+    doc.text("N°: " + t.numero, 10, y)
+    doc.text("Fecha: " + new Date().toLocaleDateString(), 140, y)
 
+    y += 12
     doc.text("Cliente: " + (t.nombre||''), 10, y)
-    y+=8
-
+    y += 8
     doc.text("Teléfono: " + (t.telefono||''), 10, y)
-    y+=10
 
-    doc.text("Problema:",10,y)
-    y+=7
-    doc.text(t.problema||'',10,y,{maxWidth:180})
+    y += 15
+    doc.text("Problema:", 10, y)
+    y += 7
+    doc.text(t.problema || '', 10, y, { maxWidth:180 })
 
-    y+=15
+    y += 15
+    doc.text("Detalle:", 10, y)
+    y += 7
+    doc.text(t.detalle || '', 10, y, { maxWidth:180 })
 
-    doc.text("Detalle:",10,y)
-    y+=7
-    doc.text(t.detalle||'',10,y,{maxWidth:180})
+    y += 20
 
-    y+=20
+    doc.setFillColor(0,51,102)
+    doc.rect(120, y, 80, 18, 'F')
 
-    doc.text("TOTAL: $" + (t.precio||0), 140, y)
+    doc.setTextColor(255,255,255)
+    doc.text("TOTAL: $" + (t.precio || 0), 125, y + 12)
 
-    y+=15
+    doc.setTextColor(0,0,0)
 
-    doc.setFontSize(10)
+    y += 30
+    doc.text("Para transferencias bancarias:", 10, y)
+    y += 6
     doc.text("BROU CA 001120656-00002", 10, y)
-    y+=5
+    y += 5
     doc.text("Julian Alonzo Guerra", 10, y)
 
     doc.save("Factura_"+t.numero+".pdf")
@@ -211,33 +248,53 @@ async function descargarPDF(numero){
 
 // ===== CRUD =====
 async function guardar(id,campo,valor){
-  await fetch(API + '/ticket/'+id,{
+  await fetchAuth('/ticket/'+id,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({[campo]:valor})
   })
 }
 
 async function marcarEntregado(id){
-  await fetch(API + '/ticket/'+id,{
+  await fetchAuth('/ticket/'+id,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({entregado:'si'})
   })
 }
 
 async function borrar(id){
   if(!confirm("Eliminar?"))return
-  await fetch(API + '/ticket/'+id,{method:'DELETE'})
+  await fetchAuth('/ticket/'+id,{method:'DELETE'})
+}
+
+// ===== WHATSAPP =====
+async function listoWhatsApp(id,nombre,telefono,precio){
+
+  let tel=telefono.replace(/\D/g,'')
+
+  if(tel.startsWith('0')) tel='598'+tel.substring(1)
+  if(!tel.startsWith('598')) tel='598'+tel
+
+  const msg=`Hola ${nombre} 👋
+
+Tu equipo está listo ✅
+
+🧾 ${id}
+💲 ${precio||'A confirmar'}`
+
+  window.location.href="https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(msg)
+
+  await guardar(id,'estado','listo')
 }
 
 // ===== CARGAR =====
 async function cargar(){
 
-  const res = await fetch(API + '/tickets')
+  const res = await fetchAuth('/tickets')
+  if(!res) return
   let tickets = await res.json()
 
-  const resCot = await fetch(API + '/cotizaciones')
+  const resCot = await fetchAuth('/cotizaciones')
+  if(!resCot) return
   let cotizaciones = await resCot.json()
 
   let rep=0, ven=0
@@ -254,12 +311,12 @@ async function cargar(){
     }
   })
 
-  resumen.innerHTML = `
-    <div class="panel">
-      <div class="card"><b>Reparaciones</b><div class="monto">$${rep}</div></div>
-      <div class="card"><b>Ventas</b><div class="monto">$${ven}</div></div>
-      <div class="card"><b>Total</b><div class="monto">$${rep+ven}</div></div>
-    </div>
+  document.getElementById('resumen').innerHTML = `
+  <div class="panel">
+    <div class="card"><b>🔧 Reparaciones</b><div class="monto">$${rep}</div></div>
+    <div class="card"><b>🛒 Ventas</b><div class="monto">$${ven}</div></div>
+    <div class="card total"><b>Total: $${rep+ven}</b></div>
+  </div>
   `
 
   if(modo==='pendientes'){
@@ -279,19 +336,45 @@ async function cargar(){
     lista.innerHTML+=`
     <div class="ticket">
       <b>${t.numero}</b><br>
-      ${t.nombre}<br>
+      ${t.nombre} (${t.telefono})<br>
       ${t.problema}<br>
+      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
 
+      💲 Precio:
       <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-      <textarea onblur="guardar('${t.numero}','detalle',this.value)">${t.detalle||''}</textarea>
 
-      <button onclick="descargarPDF('${t.numero}')">PDF</button>
+      💰 Ganancia:
+      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+      <br><br>
+
+      📝 Detalle:
+      <textarea 
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+      onblur="guardar('${t.numero}','detalle',this.value)">${(t.detalle||'').trim()}</textarea>
+
+      <br><br>
+
+      <button class="btn-success"
+      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+      ✔️ Listo + WhatsApp</button>
+
+      <button class="btn-secondary"
+      onclick="marcarEntregado('${t.numero}')">📦 Entregado</button>
+
+      <button class="btn"
+      onclick="descargarPDF('${t.numero}')">📄 PDF</button>
+
+      <button class="btn-danger"
+      onclick="borrar('${t.numero}')">❌</button>
+
     </div>
     `
   })
 }
 
-socket.on('actualizar',cargar)
+socket.on('actualizar',()=>cargar())
+
 cargar()
 
 </script>
