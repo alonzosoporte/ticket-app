@@ -11,6 +11,36 @@ const io = new Server(server)
 app.use(express.json({ limit: '20mb' }))
 app.use(express.static('public'))
 
+// 🔐 AUTH SIMPLE
+const USER = 'alonzo'
+const PASS = 'foofigh1987'
+const TOKEN = 'alonzo-123'
+
+// LOGIN
+app.post('/login', (req,res)=>{
+  const { usuario, clave } = req.body
+
+  if(usuario === USER && clave === PASS){
+    return res.json({ ok:true, token: TOKEN })
+  }
+
+  res.status(401).json({ error:'Credenciales incorrectas' })
+})
+
+// 🔐 MIDDLEWARE
+function auth(req,res,next){
+
+  const authHeader = req.headers.authorization
+
+  if(!authHeader) return res.status(401).send('No autorizado')
+
+  const token = authHeader.split(' ')[1]
+
+  if(token !== TOKEN) return res.status(403).send('Prohibido')
+
+  next()
+}
+
 // ================= MONGODB =================
 mongoose.connect('mongodb+srv://alonzosoporte:Foofigh1987!@cluster0.mafkjzo.mongodb.net/ticketsDB')
 .then(()=> console.log('Mongo conectado'))
@@ -35,7 +65,7 @@ const TicketSchema = new mongoose.Schema({
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
-// 📊 COTIZACIONES (VENTAS + GARANTÍAS)
+// 📊 COTIZACIONES
 const CotizacionSchema = new mongoose.Schema({
   nombre: String,
   celular: String,
@@ -45,20 +75,11 @@ const CotizacionSchema = new mongoose.Schema({
   precioCliente: String,
   ganancia: Number,
   descripcion: String,
-
-  // 🔥 FOTOS PRODUCTO (MULTIPLE)
   fotos: [String],
-
-  // 🔥 COMPATIBILIDAD (viejo)
   foto: String,
-
-  // 🔥 GARANTÍA
   garantiaHasta: String,
   fotoGarantia: String,
-
-  // 🔥 CONFIRMACION
   confirmada: { type: String, default: 'no' },
-
   fecha: { type: Date, default: Date.now }
 })
 
@@ -87,7 +108,7 @@ io.on('connection', () => {
 // ================= TICKETS =================
 
 // CREAR
-app.post('/ticket', async (req, res) => {
+app.post('/ticket', auth, async (req, res) => {
   try {
 
     const { nombre, telefono, problema } = req.body
@@ -112,7 +133,6 @@ app.post('/ticket', async (req, res) => {
         { $inc: { valor: 1 } },
         { new: true, upsert: true }
       )
-
       numero = contador.valor
     }
 
@@ -138,13 +158,13 @@ app.post('/ticket', async (req, res) => {
 })
 
 // LISTAR
-app.get('/tickets', async (req, res) => {
+app.get('/tickets', auth, async (req, res) => {
   const data = await Ticket.find().sort({ _id: -1 })
   res.json(data)
 })
 
 // ACTUALIZAR
-app.put('/ticket/:numero', async (req, res) => {
+app.put('/ticket/:numero', auth, async (req, res) => {
   const actualizado = await Ticket.findOneAndUpdate(
     { numero: req.params.numero },
     { $set: req.body },
@@ -156,17 +176,16 @@ app.put('/ticket/:numero', async (req, res) => {
 })
 
 // BORRAR
-app.delete('/ticket/:numero', async (req, res) => {
+app.delete('/ticket/:numero', auth, async (req, res) => {
   await Ticket.findOneAndDelete({ numero: req.params.numero })
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-
 // ================= COTIZACIONES =================
 
 // CREAR
-app.post('/cotizacion', async (req, res) => {
+app.post('/cotizacion', auth, async (req, res) => {
   try {
 
     const {
@@ -188,9 +207,7 @@ app.post('/cotizacion', async (req, res) => {
       !precioCliente?.toString().trim() ||
       !descripcion?.trim()
     ) {
-      return res.status(400).json({
-        error: 'Faltan datos obligatorios'
-      })
+      return res.status(400).json({ error: 'Faltan datos obligatorios' })
     }
 
     const costo = parseFloat(costoProveedor) || 0
@@ -212,26 +229,23 @@ app.post('/cotizacion', async (req, res) => {
 })
 
 // LISTAR
-app.get('/cotizaciones', async (req, res) => {
+app.get('/cotizaciones', auth, async (req, res) => {
   const data = await Cotizacion.find().sort({ _id: -1 })
   res.json(data)
 })
 
-// 🔥 GARANTÍAS (solo confirmadas)
-app.get('/garantias', async (req, res) => {
+// GARANTÍAS
+app.get('/garantias', auth, async (req, res) => {
   try {
-    const data = await Cotizacion.find({
-      confirmada: 'si'
-    }).sort({ _id: -1 })
-
+    const data = await Cotizacion.find({ confirmada: 'si' }).sort({ _id: -1 })
     res.json(data)
   } catch (err) {
     res.status(500).json({ error: 'Error obteniendo garantías' })
   }
 })
 
-// ACTUALIZAR COTIZACION
-app.put('/cotizacion/:id', async (req, res) => {
+// ACTUALIZAR
+app.put('/cotizacion/:id', auth, async (req, res) => {
   try {
 
     const data = req.body
@@ -252,8 +266,8 @@ app.put('/cotizacion/:id', async (req, res) => {
   }
 })
 
-// 🔥 GUARDAR GARANTÍA (ARREGLADO)
-app.put('/garantia/:id', async (req, res) => {
+// GARANTÍA
+app.put('/garantia/:id', auth, async (req, res) => {
   try {
 
     const { garantiaHasta, fotoGarantia } = req.body
@@ -276,23 +290,20 @@ app.put('/garantia/:id', async (req, res) => {
 })
 
 // BORRAR
-app.delete('/cotizacion/:id', async (req, res) => {
+app.delete('/cotizacion/:id', auth, async (req, res) => {
   await Cotizacion.findByIdAndDelete(req.params.id)
   io.emit('actualizar')
   res.json({ ok: true })
 })
 
-
 // ================= PROVEEDORES =================
 
-// LISTAR
-app.get('/proveedores', async (req, res) => {
+app.get('/proveedores', auth, async (req, res) => {
   const data = await Proveedor.find().sort({ nombre: 1 })
   res.json(data)
 })
 
-// CREAR
-app.post('/proveedores', async (req, res) => {
+app.post('/proveedores', auth, async (req, res) => {
 
   const nombre = req.body.nombre?.trim()
 
@@ -310,8 +321,7 @@ app.post('/proveedores', async (req, res) => {
   res.json({ ok: true })
 })
 
-// BORRAR
-app.delete('/proveedores/:nombre', async (req, res) => {
+app.delete('/proveedores/:nombre', auth, async (req, res) => {
   await Proveedor.deleteOne({ nombre: req.params.nombre })
   res.json({ ok: true })
 })
