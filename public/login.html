@@ -63,7 +63,6 @@ button:hover{
 
 <div class="card">
 
-  <!-- 🔥 TU LOGO -->
   <img src="logo.png" class="logo">
 
   <h2>ALONZO</h2>
@@ -76,7 +75,8 @@ button:hover{
 </div>
 
 <script>
- const API = 'https://ticket-app.onrender.com' 
+const API = 'https://ticket-app.onrender.com'
+
 async function login(){
 
   const usuario = document.getElementById('user').value
@@ -88,22 +88,13 @@ async function login(){
     body: JSON.stringify({ usuario, clave })
   })
 
-  // 🔥 DEBUG REAL
-  const text = await res.text()
-  console.log("RESPUESTA DEL SERVER:", text)
+  const data = await res.json()
 
-  try{
-    const data = JSON.parse(text)
-
-    if(res.ok){
-      localStorage.setItem('token', data.token)
-      location.href = 'admin.html'
-    }else{
-      alert(data.error || 'Error login')
-    }
-
-  }catch(e){
-    alert('El servidor NO está devolviendo JSON')
+  if(res.ok){
+    localStorage.setItem('token', data.token)
+    location.href = 'admin.html'
+  }else{
+    alert(data.error || 'Error login')
   }
 }
 </script>

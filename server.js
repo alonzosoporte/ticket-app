@@ -11,47 +11,36 @@ const io = new Server(server)
 app.use(express.json({ limit: '20mb' }))
 app.use(express.static('public'))
 
-// 🔐 AUTH SIMPLE
+// ================= AUTH =================
 const USER = 'alonzo'
 const PASS = 'foofigh1987'
 const TOKEN = 'alonzo-123'
 
-
 // LOGIN
 app.post('/login', (req,res)=>{
-  console.log('LOGIN BODY:', req.body)
-
   const { usuario, clave } = req.body
 
   if(usuario === USER && clave === PASS){
-    return res.json({ ok:true, token:'123' })
+    return res.json({ ok:true, token: TOKEN })
   }
 
   res.status(401).json({ error:'Credenciales incorrectas' })
 })
 
-let sesiones = {}
-
-function auth(req, res, next){
-  const token = req.headers['authorization']
-
-  if(!token || !sesiones[token]){
-    return res.status(401).json({ error:'No autorizado' })
-  }
-
-  next()
-}
-
-// 🔐 MIDDLEWARE
+// MIDDLEWARE AUTH
 function auth(req,res,next){
 
   const authHeader = req.headers.authorization
 
-  if(!authHeader) return res.status(401).send('No autorizado')
+  if(!authHeader){
+    return res.status(401).json({ error:'No autorizado' })
+  }
 
   const token = authHeader.split(' ')[1]
 
-  if(token !== TOKEN) return res.status(403).send('Prohibido')
+  if(token !== TOKEN){
+    return res.status(403).json({ error:'Token inválido' })
+  }
 
   next()
 }
