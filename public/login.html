@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login - ALONZO</title>
+
+<style>
+body{
+  font-family: Arial;
+  background: linear-gradient(135deg,#003366,#007bff);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:0;
+}
+
+.card{
+  background:white;
+  padding:30px;
+  border-radius:16px;
+  width:300px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  text-align:center;
+}
+
+h2{
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:#007bff;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#0056b3;
+}
+
+.logo{
+  width:80px;
+  margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <!-- 🔥 TU LOGO -->
+  <img src="logo.png" class="logo">
+
+  <h2>ALONZO</h2>
+
+  <input id="user" placeholder="Usuario">
+  <input id="pass" type="password" placeholder="Clave">
+
+  <button onclick="login()">Ingresar</button>
+
+</div>
+
+<script>
+async function login(){
+
+  const usuario = document.getElementById('user').value
+  const clave = document.getElementById('pass').value
+
+  const res = await fetch('/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ usuario, clave })
+  })
+
+  const data = await res.json()
+
+  if(res.ok){
+    localStorage.setItem('token', data.token)
+    location.href = 'admin.html'
+  }else{
+    alert(data.error || 'Error login')
+  }
+}
+</script>
+
+</body>
+</html>
