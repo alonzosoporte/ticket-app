@@ -19,14 +19,12 @@ const TOKEN = 'alonzo-123'
 
 // LOGIN
 app.post('/login', (req,res)=>{
+  console.log('LOGIN BODY:', req.body)
+
   const { usuario, clave } = req.body
 
   if(usuario === USER && clave === PASS){
-
-    const token = Math.random().toString(36).substring(2)
-    sesiones[token] = true
-
-    return res.json({ ok:true, token })
+    return res.json({ ok:true, token:'123' })
   }
 
   res.status(401).json({ error:'Credenciales incorrectas' })
