@@ -1,3 +1,4 @@
+const cors = require('cors')
 const express = require('express')
 const mongoose = require('mongoose')
 const http = require('http')
@@ -8,6 +9,7 @@ const server = http.createServer(app)
 const io = new Server(server)
 
 // ================= CONFIG =================
+app.use(cors())
 app.use(express.json({ limit: '20mb' }))
 app.use(express.static('public'))
 
