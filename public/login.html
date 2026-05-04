@@ -76,31 +76,34 @@ button:hover{
 </div>
 
 <script>
+ const API = 'https://ticket-app.onrender.com' 
 async function login(){
 
   const usuario = document.getElementById('user').value
   const clave = document.getElementById('pass').value
 
-  const res = await fetch('/login',{
+  const res = await fetch(API + '/login',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ usuario, clave })
   })
 
-  let data
+  // 🔥 DEBUG REAL
+  const text = await res.text()
+  console.log("RESPUESTA DEL SERVER:", text)
 
   try{
-    data = await res.json()
-  }catch(e){
-    alert('Error del servidor (no responde JSON)')
-    return
-  }
+    const data = JSON.parse(text)
 
-  if(res.ok){
-    localStorage.setItem('token', data.token)
-    location.href = 'admin.html'
-  }else{
-    alert(data.error || 'Error login')
+    if(res.ok){
+      localStorage.setItem('token', data.token)
+      location.href = 'admin.html'
+    }else{
+      alert(data.error || 'Error login')
+    }
+
+  }catch(e){
+    alert('El servidor NO está devolviendo JSON')
   }
 }
 </script>
