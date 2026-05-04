@@ -341,34 +341,46 @@ async function cargar(){
     const precio = parseFloat(c.precioCliente)||0
     const gan = precio - costo
 
-    lista.innerHTML+=`
-    <div class="card">
+    lista.innerHTML += `
+<div class="card">
 
-      <b>${c.producto}</b><br>
-      ${c.nombre} (${c.celular})<br>
-      💰 $${gan}<br><br>
+  📅 ${c.fecha ? new Date(c.fecha).toLocaleString('es-UY') : ''}<br><br>
+
+  <b>${c.producto || ''}</b><br>
+  🏢 ${c.proveedor || 'Sin proveedor'}<br>
+  ${c.nombre || ''} (${c.celular || ''})<br><br>
+
+  🧾 <b>Ganancia $${gan}</b><br><br>
+
+  ${
+    c.confirmada === 'si'
+    ? `
+      <span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
 
       ${
         c.fotos?.length
-        ? c.fotos.map(f=>`<img src="${f}" class="thumb" onclick="abrirModal('${f}')">`).join('')
-        : ''
+        ? c.fotos.map(f => `
+            <img src="${f}" class="thumb" onclick="abrirModal('${f}')">
+          `).join('')
+        : (c.foto
+            ? `<img src="${c.foto}" class="thumb" onclick="abrirModal('${c.foto}')">`
+            : ''
+          )
       }
 
       <br><br>
-
-      ${
-        c.confirmada==='si'
-        ? `<b style="color:green">✔️ Confirmada</b>`
-        : `
-          <button onclick="editar('${c._id}')">✏️</button>
-          <button onclick="confirmar('${c._id}')">✔️</button>
-        `
-      }
-
-      <button onclick="borrar('${c._id}')">❌</button>
-
-    </div>
+      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
     `
+    : `
+      <span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
+      <button class="btn" onclick="editar('${c._id}')">✏️</button>
+      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+      <button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>
+    `
+  }
+
+</div>
+`
   })
 }
 
