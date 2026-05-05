@@ -196,36 +196,86 @@ async function borrar(id,nombre){
 // LOAD
 async function cargar(){
 
-  const nombreSeguro = (t.nombre || '').replace(/'/g, "")
+  try{
+    const res = await fetchAuth('/tickets')
+    const tickets = await res.json()
 
-lista.innerHTML+=`
-<div class="ticket">
-  <b>${t.numero}</b><br>
-  ${nombreSeguro} (${t.telefono})<br>
-  ${t.problema}<br><br>
+    if(!Array.isArray(tickets)) return
 
-  💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-  💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+    cargarMeses(tickets)
 
-  <textarea oninput="guardar('${t.numero}','detalle',this.value)">
-${t.detalle||''}</textarea>
+    let filtrados = [...tickets]
 
-  <br><br>
+    const mes = filtroMes.value
+    if(mes !== 'todos'){
+      filtrados = filtrados.filter(t=>{
+        const d = new Date(t.fecha)
+        const m = String(d.getMonth()+1).padStart(2,'0')
+        const a = d.getFullYear()
+        return `${a}-${m}` === mes
+      })
+    }
 
-  <button class="btn-success"
-  onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
-  WhatsApp</button>
+    if(modo === 'pendientes'){
+      filtrados = filtrados.filter(t=>t.entregado !== 'si')
+    }
 
-  <button class="btn-secondary"
-  onclick="marcarEntregado('${t.numero}')">
-  Entregado</button>
+    const texto = busqueda.value.toLowerCase()
 
-  <button class="btn-danger"
-  onclick="borrar('${t.numero}','${nombreSeguro}')">
-  Eliminar</button>
-</div>
-`
-  })
+    filtrados = filtrados.filter(t=>
+      (t.nombre||'').toLowerCase().includes(texto) ||
+      (t.telefono||'').includes(texto)
+    )
+
+    let total = 0
+    filtrados.forEach(t=>{
+      total += parseFloat(t.ganancia)||0
+    })
+
+    resumen.innerHTML = `
+      <div class="panel">
+        <div class="card">💰 Total: $${total}</div>
+      </div>
+    `
+
+    lista.innerHTML=''
+
+    filtrados.reverse().forEach(t=>{
+
+      const nombreSeguro = (t.nombre || '').replace(/'/g,"")
+
+      lista.innerHTML+=`
+      <div class="ticket">
+        <b>${t.numero}</b><br>
+        ${nombreSeguro} (${t.telefono})<br>
+        ${t.problema}<br><br>
+
+        💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+        💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+        <textarea onblur="guardar('${t.numero}','detalle',this.value)">${t.detalle||''}</textarea>
+
+        <br><br>
+
+        <button class="btn-success"
+        onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
+        WhatsApp</button>
+
+        <button class="btn-secondary"
+        onclick="marcarEntregado('${t.numero}')">
+        Entregado</button>
+
+        <button class="btn-danger"
+        onclick="borrar('${t.numero}','${nombreSeguro}')">
+        Eliminar</button>
+      </div>
+      `
+    })
+
+  }catch(e){
+    console.error(e)
+    alert('Error de conexión')
+  }
 }
 
 socket.on('actualizar',()=>cargar())
