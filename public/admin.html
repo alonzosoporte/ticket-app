@@ -144,10 +144,10 @@ function cargarMeses(tickets){
     const d = new Date(t.fecha)
     const mes = String(d.getMonth()+1).padStart(2,'0')
     const anio = d.getFullYear()
-    meses.add(`${anio}-${mes}`)
+    meses.add(${anio}-${mes})
   })
 
-  select.innerHTML = `<option value="todos">📅 Todos</option>`
+  select.innerHTML = <option value="todos">📅 Todos</option>
 
   ;[...meses].sort().reverse().forEach(m=>{
     const [anio,mes] = m.split('-')
@@ -190,89 +190,42 @@ async function marcarEntregado(id){
 }
 
 async function borrar(id,nombre){
-  if(!confirm(`Eliminar ticket de ${nombre}?`)) return
+  if(!confirm(`Eliminar ticket de ${nombre}`?)) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
 
 // LOAD
 async function cargar(){
 
-  const res = await fetchAuth('/tickets')
-  const tickets = await res.json()
+  const nombreSeguro = (t.nombre || '').replace(/'/g, "")
 
-  const resCot = await fetchAuth('/cotizaciones')
-  const cotizaciones = await resCot.json()
+lista.innerHTML+=`
+<div class="ticket">
+  <b>${t.numero}</b><br>
+  ${nombreSeguro} (${t.telefono})<br>
+  ${t.problema}<br><br>
 
-  let rep=0, ven=0
+  💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+  💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
-  tickets.forEach(t=>{
-    if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
-  })
-
-  cotizaciones.forEach(c=>{
-    if(c.confirmada==='si'){
-      const costo = parseFloat(c.costoProveedor)||0
-      const precio = parseFloat(c.precioCliente)||0
-      ven += (precio - costo)
-    }
-  })
-
-  document.getElementById('resumen').innerHTML = `
-  <div class="panel">
-    <div class="card">🔧 Reparaciones $${rep}</div>
-    <div class="card">🛒 Ventas $${ven}</div>
-    <div class="card">💰 Total $${rep+ven}</div>
-  </div>`
-
-  cargarMeses(tickets)
-
-  let filtrados = tickets
-
-  if(modo==='pendientes'){
-    filtrados = filtrados.filter(t=>t.entregado!=='si')
-  }
-
-  const filtro = busqueda.value.toLowerCase()
-
-  filtrados = filtrados.filter(t=>
-    (t.nombre||'').toLowerCase().includes(filtro) ||
-    (t.telefono||'').includes(filtro)
-  )
-
-  const mesSel = filtroMes.value
-
-  if(mesSel !== 'todos'){
-    filtrados = filtrados.filter(t=>{
-      if(!t.fecha) return false
-      const d = new Date(t.fecha)
-      const mes = String(d.getMonth()+1).padStart(2,'0')
-      const anio = d.getFullYear()
-      return `${anio}-${mes}` === mesSel
-    })
-  }
-
-  lista.innerHTML=''
-
-  filtrados.reverse().forEach(t=>{
-    lista.innerHTML+=`
-    <div class="ticket">
-      <b>${t.numero}</b><br>
-      ${t.nombre} (${t.telefono})<br>
-      ${t.problema}<br><br>
-
-      💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-      💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
-
-      <textarea oninput="guardar('${t.numero}','detalle',this.value)">
+  <textarea oninput="guardar('${t.numero}','detalle',this.value)">
 ${t.detalle||''}</textarea>
 
-      <br><br>
+  <br><br>
 
-      <button class="btn-success" onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">WhatsApp</button>
-      <button class="btn-secondary" onclick="marcarEntregado('${t.numero}')">Entregado</button>
-      <button class="btn-danger" onclick="borrar('${t.numero}','${t.nombre}')">Eliminar</button>
-    </div>
-    `
+  <button class="btn-success"
+  onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
+  WhatsApp</button>
+
+  <button class="btn-secondary"
+  onclick="marcarEntregado('${t.numero}')">
+  Entregado</button>
+
+  <button class="btn-danger"
+  onclick="borrar('${t.numero}','${nombreSeguro}')">
+  Eliminar</button>
+</div>
+`
   })
 }
 
