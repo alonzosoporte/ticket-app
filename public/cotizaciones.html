@@ -167,7 +167,12 @@ button {
 </div>
 
 <script>
+const API = 'https://ticket-pro-xmhs.onrender.com'
+const TOKEN = localStorage.getItem('token')
 
+if(!TOKEN){
+  location.href = 'login.html'
+}
 let editando = null
 let fotos = []
 
@@ -305,6 +310,7 @@ async function guardar(){
   limpiar()
   cargar()
 }
+const socket = io(API)
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -327,24 +333,21 @@ async function confirmar(id){
 
 // LISTAR
 async function cargar(){
-  const res = await fetchAuth('/cotizaciones')
-  let data = await res.json()
+ const res = await fetchAuth('/cotizaciones')
 
-  const estado = filtroEstado.value
+if(!res.ok){
+  console.log("ERROR:", res.status)
+  return
+}
 
-  if(estado==='pendientes') data = data.filter(c=>c.confirmada!=='si')
-  if(estado==='confirmadas') data = data.filter(c=>c.confirmada==='si')
+const data = await res.json()
 
-  const f = buscar.value.toLowerCase()
+if(!Array.isArray(data)){
+  console.log("NO ES ARRAY:", data)
+  return
+}
 
-  data = data.filter(c=>
-    (c.nombre||'').toLowerCase().includes(f) ||
-    (c.celular||'').includes(f)
-  )
-
-  lista.innerHTML=''
-
-  data.reverse().forEach(c=>{
+data.forEach(...){
 
     const costo = parseFloat(c.costoProveedor)||0
     const precio = parseFloat(c.precioCliente)||0
