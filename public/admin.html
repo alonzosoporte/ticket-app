@@ -237,40 +237,50 @@ async function cargar(){
         <div class="card">💰 Total: $${total}</div>
       </div>
     `
+lista.innerHTML=''
 
-    lista.innerHTML=''
+filtrados.reverse().forEach(t=>{
 
-    filtrados.reverse().forEach(t=>{
+  // 🔒 FIX SEGURO (evita romper por comillas)
+  const nombreSeguro = (t.nombre || '').replace(/'/g,"")
 
-      const nombreSeguro = (t.nombre || '').replace(/'/g,"")
+  lista.innerHTML+=`
+  <div class="ticket">
+    <b>${t.numero}</b><br>
+    ${nombreSeguro} (${t.telefono || ''})<br>
+    ${t.problema || ''}<br><br>
 
-      lista.innerHTML+=`
-      <div class="ticket">
-        <b>${t.numero}</b><br>
-        ${nombreSeguro} (${t.telefono})<br>
-        ${t.problema}<br><br>
+    💲 <input value="${t.precio || ''}" 
+    onchange="guardar('${t.numero}','precio',this.value)">
 
-        💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-        💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+    💰 <input value="${t.ganancia || ''}" 
+    onchange="guardar('${t.numero}','ganancia',this.value)">
 
-        <textarea onblur="guardar('${t.numero}','detalle',this.value)">${t.detalle||''}</textarea>
+    <br><br>
 
-        <br><br>
+    📝 Detalle:
+    <textarea 
+    onblur="guardar('${t.numero}','detalle',this.value)">
+${t.detalle || ''}
+    </textarea>
 
-        <button class="btn-success"
-        onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
-        WhatsApp</button>
+    <br><br>
 
-        <button class="btn-secondary"
-        onclick="marcarEntregado('${t.numero}')">
-        Entregado</button>
+    <button class="btn-success"
+    onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
+    WhatsApp</button>
 
-        <button class="btn-danger"
-        onclick="borrar('${t.numero}','${nombreSeguro}')">
-        Eliminar</button>
-      </div>
-      `
-    })
+    <button class="btn-secondary"
+    onclick="marcarEntregado('${t.numero}')">
+    Entregado</button>
+
+    <button class="btn-danger"
+    onclick="borrar('${t.numero}','${nombreSeguro}')">
+    Eliminar</button>
+
+  </div>
+  `
+})
 
   }catch(e){
     console.error(e)
