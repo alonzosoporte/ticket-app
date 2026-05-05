@@ -318,7 +318,7 @@ async function confirmar(id){
 
 // LISTAR
 async function cargar(){
-  const res = await fetch('/cotizaciones')
+  const res = await fetchAuth('/cotizaciones')
   let data = await res.json()
 
   const estado = filtroEstado.value
@@ -387,7 +387,7 @@ async function cargar(){
 
 // EDITAR
 async function editar(id){
-  const res = await fetch('/cotizaciones')
+  const res = await fetchAuth('/cotizaciones')
   const data = await res.json()
   const c = data.find(x=>x._id===id)
 
