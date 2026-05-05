@@ -91,6 +91,13 @@ button {
   margin:10px 0;
   border-radius:12px;
 }
+
+textarea {
+  width:100%;
+  border-radius:10px;
+  border:1px solid #ccc;
+  padding:8px;
+}
 </style>
 </head>
 
@@ -131,6 +138,7 @@ if(!TOKEN){
 
 const socket = io(API)
 let modo = 'pendientes'
+let escribiendo = false
 
 function logout(){
   localStorage.removeItem('token')
@@ -148,9 +156,8 @@ function fetchAuth(url, options = {}){
   })
 }
 
-// ===== WHATSAPP =====
+// WHATSAPP
 async function listoWhatsApp(id,nombre,telefono,precio){
-
   let tel=telefono.replace(/\D/g,'')
 
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
@@ -168,7 +175,7 @@ Tu equipo está listo ✅
   await guardar(id,'estado','listo')
 }
 
-// ===== CRUD =====
+// CRUD
 async function guardar(id,campo,valor){
   await fetchAuth('/ticket/'+id,{
     method:'PUT',
@@ -188,8 +195,10 @@ async function borrar(id,nombre){
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
 
-// ===== CARGAR =====
+// CARGAR
 async function cargar(){
+
+  const mesGuardado = document.getElementById('filtroMes').value
 
   const res = await fetchAuth('/tickets')
   let tickets = await res.json()
@@ -197,34 +206,35 @@ async function cargar(){
   const resCot = await fetchAuth('/cotizaciones')
   let cotizaciones = await resCot.json()
 
-  // FILTRO MES
-  const meses = {}
-  tickets.forEach(t=>{
-    const f=new Date(t.fecha)
-    const key=f.getFullYear()+'-'+(f.getMonth()+1)
-    meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
-  })
+  // ARMAR MESES SOLO 1 VEZ
+  if(filtroMes.options.length <= 1){
+    const meses = {}
 
-  filtroMes.innerHTML='<option value="todos">📅 Todos</option>'
-  for(let k in meses){
-    filtroMes.innerHTML += `<option value="${k}">${meses[k]}</option>`
+    tickets.forEach(t=>{
+      const f=new Date(t.fecha)
+      const key=f.getFullYear()+'-'+(f.getMonth()+1)
+      meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+    })
+
+    for(let k in meses){
+      filtroMes.innerHTML += `<option value="${k}">${meses[k]}</option>`
+    }
   }
 
-  const mesSel = filtroMes.value
+  filtroMes.value = mesGuardado || 'todos'
 
-  if(mesSel !== 'todos'){
+  if(filtroMes.value !== 'todos'){
     tickets = tickets.filter(t=>{
       const f=new Date(t.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSel
+      return f.getFullYear()+'-'+(f.getMonth()+1)===filtroMes.value
     })
 
     cotizaciones = cotizaciones.filter(c=>{
       const f=new Date(c.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSel
+      return f.getFullYear()+'-'+(f.getMonth()+1)===filtroMes.value
     })
   }
 
-  // GANANCIAS
   let rep=0, ven=0
 
   tickets.forEach(t=>{
@@ -233,30 +243,18 @@ async function cargar(){
 
   cotizaciones.forEach(c=>{
     if(c.confirmada==='si'){
-      ven += (parseFloat(c.precioCliente)||0) - (parseFloat(c.costoProveedor)||0)
+      ven += (parseFloat(c.precioCliente)||0)-(parseFloat(c.costoProveedor)||0)
     }
   })
 
   resumen.innerHTML = `
   <div class="panel">
-    <div class="card">
-      🔧 Reparaciones
-      <div class="monto">$${rep}</div>
-    </div>
-
-    <div class="card">
-      🛒 Ventas
-      <div class="monto">$${ven}</div>
-    </div>
-
-    <div class="card">
-      💰 Total
-      <div class="monto">$${rep+ven}</div>
-    </div>
+    <div class="card">🔧 Reparaciones<div class="monto">$${rep}</div></div>
+    <div class="card">🛒 Ventas<div class="monto">$${ven}</div></div>
+    <div class="card">💰 Total<div class="monto">$${rep+ven}</div></div>
   </div>
   `
 
-  // FILTRO
   if(modo==='pendientes'){
     tickets = tickets.filter(t=>t.entregado!=='si')
   }
@@ -273,13 +271,27 @@ async function cargar(){
   tickets.reverse().forEach(t=>{
     lista.innerHTML+=`
     <div class="ticket">
+
       <b>${t.numero}</b><br>
       ${t.nombre} (${t.telefono})<br>
       ${t.problema}<br>
       📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
 
-      💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-      💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+      💲 Precio:
+      <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+
+      💰 Ganancia:
+      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+      <br><br>
+
+      📝 Detalle:
+      <textarea 
+      onfocus="escribiendo=true"
+      onblur="guardar('${t.numero}','detalle',this.value); escribiendo=false"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+      placeholder="Escribir detalle técnico..."
+      >${t.detalle ? t.detalle.trim() : ''}</textarea>
 
       <br><br>
 
@@ -300,7 +312,13 @@ async function cargar(){
   })
 }
 
-socket.on('actualizar',cargar)
+// SOCKET (NO interrumpe escritura)
+socket.on('actualizar', () => {
+  if(!escribiendo){
+    cargar()
+  }
+})
+
 cargar()
 
 </script>
