@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Cotizaciones PRO</title>
 
+<script src="/socket.io/socket.io.js"></script>
+
 <style>
 body {
   font-family: Arial;
@@ -33,7 +35,7 @@ button {
   font-weight:bold;
 }
 
-.btn { background:#007bff; color:white; }
+.btn { background:#003366; color:white; }
 .btn-success { background:#28a745; color:white; }
 .btn-danger { background:#dc3545; color:white; }
 .btn-secondary { background:#6c757d; color:white; }
@@ -46,12 +48,6 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.input-error {
-  border:2px solid #dc3545 !important;
-  background:#fff5f5;
-}
-
-/* MINIATURAS */
 .thumb {
   width:60px;
   height:60px;
@@ -61,26 +57,6 @@ button {
   cursor:pointer;
 }
 
-.thumb-wrap {
-  position:relative;
-  display:inline-block;
-}
-
-.btn-x {
-  position:absolute;
-  top:-5px;
-  right:-5px;
-  background:red;
-  color:white;
-  border-radius:50%;
-  font-size:12px;
-  width:18px;
-  height:18px;
-  text-align:center;
-  cursor:pointer;
-}
-
-/* MODAL */
 .modal {
   display:none;
   position:fixed;
@@ -107,15 +83,7 @@ button {
 
 <div class="topbar">
   <button class="btn-secondary" onclick="location.href='admin.html'">⬅️ Volver</button>
-
   <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
-
-  <select id="filtroEstado" onchange="cargar()">
-    <option value="pendientes">⏳ Pendientes</option>
-    <option value="confirmadas">✅ Confirmadas</option>
-    <option value="todas">📋 Todas</option>
-  </select>
-
   <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
 </div>
 
@@ -131,12 +99,6 @@ button {
 <br><br>
 
 <select id="proveedor"></select>
-<button type="button" class="btn-danger" onclick="eliminarProveedor()">❌</button>
-
-<input id="nuevoProveedor" placeholder="Nuevo proveedor">
-<button type="button" class="btn" onclick="agregarProveedor()">➕</button>
-
-<br><br>
 
 <input id="costoProveedor" placeholder="Costo">
 <input id="precioCliente" placeholder="Precio cliente">
@@ -148,7 +110,7 @@ button {
 
 <br><br>
 
-📸 <input type="file" id="foto" multiple>
+<input type="file" id="foto" multiple>
 
 <div id="preview"></div>
 
@@ -161,156 +123,20 @@ button {
 
 <div id="lista"></div>
 
-<!-- MODAL -->
 <div id="modal" class="modal" onclick="cerrarModal()">
   <img id="imgGrande">
 </div>
 
 <script>
+
 const API = 'https://ticket-pro-xmhs.onrender.com'
 const TOKEN = localStorage.getItem('token')
 
 if(!TOKEN){
   location.href = 'login.html'
 }
-let editando = null
-let fotos = []
 
-// GANANCIA
-function calcularGanancia() {
-  const c = parseFloat(costoProveedor.value)||0
-  const p = parseFloat(precioCliente.value)||0
-  ganancia.value = p - c
-}
-
-costoProveedor.oninput = calcularGanancia
-precioCliente.oninput = calcularGanancia
-
-// FOTO MULTIPLE
-foto.onchange = e=>{
-  const files = e.target.files
-
-  for(let file of files){
-    const r = new FileReader()
-    r.onload = ()=>{
-      fotos.push(r.result)
-      renderPreview()
-    }
-    r.readAsDataURL(file)
-  }
-}
-
-function renderPreview(){
-  preview.innerHTML=''
-
-  fotos.forEach((f,i)=>{
-    preview.innerHTML+=`
-    <div class="thumb-wrap">
-      <img src="${f}" class="thumb" onclick="abrirModal('${f}')">
-      <div class="btn-x" onclick="eliminarFoto(${i})">x</div>
-    </div>
-    `
-  })
-}
-
-function eliminarFoto(i){
-  fotos.splice(i,1)
-  renderPreview()
-}
-
-// MODAL
-function abrirModal(src){
-  modal.style.display='flex'
-  imgGrande.src=src
-}
-function cerrarModal(){
-  modal.style.display='none'
-}
-
-// PROVEEDORES
-async function cargarProveedores(){
-  const res = await fetch('/proveedores')
-  const data = await res.json()
-
-  proveedor.innerHTML = `<option value="">-- Seleccionar proveedor --</option>`
-
-  data.forEach(p=>{
-    proveedor.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`
-  })
-}
-
-async function agregarProveedor(){
-  const nombre = nuevoProveedor.value.trim()
-  if(!nombre) return alert('Escribí proveedor')
-
-  await fetch('/proveedores',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({nombre})
-  })
-
-  nuevoProveedor.value=''
-  await cargarProveedores()
-  proveedor.value=nombre
-}
-
-async function eliminarProveedor(){
-  const nombre = proveedor.value
-  if(!nombre) return alert('Seleccioná proveedor')
-
-  if(!confirm('Eliminar?'))return
-
-  await fetch('/proveedores/'+encodeURIComponent(nombre),{method:'DELETE'})
-  cargarProveedores()
-}
-
-// VALIDAR
-function validar(){
-  let ok=true
-  ;[nombre,celular,producto,proveedor,costoProveedor,precioCliente,descripcion].forEach(c=>{
-    if(!c.value.trim()){
-      c.classList.add('input-error')
-      ok=false
-    }
-  })
-  if(!ok) alert('Completar campos')
-  return ok
-}
-
-// GUARDAR
-async function guardar(){
-
-  if(!validar()) return
-
-  const data = {
-    nombre:nombre.value,
-    celular:celular.value,
-    producto:producto.value,
-    proveedor:proveedor.value,
-    costoProveedor:costoProveedor.value,
-    precioCliente:precioCliente.value,
-    descripcion:descripcion.value,
-    fotos
-  }
-
-  if(editando){
-    await fetch('/cotizacion/'+editando,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    })
-  }else{
-    await fetch('/cotizacion',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    })
-  }
-
-  limpiar()
-  cargar()
-}
-const socket = io(API)
+// 🔐 FETCH PROTEGIDO
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -321,142 +147,125 @@ function fetchAuth(url, options = {}){
     }
   })
 }
-// CONFIRMAR
-async function confirmar(id){
-  await fetch('/cotizacion/'+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({confirmada:'si'})
-  })
-  cargar()
-}
 
-// LISTAR
+// SOCKET
+const socket = io(API)
+socket.on('actualizar', cargar)
+
+// ===== CARGAR =====
 async function cargar(){
- const res = await fetchAuth('/cotizaciones')
 
-if(!res.ok){
-  console.log("ERROR:", res.status)
-  return
-}
+  const res = await fetchAuth('/cotizaciones')
 
-const data = await res.json()
+  if(!res.ok){
+    console.log("ERROR HTTP:", res.status)
+    return
+  }
 
-if(!Array.isArray(data)){
-  console.log("NO ES ARRAY:", data)
-  return
-}
+  const data = await res.json()
 
-data.forEach(...){
+  if(!Array.isArray(data)){
+    console.log("NO ES ARRAY:", data)
+    return
+  }
+
+  lista.innerHTML = ''
+
+  const filtro = buscar.value.toLowerCase()
+
+  data
+  .filter(c =>
+    (c.nombre||'').toLowerCase().includes(filtro) ||
+    (c.producto||'').toLowerCase().includes(filtro)
+  )
+  .reverse()
+  .forEach(c => {
 
     const costo = parseFloat(c.costoProveedor)||0
     const precio = parseFloat(c.precioCliente)||0
     const gan = precio - costo
 
     lista.innerHTML += `
-<div class="card">
+    <div class="card">
 
-  📅 ${c.fecha ? new Date(c.fecha).toLocaleString('es-UY') : ''}<br><br>
+      📅 ${c.fecha ? new Date(c.fecha).toLocaleString('es-UY') : ''}<br><br>
 
-  <b>${c.producto || ''}</b><br>
-  🏢 ${c.proveedor || 'Sin proveedor'}<br>
-  ${c.nombre || ''} (${c.celular || ''})<br><br>
+      <b>${c.producto || ''}</b><br>
+      🏢 ${c.proveedor || 'Sin proveedor'}<br>
+      ${c.nombre || ''} (${c.celular || ''})<br><br>
 
- 💰 <b>Precio cliente $${precio}</b><br>
-🧾 <b>Ganancia $${gan}</b><br><br>
-
-  ${
-    c.confirmada === 'si'
-    ? `
-      <span style="color:green;font-weight:bold">✔️ Confirmada</span><br><br>
+      💰 <b>Precio cliente $${precio}</b><br>
+      🧾 <b>Ganancia $${gan}</b><br><br>
 
       ${
-        c.fotos?.length
-        ? c.fotos.map(f => `
-            <img src="${f}" class="thumb" onclick="abrirModal('${f}')">
-          `).join('')
-        : (c.foto
-            ? `<img src="${c.foto}" class="thumb" onclick="abrirModal('${c.foto}')">`
-            : ''
-          )
+        c.confirmada === 'si'
+        ? `<span style="color:green;font-weight:bold">✔️ Confirmada</span>`
+        : `<span style="color:orange;font-weight:bold">⏳ Pendiente</span>`
       }
 
       <br><br>
-      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-    `
-    : `
-      <span style="color:orange;font-weight:bold">⏳ Pendiente</span><br><br>
-      <button class="btn" onclick="editar('${c._id}')">✏️</button>
-      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-      <button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>
-    `
-  }
 
-</div>
-`
+      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
+      ${
+        c.confirmada !== 'si'
+        ? `<button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>`
+        : ''
+      }
+
+    </div>
+    `
   })
 }
 
-// EDITAR
-async function editar(id){
-  const res = await fetchAuth('/cotizaciones')
-  const data = await res.json()
-  const c = data.find(x=>x._id===id)
+// ===== GUARDAR =====
+async function guardar(){
 
-  editando=id
+  const data = {
+    nombre:nombre.value,
+    celular:celular.value,
+    producto:producto.value,
+    proveedor:proveedor.value,
+    costoProveedor:costoProveedor.value,
+    precioCliente:precioCliente.value,
+    descripcion:descripcion.value
+  }
 
-  nombre.value=c.nombre
-  celular.value=c.celular
-  producto.value=c.producto
-  proveedor.value=c.proveedor
-  costoProveedor.value=c.costoProveedor
-  precioCliente.value=c.precioCliente
-  descripcion.value=c.descripcion
+  await fetchAuth('/cotizacion',{
+    method:'POST',
+    body: JSON.stringify(data)
+  })
 
-  fotos = c.fotos || []
-  renderPreview()
-
-  calcularGanancia()
-  form.style.display='block'
+  cancelar()
+  cargar()
 }
 
-// BORRAR
+// ===== CONFIRMAR =====
+async function confirmar(id){
+  await fetchAuth('/cotizacion/'+id,{
+    method:'PUT',
+    body: JSON.stringify({confirmada:'si'})
+  })
+  cargar()
+}
+
+// ===== BORRAR =====
 async function borrar(id){
   if(!confirm('Eliminar?'))return
-  await fetch('/cotizacion/'+id,{method:'DELETE'})
+  await fetchAuth('/cotizacion/'+id,{method:'DELETE'})
   cargar()
 }
 
 // UI
 function mostrarForm(){
-  limpiar()
   form.style.display='block'
 }
 
 function cancelar(){
-  limpiar()
-}
-
-function limpiar(){
-  editando=null
-  fotos=[]
-  preview.innerHTML=''
-
-  nombre.value=''
-  celular.value=''
-  producto.value=''
-  proveedor.value=''
-  costoProveedor.value=''
-  precioCliente.value=''
-  descripcion.value=''
-  ganancia.value=''
-
   form.style.display='none'
 }
 
 // INIT
 cargar()
-cargarProveedores()
 
 </script>
 
