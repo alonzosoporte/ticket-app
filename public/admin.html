@@ -169,8 +169,7 @@ Tu equipo está listo ✅
 🧾 ${id}
 💲 ${precio||'A confirmar'}`
 
-  window.open(https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)})
-
+window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`)
   await guardar(id,'estado','listo')
 }
 
