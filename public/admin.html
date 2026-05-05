@@ -24,29 +24,16 @@ body {
 
 .header-pro {
   display:flex;
-  align-items:center;
+  flex-wrap:wrap;
   gap:10px;
   background:white;
   padding:12px;
   border-radius:14px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  margin-bottom:15px;
-  flex-wrap:wrap;
+  margin-bottom:20px;
   border-left:5px solid #003366;
 }
 
-.titulo {
-  font-size:18px;
-  font-weight:bold;
-}
-
-.acciones {
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-select, input {
+input, select {
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
@@ -56,11 +43,11 @@ button {
   padding:8px 10px;
   border:none;
   border-radius:10px;
-  cursor:pointer;
   font-weight:bold;
+  cursor:pointer;
 }
 
-.btn { background:#003366; color:white; }
+.btn { background:#003366; color:white }
 .btn-success { background:#28a745; color:white }
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
@@ -68,35 +55,29 @@ button {
 .panel {
   display:flex;
   gap:10px;
-  margin-bottom:10px;
   flex-wrap:wrap;
 }
 
 .card {
   background:white;
-  padding:12px;
-  border-radius:12px;
+  padding:10px;
+  border-radius:10px;
   flex:1;
-  text-align:center;
-}
-
-.monto {
-  font-size:18px;
-  font-weight:bold;
 }
 
 .ticket {
   background:white;
-  padding:12px;
+  padding:10px;
   margin:10px 0;
-  border-radius:12px;
+  border-radius:10px;
 }
 
 textarea {
   width:100%;
+  min-height:60px;
+  padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
-  padding:8px;
 }
 </style>
 </head>
@@ -109,26 +90,21 @@ textarea {
 </div>
 
 <div class="header-pro">
-  <div class="titulo">🧾 Sistema De Tickets</div>
+  <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
 
-  <div class="acciones">
-    <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
+  <select id="filtroMes" onchange="cargar()">
+    <option value="todos">📅 Todos</option>
+  </select>
 
-    <select id="filtroMes" onchange="cargar()">
-      <option value="todos">📅 Todos</option>
-    </select>
-
-    <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
-    <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
-    <button class="btn-danger" onclick="logout()">🚪 Salir</button>
-  </div>
+  <button class="btn" onclick="modo='pendientes';cargar()">Pendientes</button>
+  <button class="btn-success" onclick="modo='todos';cargar()">Todos</button>
+  <button class="btn-danger" onclick="logout()">Salir</button>
 </div>
 
 <div id="resumen"></div>
 <div id="lista"></div>
 
 <script>
-
 const API = 'https://ticket-pro-xmhs.onrender.com'
 const TOKEN = localStorage.getItem('token')
 
@@ -138,7 +114,6 @@ if(!TOKEN){
 
 const socket = io(API)
 let modo = 'pendientes'
-let escribiendo = false
 
 function logout(){
   localStorage.removeItem('token')
@@ -150,27 +125,51 @@ function fetchAuth(url, options = {}){
     ...options,
     headers:{
       'Content-Type':'application/json',
-      'Authorization': 'Bearer ' + TOKEN,
+      'Authorization':'Bearer ' + TOKEN,
       ...(options.headers || {})
     }
   })
 }
 
-// WHATSAPP
-async function listoWhatsApp(id,nombre,telefono,precio){
-  let tel=telefono.replace(/\D/g,'')
+// 📅 MESES BONITO
+function cargarMeses(tickets){
+  const select = document.getElementById('filtroMes')
+  const seleccionado = select.value
 
+  const nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+  const meses = new Set()
+
+  tickets.forEach(t=>{
+    if(!t.fecha) return
+    const d = new Date(t.fecha)
+    const mes = String(d.getMonth()+1).padStart(2,'0')
+    const anio = d.getFullYear()
+    meses.add(`${anio}-${mes}`)
+  })
+
+  select.innerHTML = `<option value="todos">📅 Todos</option>`
+
+  ;[...meses].sort().reverse().forEach(m=>{
+    const [anio,mes] = m.split('-')
+    const nombre = nombres[parseInt(mes)-1]
+    select.innerHTML += `<option value="${m}">${nombre} ${anio}</option>`
+  })
+
+  select.value = seleccionado || 'todos'
+}
+
+// 📲 WHATSAPP
+async function listoWhatsApp(id,nombre,telefono,precio){
+  let tel = telefono.replace(/\D/g,'')
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
-  const msg=`Hola ${nombre} 👋
-
+  const msg = `Hola ${nombre} 👋
 Tu equipo está listo ✅
-
 🧾 ${id}
 💲 ${precio||'A confirmar'}`
 
-  window.open("https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(msg))
+  window.open(https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)})
 
   await guardar(id,'estado','listo')
 }
@@ -191,49 +190,18 @@ async function marcarEntregado(id){
 }
 
 async function borrar(id,nombre){
-  if(!confirm("¿Eliminar ticket de " + nombre + "?")) return
+  if(!confirm(`Eliminar ticket de ${nombre}?`)) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
 
-// CARGAR
+// LOAD
 async function cargar(){
 
-  const mesGuardado = document.getElementById('filtroMes').value
-
   const res = await fetchAuth('/tickets')
-  let tickets = await res.json()
+  const tickets = await res.json()
 
   const resCot = await fetchAuth('/cotizaciones')
-  let cotizaciones = await resCot.json()
-
-  // ARMAR MESES SOLO 1 VEZ
-  if(filtroMes.options.length <= 1){
-    const meses = {}
-
-    tickets.forEach(t=>{
-      const f=new Date(t.fecha)
-      const key=f.getFullYear()+'-'+(f.getMonth()+1)
-      meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
-    })
-
-    for(let k in meses){
-      filtroMes.innerHTML += `<option value="${k}">${meses[k]}</option>`
-    }
-  }
-
-  filtroMes.value = mesGuardado || 'todos'
-
-  if(filtroMes.value !== 'todos'){
-    tickets = tickets.filter(t=>{
-      const f=new Date(t.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===filtroMes.value
-    })
-
-    cotizaciones = cotizaciones.filter(c=>{
-      const f=new Date(c.fecha)
-      return f.getFullYear()+'-'+(f.getMonth()+1)===filtroMes.value
-    })
-  }
+  const cotizaciones = await resCot.json()
 
   let rep=0, ven=0
 
@@ -243,84 +211,74 @@ async function cargar(){
 
   cotizaciones.forEach(c=>{
     if(c.confirmada==='si'){
-      ven += (parseFloat(c.precioCliente)||0)-(parseFloat(c.costoProveedor)||0)
+      const costo = parseFloat(c.costoProveedor)||0
+      const precio = parseFloat(c.precioCliente)||0
+      ven += (precio - costo)
     }
   })
 
-  resumen.innerHTML = `
+  document.getElementById('resumen').innerHTML = `
   <div class="panel">
-    <div class="card">🔧 Reparaciones<div class="monto">$${rep}</div></div>
-    <div class="card">🛒 Ventas<div class="monto">$${ven}</div></div>
-    <div class="card">💰 Total<div class="monto">$${rep+ven}</div></div>
-  </div>
-  `
+    <div class="card">🔧 Reparaciones $${rep}</div>
+    <div class="card">🛒 Ventas $${ven}</div>
+    <div class="card">💰 Total $${rep+ven}</div>
+  </div>`
+
+  cargarMeses(tickets)
+
+  let filtrados = tickets
 
   if(modo==='pendientes'){
-    tickets = tickets.filter(t=>t.entregado!=='si')
+    filtrados = filtrados.filter(t=>t.entregado!=='si')
   }
 
   const filtro = busqueda.value.toLowerCase()
 
-  tickets = tickets.filter(t=>
+  filtrados = filtrados.filter(t=>
     (t.nombre||'').toLowerCase().includes(filtro) ||
     (t.telefono||'').includes(filtro)
   )
 
+  const mesSel = filtroMes.value
+
+  if(mesSel !== 'todos'){
+    filtrados = filtrados.filter(t=>{
+      if(!t.fecha) return false
+      const d = new Date(t.fecha)
+      const mes = String(d.getMonth()+1).padStart(2,'0')
+      const anio = d.getFullYear()
+      return `${anio}-${mes}` === mesSel
+    })
+  }
+
   lista.innerHTML=''
 
-  tickets.reverse().forEach(t=>{
+  filtrados.reverse().forEach(t=>{
     lista.innerHTML+=`
     <div class="ticket">
-
       <b>${t.numero}</b><br>
       ${t.nombre} (${t.telefono})<br>
-      ${t.problema}<br>
-      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
+      ${t.problema}<br><br>
 
-      💲 Precio:
-      <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+      💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+      💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
 
-      💰 Ganancia:
-      <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
-
-      <br><br>
-
-      📝 Detalle:
-      <textarea 
-      onfocus="escribiendo=true"
-      onblur="guardar('${t.numero}','detalle',this.value); escribiendo=false"
-      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-      placeholder="Escribir detalle técnico..."
-      >${t.detalle ? t.detalle.trim() : ''}</textarea>
+      <textarea oninput="guardar('${t.numero}','detalle',this.value)">
+${t.detalle||''}</textarea>
 
       <br><br>
 
-      <button class="btn-success"
-      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
-      ✔️ Listo + WhatsApp</button>
-
-      <button class="btn-secondary"
-      onclick="marcarEntregado('${t.numero}')">
-      📦 Entregado</button>
-
-      <button class="btn-danger"
-      onclick="borrar('${t.numero}','${t.nombre}')">
-      ❌</button>
-
+      <button class="btn-success" onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">WhatsApp</button>
+      <button class="btn-secondary" onclick="marcarEntregado('${t.numero}')">Entregado</button>
+      <button class="btn-danger" onclick="borrar('${t.numero}','${t.nombre}')">Eliminar</button>
     </div>
     `
   })
 }
 
-// SOCKET (NO interrumpe escritura)
-socket.on('actualizar', () => {
-  if(!escribiendo){
-    cargar()
-  }
-})
+socket.on('actualizar',()=>cargar())
 
 cargar()
-
 </script>
 
 </body>
