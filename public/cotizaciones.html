@@ -305,7 +305,16 @@ async function guardar(){
   limpiar()
   cargar()
 }
-
+function fetchAuth(url, options = {}){
+  return fetch(API + url, {
+    ...options,
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization': 'Bearer ' + TOKEN,
+      ...(options.headers || {})
+    }
+  })
+}
 // CONFIRMAR
 async function confirmar(id){
   await fetch('/cotizacion/'+id,{
