@@ -16,14 +16,12 @@ body {
   padding:15px;
 }
 
-/* NAV */
 .nav-top {
   display:flex;
   gap:10px;
   margin-bottom:15px;
 }
 
-/* HEADER */
 .header-pro {
   display:flex;
   align-items:center;
@@ -32,7 +30,7 @@ body {
   padding:12px;
   border-radius:14px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  margin-bottom:20px;
+  margin-bottom:15px;
   flex-wrap:wrap;
   border-left:5px solid #003366;
 }
@@ -45,19 +43,17 @@ body {
 .acciones {
   display:flex;
   gap:8px;
-  align-items:center;
   flex-wrap:wrap;
 }
 
-input {
-  padding:10px;
+select, input {
+  padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
-/* BOTONES */
 button {
-  padding:10px 12px;
+  padding:8px 10px;
   border:none;
   border-radius:10px;
   cursor:pointer;
@@ -69,10 +65,10 @@ button {
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
 
-/* PANEL */
 .panel {
   display:flex;
   gap:10px;
+  margin-bottom:10px;
   flex-wrap:wrap;
 }
 
@@ -81,6 +77,7 @@ button {
   padding:12px;
   border-radius:12px;
   flex:1;
+  text-align:center;
 }
 
 .monto {
@@ -88,22 +85,11 @@ button {
   font-weight:bold;
 }
 
-/* TICKETS */
 .ticket {
   background:white;
   padding:12px;
   margin:10px 0;
   border-radius:12px;
-}
-
-textarea {
-  width:100%;
-  padding:8px;
-  border-radius:10px;
-  border:1px solid #ccc;
-  resize:none;
-  overflow:hidden;
-  box-sizing:border-box;
 }
 </style>
 </head>
@@ -120,6 +106,11 @@ textarea {
 
   <div class="acciones">
     <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
+
+    <select id="filtroMes" onchange="cargar()">
+      <option value="todos">📅 Todos</option>
+    </select>
+
     <button class="btn" onclick="modo='pendientes';cargar()">📋 Pendientes</button>
     <button class="btn-success" onclick="modo='todos';cargar()">✅ Todos</button>
     <button class="btn-danger" onclick="logout()">🚪 Salir</button>
@@ -131,26 +122,21 @@ textarea {
 
 <script>
 
-// ===== CONFIG =====
 const API = 'https://ticket-pro-xmhs.onrender.com'
 const TOKEN = localStorage.getItem('token')
 
-// 🔐 PROTECCIÓN
 if(!TOKEN){
   location.href = 'login.html'
 }
 
 const socket = io(API)
-
 let modo = 'pendientes'
 
-// ===== LOGOUT =====
 function logout(){
   localStorage.removeItem('token')
   location.href = 'login.html'
 }
 
-// ===== FETCH BASE =====
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -162,24 +148,24 @@ function fetchAuth(url, options = {}){
   })
 }
 
-// ===== PDF =====
-async function descargarPDF(numero){
+// ===== WHATSAPP =====
+async function listoWhatsApp(id,nombre,telefono,precio){
 
-  const res = await fetchAuth('/tickets')
-  const data = await res.json()
+  let tel=telefono.replace(/\D/g,'')
 
-  const t = data.find(x => x.numero === numero)
-  if(!t) return
+  if(tel.startsWith('0')) tel='598'+tel.substring(1)
+  if(!tel.startsWith('598')) tel='598'+tel
 
-  const { jsPDF } = window.jspdf
-  const doc = new jsPDF()
+  const msg=`Hola ${nombre} 👋
 
-  doc.text("ALONZO",10,10)
-  doc.text("Ticket: "+t.numero,10,20)
-  doc.text("Cliente: "+t.nombre,10,30)
-  doc.text("Total: $"+(t.precio||0),10,40)
+Tu equipo está listo ✅
 
-  doc.save("ticket.pdf")
+🧾 ${id}
+💲 ${precio||'A confirmar'}`
+
+  window.open("https://api.whatsapp.com/send?phone="+tel+"&text="+encodeURIComponent(msg))
+
+  await guardar(id,'estado','listo')
 }
 
 // ===== CRUD =====
@@ -197,90 +183,124 @@ async function marcarEntregado(id){
   })
 }
 
-async function borrar(id){
-  if(!confirm("Eliminar?"))return
+async function borrar(id,nombre){
+  if(!confirm("¿Eliminar ticket de " + nombre + "?")) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
 
-// ===== LOAD =====
+// ===== CARGAR =====
 async function cargar(){
 
-  try{
+  const res = await fetchAuth('/tickets')
+  let tickets = await res.json()
 
-    const res = await fetchAuth('/tickets')
-    const tickets = await res.json()
+  const resCot = await fetchAuth('/cotizaciones')
+  let cotizaciones = await resCot.json()
 
-    const resCot = await fetchAuth('/cotizaciones')
-    const cotizaciones = await resCot.json()
+  // FILTRO MES
+  const meses = {}
+  tickets.forEach(t=>{
+    const f=new Date(t.fecha)
+    const key=f.getFullYear()+'-'+(f.getMonth()+1)
+    meses[key]=f.toLocaleString('es-UY',{month:'long',year:'numeric'})
+  })
 
-    let rep=0, ven=0
-
-    tickets.forEach(t=>{
-      if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
-    })
-
-    cotizaciones.forEach(c=>{
-      if(c.confirmada === 'si'){
-        ven += (c.precioCliente - c.costoProveedor)
-      }
-    })
-
-    document.getElementById('resumen').innerHTML = `
-      <div class="panel">
-        <div class="card">🔧 $${rep}</div>
-        <div class="card">🛒 $${ven}</div>
-        <div class="card">💰 $${rep+ven}</div>
-      </div>
-    `
-
-    let filtrados = tickets
-
-    if(modo==='pendientes'){
-      filtrados = tickets.filter(t=>t.entregado!=='si')
-    }
-
-    const filtro = document.getElementById('busqueda').value.toLowerCase()
-
-    filtrados = filtrados.filter(t=>
-      (t.nombre||'').toLowerCase().includes(filtro) ||
-      (t.telefono||'').includes(filtro)
-    )
-
-    lista.innerHTML=''
-
-    filtrados.reverse().forEach(t=>{
-      lista.innerHTML+=`
-      <div class="ticket">
-        <b>${t.numero}</b><br>
-        ${t.nombre} (${t.telefono})<br>
-        ${t.problema}<br><br>
-
-        💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
-        💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
-
-        <textarea onblur="guardar('${t.numero}','detalle',this.value)">
-${(t.detalle||'')}
-        </textarea>
-
-        <br><br>
-
-        <button class="btn-success" onclick="marcarEntregado('${t.numero}')">✔️</button>
-        <button class="btn" onclick="descargarPDF('${t.numero}')">PDF</button>
-        <button class="btn-danger" onclick="borrar('${t.numero}')">X</button>
-      </div>
-      `
-    })
-
-  }catch(e){
-    console.error(e)
-    alert('Error de conexión o token inválido')
+  filtroMes.innerHTML='<option value="todos">📅 Todos</option>'
+  for(let k in meses){
+    filtroMes.innerHTML += `<option value="${k}">${meses[k]}</option>`
   }
+
+  const mesSel = filtroMes.value
+
+  if(mesSel !== 'todos'){
+    tickets = tickets.filter(t=>{
+      const f=new Date(t.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSel
+    })
+
+    cotizaciones = cotizaciones.filter(c=>{
+      const f=new Date(c.fecha)
+      return f.getFullYear()+'-'+(f.getMonth()+1)===mesSel
+    })
+  }
+
+  // GANANCIAS
+  let rep=0, ven=0
+
+  tickets.forEach(t=>{
+    if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
+  })
+
+  cotizaciones.forEach(c=>{
+    if(c.confirmada==='si'){
+      ven += (parseFloat(c.precioCliente)||0) - (parseFloat(c.costoProveedor)||0)
+    }
+  })
+
+  resumen.innerHTML = `
+  <div class="panel">
+    <div class="card">
+      🔧 Reparaciones
+      <div class="monto">$${rep}</div>
+    </div>
+
+    <div class="card">
+      🛒 Ventas
+      <div class="monto">$${ven}</div>
+    </div>
+
+    <div class="card">
+      💰 Total
+      <div class="monto">$${rep+ven}</div>
+    </div>
+  </div>
+  `
+
+  // FILTRO
+  if(modo==='pendientes'){
+    tickets = tickets.filter(t=>t.entregado!=='si')
+  }
+
+  const filtro = busqueda.value.toLowerCase()
+
+  tickets = tickets.filter(t=>
+    (t.nombre||'').toLowerCase().includes(filtro) ||
+    (t.telefono||'').includes(filtro)
+  )
+
+  lista.innerHTML=''
+
+  tickets.reverse().forEach(t=>{
+    lista.innerHTML+=`
+    <div class="ticket">
+      <b>${t.numero}</b><br>
+      ${t.nombre} (${t.telefono})<br>
+      ${t.problema}<br>
+      📅 ${new Date(t.fecha).toLocaleString('es-UY')}<br><br>
+
+      💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+      💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+      <br><br>
+
+      <button class="btn-success"
+      onclick="listoWhatsApp('${t.numero}','${t.nombre}','${t.telefono}','${t.precio}')">
+      ✔️ Listo + WhatsApp</button>
+
+      <button class="btn-secondary"
+      onclick="marcarEntregado('${t.numero}')">
+      📦 Entregado</button>
+
+      <button class="btn-danger"
+      onclick="borrar('${t.numero}','${t.nombre}')">
+      ❌</button>
+
+    </div>
+    `
+  })
 }
 
-// SOCKET
 socket.on('actualizar',cargar)
-
-// INIT
 cargar()
 
 </script>
