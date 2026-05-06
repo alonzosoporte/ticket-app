@@ -160,6 +160,8 @@ function cargarMeses(tickets){
   const select = document.getElementById('filtroMes')
   const actual = select.value
 
+  const nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
   const meses = new Set()
 
   tickets.forEach(t=>{
@@ -173,9 +175,13 @@ function cargarMeses(tickets){
   select.innerHTML = `<option value="todos">📅 Todos</option>`
 
   ;[...meses].sort().reverse().forEach(m=>{
-    select.innerHTML += `<option value="${m}">${m}</option>`
+    const [anio,mes] = m.split('-')
+    const nombre = nombres[parseInt(mes)-1]
+
+    select.innerHTML += `<option value="${m}">${nombre} ${anio}</option>`
   })
 
+  // 👉 mes actual por defecto
   const hoy = new Date()
   const actualMes = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`
 
@@ -223,6 +229,27 @@ async function cargar(){
 
     const res = await fetchAuth('/tickets')
     const tickets = await res.json()
+    const mesSel = document.getElementById('filtroMes').value
+
+    let rep = 0
+    let ven = 0
+
+    tickets.forEach(t=>{
+      if(!t.fecha) return
+
+      const d = new Date(t.fecha)
+      const mes = String(d.getMonth()+1).padStart(2,'0')
+      const anio = d.getFullYear()
+      const clave = `${anio}-${mes}`
+
+      // FILTRO POR MES
+      if(mesSel !== 'todos' && clave !== mesSel) return
+
+      // SOLO ENTREGADOS SUMAN
+      if(t.entregado === 'si'){
+        rep += parseFloat(t.ganancia) || 0
+      }
+    })
 
     cargarMeses(tickets)
 
