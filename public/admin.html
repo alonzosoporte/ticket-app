@@ -123,10 +123,13 @@ function logout(){
 // FETCH CON TOKEN
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
-  method:'PUT',
-  body: JSON.stringify(...)
-})
-  
+    ...options,
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + TOKEN,
+      ...(options.headers || {})
+    }
+  })
 }
 
 // FILTRO POR MES
