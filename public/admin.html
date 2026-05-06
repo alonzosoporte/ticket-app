@@ -10,8 +10,43 @@
 
 <style>
 body { font-family: Arial; background:#eef2f7; padding:15px; }
+<style>
+body {
+  font-family: Arial;
+  background:#eef2f7;
+  padding:15px;
+}
+
+/* NAV */
+.nav-top {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+/* HEADER */
+.header-pro {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  background:white;
+  padding:12px;
+  border-radius:14px;
+  margin-bottom:20px;
+  border-left:5px solid #003366;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+/* INPUTS */
+input, select {
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+/* BOTONES */
 button {
-  padding:8px 10px;
+  padding:10px 12px;
   border:none;
   border-radius:10px;
   cursor:pointer;
@@ -23,21 +58,50 @@ button {
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
 
+/* PANEL */
+.panel {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.card {
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  flex:1;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  font-weight:bold;
+}
+
+/* TICKETS */
 .ticket {
+  background:white;
+  padding:14px;
+  margin:10px 0;
+  border-radius:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.ticket {
-  background:white;
-  padding:10px;
-  margin:10px 0;
+/* TEXTAREA */
+textarea {
+  width:100%;
+  min-height:60px;
+  padding:8px;
   border-radius:10px;
+  border:1px solid #ccc;
+  resize:none;
 }
 
-button {
-  padding:8px;
-  margin:5px;
+/* BOTONES EN LÍNEA */
+.acciones-ticket {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
 }
+</style>
 </style>
 </head>
 
@@ -147,19 +211,24 @@ ${t.detalle||''}</textarea>
 
         <br>
 
-      <button class="btn-secondary" onclick="marcarEntregado('${t.numero}')">
-      Entregado
-      </button>
+    <div class="acciones-ticket">
 
-      <button class="btn-success"
-      onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
-      WhatsApp
-      </button>
+    <button class="btn-secondary"
+    onclick="marcarEntregado('${t.numero}')">
+    ✔ Entregado
+    </button>
 
-      <button class="btn-danger" onclick="borrar('${t.numero}')">
-      Eliminar
-      </button>
-      </div>
+    <button class="btn-success"
+    onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
+    📲 WhatsApp
+    </button>
+
+    <button class="btn-danger"
+    onclick="borrar('${t.numero}')">
+    ❌ Eliminar
+    </button>
+
+</div>
       `
     })
 
