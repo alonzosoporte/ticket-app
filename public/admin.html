@@ -200,8 +200,17 @@ console.log('RESPUESTA SERVER:', text)
 
 const tickets = JSON.parse(text)
 
-    const resCot = await fetchAuth('/cotizaciones')
-    const cotizaciones = await resCot.json()
+    let cotizaciones = []
+
+try{
+ 
+
+  console.log('COTIZACIONES:', text)
+
+  cotizaciones = JSON.parse(text)
+}catch(e){
+  console.warn('Sin cotizaciones o error')
+}
 
     cargarMeses(tickets)
 
@@ -209,7 +218,7 @@ const tickets = JSON.parse(text)
     const filtro = document.getElementById('busqueda').value.toLowerCase()
 
     let rep = 0
-    let ven = 0
+    let ven = 0 // ventas desactivadas por ahora
 
     // REPARACIONES
     tickets.forEach(t=>{
@@ -228,22 +237,7 @@ const tickets = JSON.parse(text)
     })
 
     // VENTAS
-    cotizaciones.forEach(c=>{
-      if(c.confirmada === 'si'){
-
-        const d = new Date(c.fecha)
-        const mes = String(d.getMonth()+1).padStart(2,'0')
-        const anio = d.getFullYear()
-        const clave = `${anio}-${mes}`
-
-        if(mesSel !== 'todos' && clave !== mesSel) return
-
-        const costo = parseFloat(c.costoProveedor)||0
-        const precio = parseFloat(c.precioCliente)||0
-
-        ven += (precio - costo)
-      }
-    })
+    
 
     document.getElementById('resumen').innerHTML = `
     <div class="panel">
