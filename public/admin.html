@@ -123,7 +123,7 @@ function logout(){
 // FETCH CON TOKEN
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
-    ...options,
+    data.forEach(t => {options,
     headers:{
       'Content-Type':'application/json',
       'Authorization':'Bearer ' + TOKEN,
