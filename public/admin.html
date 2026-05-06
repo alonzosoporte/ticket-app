@@ -10,6 +10,22 @@
 
 <style>
 body { font-family: Arial; background:#eef2f7; padding:15px; }
+button {
+  padding:8px 10px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.btn { background:#003366; color:white }
+.btn-success { background:#28a745; color:white }
+.btn-danger { background:#dc3545; color:white }
+.btn-secondary { background:#6c757d; color:white }
+
+.ticket {
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
 
 .ticket {
   background:white;
@@ -70,7 +86,27 @@ async function borrar(id){
   if(!confirm("Eliminar?")) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
+async function marcarEntregado(id){
+  await fetchAuth('/ticket/'+id,{
+    method:'PUT',
+    body: JSON.stringify({entregado:'si'})
+  })
+}
 
+async function listoWhatsApp(id,nombre,telefono,precio){
+
+  let tel = (telefono||'').replace(/\D/g,'')
+
+  if(tel.startsWith('0')) tel='598'+tel.substring(1)
+  if(!tel.startsWith('598')) tel='598'+tel
+
+  const msg = `Hola ${nombre} 👋
+Tu equipo está listo ✅
+🧾 ${id}
+💲 ${precio||'A confirmar'}`
+
+  window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`)
+}
 // CARGAR
 async function cargar(){
 
@@ -111,7 +147,18 @@ ${t.detalle||''}</textarea>
 
         <br>
 
-        <button onclick="borrar('${t.numero}')">Eliminar</button>
+      <button class="btn-secondary" onclick="marcarEntregado('${t.numero}')">
+      Entregado
+      </button>
+
+      <button class="btn-success"
+      onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
+      WhatsApp
+      </button>
+
+      <button class="btn-danger" onclick="borrar('${t.numero}')">
+      Eliminar
+      </button>
       </div>
       `
     })
