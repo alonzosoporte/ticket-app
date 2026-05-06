@@ -15,6 +15,13 @@ body {
   padding:15px;
 }
 
+/* NAV */
+.nav-top {
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+
 /* HEADER */
 .header-pro {
   display:flex;
@@ -28,12 +35,14 @@ body {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-input {
+/* INPUTS */
+input, select {
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
+/* BOTONES */
 button {
   padding:10px 12px;
   border:none;
@@ -47,6 +56,23 @@ button {
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
 
+/* PANEL */
+.panel {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.card {
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  flex:1;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  font-weight:bold;
+}
+
 /* TICKETS */
 .ticket {
   background:white;
@@ -56,14 +82,17 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
+/* TEXTAREA */
 textarea {
   width:100%;
   min-height:60px;
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
+  resize:none;
 }
 
+/* BOTONES EN LÍNEA */
 .acciones-ticket {
   display:flex;
   gap:8px;
@@ -75,29 +104,46 @@ textarea {
 
 <body>
 
-<h2>🧾 Admin Tickets</h2>
+<script>
+// 🔐 PROTECCIÓN LOGIN
+const TOKEN = localStorage.getItem('token')
+if(!TOKEN){
+  location.href = 'login.html'
+}
+</script>
+
+<div class="nav-top">
+  <button class="btn-secondary" onclick="location.href='cotizaciones.html'">📊 Cotizaciones</button>
+  <button class="btn-secondary" onclick="location.href='garantias.html'">🛡️ Garantías</button>
+</div>
 
 <div class="header-pro">
-  <input id="busqueda" placeholder="Buscar..." oninput="cargar()">
+  <input id="busqueda" placeholder="🔍 Buscar..." oninput="cargar()">
+
+  <select id="filtroMes" onchange="cargar()">
+    <option value="todos">📅 Todos</option>
+  </select>
 
   <button class="btn" onclick="modo='pendientes';cargar()">Pendientes</button>
   <button class="btn-success" onclick="modo='todos';cargar()">Todos</button>
+  <button class="btn-danger" onclick="logout()">Salir</button>
 </div>
 
+<div id="resumen"></div>
 <div id="lista"></div>
 
 <script>
 const API = 'https://ticket-pro-xmhs.onrender.com'
-const TOKEN = localStorage.getItem('token')
-
-if(!TOKEN){
-  location.href = 'login.html'
-}
-
 const socket = io(API)
 let modo = 'pendientes'
 
-// FETCH
+// LOGOUT
+function logout(){
+  localStorage.removeItem('token')
+  location.href = 'login.html'
+}
+
+// FETCH CON TOKEN
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -109,6 +155,33 @@ function fetchAuth(url, options = {}){
   })
 }
 
+// 📅 MESES
+function cargarMeses(tickets){
+  const select = document.getElementById('filtroMes')
+  const actual = select.value
+
+  const meses = new Set()
+
+  tickets.forEach(t=>{
+    if(!t.fecha) return
+    const d = new Date(t.fecha)
+    const mes = String(d.getMonth()+1).padStart(2,'0')
+    const anio = d.getFullYear()
+    meses.add(`${anio}-${mes}`)
+  })
+
+  select.innerHTML = `<option value="todos">📅 Todos</option>`
+
+  ;[...meses].sort().reverse().forEach(m=>{
+    select.innerHTML += `<option value="${m}">${m}</option>`
+  })
+
+  const hoy = new Date()
+  const actualMes = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`
+
+  select.value = actual !== 'todos' ? actual : actualMes
+}
+
 // CRUD
 async function guardar(id,campo,valor){
   await fetchAuth('/ticket/'+id,{
@@ -117,26 +190,21 @@ async function guardar(id,campo,valor){
   })
 }
 
-async function borrar(id,nombre){
-  if(!confirm(`¿Eliminar ticket de ${nombre}?`)) return
-  await fetchAuth('/ticket/'+id,{method:'DELETE'})
-  cargar()
-}
-
 async function marcarEntregado(id){
   await fetchAuth('/ticket/'+id,{
     method:'PUT',
-    body: JSON.stringify({
-      entregado:'si',
-      fechaEntregado: new Date()
-    })
+    body: JSON.stringify({entregado:'si'})
   })
-  cargar()
 }
 
-async function listoWhatsApp(id,nombre,telefono,precio){
-  let tel = (telefono||'').replace(/\D/g,'')
+async function borrar(id,nombre){
+  if(!confirm(`¿Eliminar ticket de ${nombre}?`)) return
+  await fetchAuth('/ticket/'+id,{method:'DELETE'})
+}
 
+// 📲 WHATSAPP
+function listoWhatsApp(id,nombre,telefono,precio){
+  let tel = (telefono||'').replace(/\D/g,'')
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
@@ -148,12 +216,44 @@ Tu equipo está listo ✅
   window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`)
 }
 
-// CARGAR
+// LOAD
 async function cargar(){
+
   try{
 
     const res = await fetchAuth('/tickets')
     const tickets = await res.json()
+
+    cargarMeses(tickets)
+
+    const mesSel = document.getElementById('filtroMes').value
+    const filtro = document.getElementById('busqueda').value.toLowerCase()
+
+    let rep = 0
+    let ven = 0
+
+    tickets.forEach(t=>{
+      if(!t.fecha) return
+
+      const d = new Date(t.fecha)
+      const mes = String(d.getMonth()+1).padStart(2,'0')
+      const anio = d.getFullYear()
+      const clave = `${anio}-${mes}`
+
+      if(mesSel !== 'todos' && clave !== mesSel) return
+
+      if(t.entregado === 'si'){
+        rep += parseFloat(t.ganancia) || 0
+      }
+    })
+
+    document.getElementById('resumen').innerHTML = `
+    <div class="panel">
+      <div class="card">🔧 Reparaciones $${rep}</div>
+      <div class="card">🛒 Ventas $${ven}</div>
+      <div class="card">💰 Total $${rep+ven}</div>
+    </div>
+    `
 
     let filtrados = tickets
 
@@ -161,32 +261,47 @@ async function cargar(){
       filtrados = tickets.filter(t=>t.entregado!=='si')
     }
 
-    const filtro = document.getElementById('busqueda').value.toLowerCase()
+    filtrados = filtrados.filter(t=>{
 
-    filtrados = filtrados.filter(t=>
-      (t.nombre||'').toLowerCase().includes(filtro)
-    )
+      const matchTexto =
+        (t.nombre||'').toLowerCase().includes(filtro) ||
+        (t.telefono||'').includes(filtro)
+
+      if(mesSel === 'todos') return matchTexto
+
+      const d = new Date(t.fecha)
+      const mes = String(d.getMonth()+1).padStart(2,'0')
+      const anio = d.getFullYear()
+      const clave = `${anio}-${mes}`
+
+      return matchTexto && clave === mesSel
+    })
 
     lista.innerHTML=''
 
-    filtrados.forEach(t=>{
+    filtrados.reverse().forEach(t=>{
 
       const nombre = (t.nombre || '').replace(/'/g,"")
 
       lista.innerHTML += `
       <div class="ticket">
-        <b>${t.numero || 'Sin número'}</b><br>
-        ${nombre} (${t.telefono||''})<br>
-        ${t.problema||''}<br><br>
 
+        <b>${t.numero}</b><br>
+        ${nombre} (${t.telefono})<br>
+        ${t.problema}<br><br>
+
+        💲 Precio:
         <input class="precio" value="${t.precio||''}" 
         onchange="guardar('${t.numero}','precio',this.value)">
+
+        💰 Ganancia:
+        <input class="ganancia" value="${t.ganancia||''}" 
+        onchange="guardar('${t.numero}','ganancia',this.value)">
 
         <br><br>
 
         📝 Detalle:
-        <textarea 
-        onblur="guardar('${t.numero}','detalle',this.value)">
+        <textarea onblur="guardar('${t.numero}','detalle',this.value)">
 ${t.detalle||''}</textarea>
 
         <div class="acciones-ticket">
@@ -197,7 +312,7 @@ ${t.detalle||''}</textarea>
           </button>
 
           <button class="btn-success"
-          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}', this.closest('.ticket').querySelector('.precio').value)"
+          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}', this.closest('.ticket').querySelector('.precio').value)">
           📲 WhatsApp
           </button>
 
@@ -207,18 +322,19 @@ ${t.detalle||''}</textarea>
           </button>
 
         </div>
+
       </div>
       `
     })
 
   }catch(e){
     console.error(e)
-    alert('Error conexión')
+    alert('Error conexión o token inválido')
   }
 }
 
 // SOCKET
-socket.on('actualizar', cargar)
+socket.on('actualizar',()=>cargar())
 
 // INIT
 cargar()

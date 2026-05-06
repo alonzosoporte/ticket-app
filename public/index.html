@@ -54,15 +54,37 @@ button {
   color: white;
   border: none;
   font-weight: bold;
+  cursor: pointer;
 }
 
 button:hover {
   background: #16a34a;
 }
 
+/* NAV ADMIN */
+.nav-admin {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.nav-admin a {
+  text-decoration: none;
+  background:#003366;
+  color:white;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:14px;
+}
+
+/* 📱 CELULAR */
 @media (max-width: 600px) {
-  .container { margin: 20px; }
-  .form-grid { grid-template-columns: 1fr; }
+  .container {
+    margin: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 </head>
@@ -70,6 +92,11 @@ button:hover {
 <body>
 
 <div class="container">
+
+  <div class="nav-admin">
+    <a href="login.html">🔐 Admin</a>
+  </div>
+
   <div class="box">
     <h2>🛠 Crear Ticket</h2>
 
@@ -82,10 +109,11 @@ button:hover {
       <button class="form-full" onclick="crear()">Enviar Ticket</button>
     </div>
   </div>
+
 </div>
 
 <script>
-  async function crear() {
+async function crear() {
 
   const n = document.getElementById('nombre').value
   const t = document.getElementById('telefono').value
@@ -98,6 +126,7 @@ button:hover {
 
   try {
 
+    // 🔥 RUTA PUBLICA (SIN LOGIN)
     const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -110,8 +139,14 @@ button:hover {
 
     const data = await res.json()
 
-    // 📞 TEL
-    let tel = t.replace(/\D/g,'')
+    if(data.error){
+      alert(data.error)
+      return
+    }
+
+    // 📞 TEL FORMATEADO
+    let tel = t.replace(/\D/g, '')
+
     if (tel.startsWith('0')) tel = '598' + tel.substring(1)
     if (!tel.startsWith('598')) tel = '598' + tel
 
@@ -138,9 +173,10 @@ El técnico se comunicará contigo.`
 
     const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
 
+    // 📲 REDIRIGE A WHATSAPP
     window.location.href = url
 
-    // limpiar
+    // 🧹 LIMPIAR
     document.getElementById('nombre').value = ''
     document.getElementById('telefono').value = ''
     document.getElementById('problema').value = ''
@@ -150,7 +186,6 @@ El técnico se comunicará contigo.`
     alert("Error al crear ticket")
   }
 }
-
 </script>
 
 </body>

@@ -1,20 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
+<title>Login Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#003366,#0059b3);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+
+.box {
+  background:white;
+  padding:40px;
+  border-radius:15px;
+  width:300px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  text-align:center;
+}
+
+input {
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  background:#003366;
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
+
+.error {
+  color:red;
+  font-size:14px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>Login</h2>
+<div class="box">
+  <h2>🔐 Admin Login</h2>
 
-<input id="user" placeholder="Usuario">
-<input id="pass" type="password" placeholder="Clave">
+  <input id="user" placeholder="Usuario">
+  <input id="pass" type="password" placeholder="Clave">
 
-<button onclick="login()">Entrar</button>
+  <button onclick="login()">Ingresar</button>
+
+  <div id="error" class="error"></div>
+</div>
 
 <script>
+
+// 🔥 AUTO REDIRECT SI YA ESTÁ LOGUEADO
+if(localStorage.getItem('token')){
+  location.href = 'admin.html'
+}
+
 async function login(){
 
   const usuario = document.getElementById('user').value
@@ -32,7 +87,7 @@ async function login(){
     localStorage.setItem('token', data.token)
     location.href = 'admin.html'
   } else {
-    alert('Error login')
+    document.getElementById('error').innerText = 'Usuario o clave incorrectos'
   }
 }
 </script>
