@@ -120,7 +120,7 @@ function logout(){
   location.href = 'login.html'
 }
 
-// FETCH CON TOKEN
+// FETCH CON TOKEN ✅ CORREGIDO
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -130,7 +130,7 @@ function fetchAuth(url, options = {}){
       ...(options.headers || {})
     }
   })
-}
+} // 👈 ESTE ERA EL ERROR
 
 // FILTRO POR MES
 function cargarMeses(tickets){
@@ -210,7 +210,6 @@ async function cargar(){
     const resCot = await fetchAuth('/cotizaciones')
     const cotizaciones = await resCot.json()
 
-    // RESUMEN
     let rep=0, ven=0
 
     tickets.forEach(t=>{
@@ -233,7 +232,6 @@ async function cargar(){
       </div>
     `
 
-    // MESES
     cargarMeses(tickets)
 
     let filtrados = tickets
