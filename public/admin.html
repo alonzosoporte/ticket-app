@@ -146,15 +146,22 @@ async function guardar(id,campo,valor){
   })
 }
 
-async function borrar(id){
-  if(!confirm("Eliminar?")) return
+async function borrar(id,nombre){
+  if(!confirm(`¿Eliminar ticket de ${nombre}?`)) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
+  cargar()
 }
+
 async function marcarEntregado(id){
   await fetchAuth('/ticket/'+id,{
     method:'PUT',
-    body: JSON.stringify({entregado:'si'})
+    body: JSON.stringify({
+      entregado:'si',
+      fechaEntregado: new Date()
+    })
   })
+
+  cargar() // 👈 refresca lista
 }
 
 async function listoWhatsApp(id,nombre,telefono,precio){
