@@ -115,6 +115,52 @@ io.on('connection', () => {
 
 // CREAR
 app.post('/ticket', auth, async (req, res) => {
+  app.post('/ticket-publico', async (req, res) => {
+  try {
+
+    const { nombre, telefono, problema } = req.body
+
+    if (!nombre || !telefono || !problema) {
+      return res.json({ error: 'Faltan datos' })
+    }
+
+    const hoy = new Date()
+    const anio = hoy.getFullYear()
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+
+    const clave = `ticket-${anio}-${mes}`
+
+    let contador = await Counter.findOne({ nombre: clave })
+
+    if (!contador) {
+      contador = await Counter.create({ nombre: clave, valor: 1 })
+    } else {
+      contador.valor += 1
+      await contador.save()
+    }
+
+    const numero = `${anio}-${mes}-${String(contador.valor).padStart(3, '0')}`
+
+    const nuevo = new Ticket({
+      numero,
+      nombre,
+      telefono,
+      problema,
+      estado: 'pendiente',
+      entregado: 'no',
+      fecha: hoy
+    })
+
+    await nuevo.save()
+
+    io.emit('actualizar')
+
+    res.json(nuevo)
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error creando ticket' })
+  }
+})
   try {
 
     const { nombre, telefono, problema } = req.body
