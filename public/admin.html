@@ -179,7 +179,7 @@ async function cargar(){
         ${nombre} (${t.telefono||''})<br>
         ${t.problema||''}<br><br>
 
-        💲 <input value="${t.precio||''}" 
+        <input class="precio" value="${t.precio||''}" 
         onchange="guardar('${t.numero}','precio',this.value)">
 
         <br><br>
@@ -197,7 +197,7 @@ ${t.detalle||''}</textarea>
           </button>
 
           <button class="btn-success"
-          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
+          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}', this.closest('.ticket').querySelector('.precio').value)"
           📲 WhatsApp
           </button>
 
