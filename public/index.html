@@ -91,7 +91,7 @@ button:hover {
   const p = document.getElementById('problema').value
 
   if (!n || !t || !p) return alert("Completa todo")
-
+   try { 
   const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
