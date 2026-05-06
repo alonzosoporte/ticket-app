@@ -194,7 +194,11 @@ async function cargar(){
   try{
 
     const res = await fetchAuth('/tickets')
-    const tickets = await res.json()
+const text = await res.text()
+
+console.log('RESPUESTA SERVER:', text)
+
+const tickets = JSON.parse(text)
 
     const resCot = await fetchAuth('/cotizaciones')
     const cotizaciones = await resCot.json()
