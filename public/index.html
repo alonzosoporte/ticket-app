@@ -95,7 +95,7 @@ async function crear() {
   try {
 
     // 🔥 CREAR TICKET
-    const res = await fetch('/ticket-publico', {
+    const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ nombre:n, telefono:t, problema:p })
