@@ -23,7 +23,6 @@ body {
   background: white;
   padding: 40px;
   border-radius: 12px;
-
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
@@ -61,17 +60,10 @@ button:hover {
   background: #16a34a;
 }
 
-/* 📱 CELULAR */
 @media (max-width: 600px) {
-  .container {
-    margin: 20px;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
+  .container { margin: 20px; }
+  .form-grid { grid-template-columns: 1fr; }
 }
-
 </style>
 </head>
 
@@ -94,37 +86,49 @@ button:hover {
 
 <script>
 async function crear() {
-  const n = document.getElementById('nombre').value
-  const t = document.getElementById('telefono').value
-  const p = document.getElementById('problema').value
+  const n = document.getElementById('nombre').value.trim()
+  const t = document.getElementById('telefono').value.trim()
+  const p = document.getElementById('problema').value.trim()
 
   if (!n || !t || !p) return alert("Completa todo")
 
-  // 🔥 CREAR TICKET
-  const res = await fetch('/ticket', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ nombre:n, telefono:t, problema:p })
-  })
+  try {
 
-  const data = await res.json()
+    // 🔥 CREAR TICKET
+    const res = await fetch('/ticket', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ nombre:n, telefono:t, problema:p })
+    })
 
-  // 🔥 FORMATEO TEL
-  let tel = t.replace(/\D/g, '')
+    const data = await res.json()
 
-  if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-  if (!tel.startsWith('598')) tel = '598' + tel
+    // ⚠️ VALIDACIÓN IMPORTANTE
+    if(!data || !data.numero){
+      alert('Error creando ticket')
+      console.log(data)
+      return
+    }
 
-  const fecha = new Date(data.fecha).toLocaleString('es-UY', {
-  weekday: 'long',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit'
-})
+    // 🔥 FORMATEO TEL
+    let tel = t.replace(/\D/g, '')
 
-  const mensaje =
+    if (tel.startsWith('0')) tel = '598' + tel.substring(1)
+    if (!tel.startsWith('598')) tel = '598' + tel
+
+    // 🔥 FECHA SEGURA
+    const fecha = data.fecha
+      ? new Date(data.fecha).toLocaleString('es-UY', {
+          weekday: 'long',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      : 'Sin fecha'
+
+    const mensaje =
 `Hola ${n} 👋
 
 Tu ticket fue creado correctamente ✅
@@ -136,15 +140,20 @@ Tu ticket fue creado correctamente ✅
 
 El técnico se comunicará contigo.`
 
-  const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+    const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
 
-  // 🔥 abrir WhatsApp
-  window.location.href = url
+    // 🔥 abrir WhatsApp
+    window.location.href = url
 
-  // 🔥 limpiar formulario
-  document.getElementById('nombre').value = ''
-  document.getElementById('telefono').value = ''
-  document.getElementById('problema').value = ''
+    // 🔥 limpiar formulario
+    document.getElementById('nombre').value = ''
+    document.getElementById('telefono').value = ''
+    document.getElementById('problema').value = ''
+
+  } catch(err){
+    console.error(err)
+    alert('Error de conexión')
+  }
 }
 </script>
 

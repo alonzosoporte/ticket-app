@@ -2,26 +2,17 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Tickets</title>
+<title>Admin Tickets PRO</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
 
 <style>
-body { font-family: Arial; background:#eef2f7; padding:15px; }
-<style>
 body {
   font-family: Arial;
   background:#eef2f7;
   padding:15px;
-}
-
-/* NAV */
-.nav-top {
-  display:flex;
-  gap:10px;
-  margin-bottom:15px;
 }
 
 /* HEADER */
@@ -37,14 +28,12 @@ body {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-/* INPUTS */
-input, select {
+input {
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
-/* BOTONES */
 button {
   padding:10px 12px;
   border:none;
@@ -58,23 +47,6 @@ button {
 .btn-danger { background:#dc3545; color:white }
 .btn-secondary { background:#6c757d; color:white }
 
-/* PANEL */
-.panel {
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-}
-
-.card {
-  background:white;
-  padding:12px;
-  border-radius:12px;
-  flex:1;
-  box-shadow:0 5px 15px rgba(0,0,0,0.08);
-  font-weight:bold;
-}
-
 /* TICKETS */
 .ticket {
   background:white;
@@ -84,17 +56,14 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-/* TEXTAREA */
 textarea {
   width:100%;
   min-height:60px;
   padding:8px;
   border-radius:10px;
   border:1px solid #ccc;
-  resize:none;
 }
 
-/* BOTONES EN LÍNEA */
 .acciones-ticket {
   display:flex;
   gap:8px;
@@ -102,16 +71,18 @@ textarea {
   margin-top:10px;
 }
 </style>
-</style>
 </head>
 
 <body>
 
-<h2>Admin Tickets</h2>
+<h2>🧾 Admin Tickets</h2>
 
-<input id="busqueda" placeholder="Buscar..." oninput="cargar()">
-<button onclick="modo='pendientes';cargar()">Pendientes</button>
-<button onclick="modo='todos';cargar()">Todos</button>
+<div class="header-pro">
+  <input id="busqueda" placeholder="Buscar..." oninput="cargar()">
+
+  <button class="btn" onclick="modo='pendientes';cargar()">Pendientes</button>
+  <button class="btn-success" onclick="modo='todos';cargar()">Todos</button>
+</div>
 
 <div id="lista"></div>
 
@@ -126,7 +97,7 @@ if(!TOKEN){
 const socket = io(API)
 let modo = 'pendientes'
 
-// FETCH OK
+// FETCH
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -160,12 +131,10 @@ async function marcarEntregado(id){
       fechaEntregado: new Date()
     })
   })
-
-  cargar() // 👈 refresca lista
+  cargar()
 }
 
 async function listoWhatsApp(id,nombre,telefono,precio){
-
   let tel = (telefono||'').replace(/\D/g,'')
 
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
@@ -178,9 +147,9 @@ Tu equipo está listo ✅
 
   window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`)
 }
+
 // CARGAR
 async function cargar(){
-
   try{
 
     const res = await fetchAuth('/tickets')
@@ -206,36 +175,39 @@ async function cargar(){
 
       lista.innerHTML += `
       <div class="ticket">
-        <b>${t.numero}</b><br>
-        ${nombre}<br>
+        <b>${t.numero || 'Sin número'}</b><br>
+        ${nombre} (${t.telefono||''})<br>
+        ${t.problema||''}<br><br>
 
-        <input value="${t.precio||''}" 
+        💲 <input value="${t.precio||''}" 
         onchange="guardar('${t.numero}','precio',this.value)">
 
+        <br><br>
+
+        📝 Detalle:
         <textarea 
         onblur="guardar('${t.numero}','detalle',this.value)">
 ${t.detalle||''}</textarea>
 
-        <br>
+        <div class="acciones-ticket">
 
-    <div class="acciones-ticket">
+          <button class="btn-secondary"
+          onclick="marcarEntregado('${t.numero}')">
+          ✔ Entregado
+          </button>
 
-    <button class="btn-secondary"
-    onclick="marcarEntregado('${t.numero}')">
-    ✔ Entregado
-    </button>
+          <button class="btn-success"
+          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
+          📲 WhatsApp
+          </button>
 
-    <button class="btn-success"
-    onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}','${t.precio}')">
-    📲 WhatsApp
-    </button>
+          <button class="btn-danger"
+          onclick="borrar('${t.numero}','${nombre}')">
+          ❌ Eliminar
+          </button>
 
-    <button class="btn-danger"
-    onclick="borrar('${t.numero}')">
-    ❌ Eliminar
-    </button>
-
-</div>
+        </div>
+      </div>
       `
     })
 
@@ -250,7 +222,6 @@ socket.on('actualizar', cargar)
 
 // INIT
 cargar()
-
 </script>
 
 </body>

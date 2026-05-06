@@ -123,33 +123,34 @@ app.post('/ticket', auth, async (req, res) => {
       return res.json({ error: 'Faltan datos' })
     }
 
-    const cantidad = await Ticket.countDocuments()
+    // 📅 FECHA ACTUAL
+    const hoy = new Date()
+    const anio = hoy.getFullYear()
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
 
-    let numero = 1
+    // 🔢 CLAVE POR MES
+    const clave = `ticket-${anio}-${mes}`
 
-    if (cantidad === 0) {
-      await Counter.findOneAndUpdate(
-        { nombre: 'ticket' },
-        { valor: 1 },
-        { upsert: true }
-      )
+    // 🔢 CONTADOR POR MES
+    let contador = await Counter.findOne({ nombre: clave })
+
+    if (!contador) {
+      contador = await Counter.create({ nombre: clave, valor: 1 })
     } else {
-      let contador = await Counter.findOneAndUpdate(
-        { nombre: 'ticket' },
-        { $inc: { valor: 1 } },
-        { new: true, upsert: true }
-      )
-      numero = contador.valor
+      contador.valor += 1
+      await contador.save()
     }
 
-    const numeroFormateado = 'Ticket-' + numero.toString().padStart(3, '0')
+    // 🔢 NUMERO FINAL
+    const numeroFormateado = `${anio}-${mes}-${String(contador.valor).padStart(3, '0')}`
 
+    // 🧾 CREAR TICKET
     const nuevo = new Ticket({
       ...req.body,
       numero: numeroFormateado,
       estado: 'pendiente',
       entregado: 'no',
-      fecha: new Date()
+      fecha: hoy
     })
 
     await nuevo.save()
