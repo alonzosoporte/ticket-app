@@ -7,7 +7,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {
@@ -115,11 +114,13 @@ if(!TOKEN){
 const socket = io(API)
 let modo = 'pendientes'
 
+// LOGOUT
 function logout(){
   localStorage.removeItem('token')
   location.href = 'login.html'
 }
 
+// FETCH CON TOKEN
 function fetchAuth(url, options = {}){
   return fetch(API + url, {
     ...options,
@@ -131,7 +132,7 @@ function fetchAuth(url, options = {}){
   })
 }
 
-// 📅 MESES BONITO
+// FILTRO POR MES
 function cargarMeses(tickets){
   const select = document.getElementById('filtroMes')
   const seleccionado = select.value
@@ -153,16 +154,18 @@ function cargarMeses(tickets){
     const partes = m.split('-')
     const anio = partes[0]
     const mes = partes[1]
-
     const nombre = nombres[parseInt(mes)-1]
+
     select.innerHTML += `<option value="${m}">${nombre} ${anio}</option>`
   })
 
   select.value = seleccionado || 'todos'
 }
-// 📲 WHATSAPP
+
+// WHATSAPP
 async function listoWhatsApp(id,nombre,telefono,precio){
   let tel = telefono.replace(/\D/g,'')
+
   if(tel.startsWith('0')) tel='598'+tel.substring(1)
   if(!tel.startsWith('598')) tel='598'+tel
 
@@ -171,7 +174,8 @@ Tu equipo está listo ✅
 🧾 ${id}
 💲 ${precio||'A confirmar'}`
 
-window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`)
+  window.open(https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)})
+
   await guardar(id,'estado','listo')
 }
 
@@ -191,108 +195,121 @@ async function marcarEntregado(id){
 }
 
 async function borrar(id,nombre){
-  if(!confirm(`Eliminar ticket de ${nombre}`?)) return
+  if(!confirm(`Eliminar ticket de ${nombre}?`)) return
   await fetchAuth('/ticket/'+id,{method:'DELETE'})
 }
 
-// LOAD
+// CARGAR DATA
 async function cargar(){
 
   try{
+
     const res = await fetchAuth('/tickets')
     const tickets = await res.json()
 
-    if(!Array.isArray(tickets)) return
+    const resCot = await fetchAuth('/cotizaciones')
+    const cotizaciones = await resCot.json()
 
-    cargarMeses(tickets)
+    // RESUMEN
+    let rep=0, ven=0
 
-    let filtrados = [...tickets]
-
-    const mes = filtroMes.value
-    if(mes !== 'todos'){
-      filtrados = filtrados.filter(t=>{
-        const d = new Date(t.fecha)
-        const m = String(d.getMonth()+1).padStart(2,'0')
-        const a = d.getFullYear()
-        return `${a}-${m}` === mes
-      })
-    }
-
-    if(modo === 'pendientes'){
-      filtrados = filtrados.filter(t=>t.entregado !== 'si')
-    }
-
-    const texto = busqueda.value.toLowerCase()
-
-    filtrados = filtrados.filter(t=>
-      (t.nombre||'').toLowerCase().includes(texto) ||
-      (t.telefono||'').includes(texto)
-    )
-
-    let total = 0
-    filtrados.forEach(t=>{
-      total += parseFloat(t.ganancia)||0
+    tickets.forEach(t=>{
+      if(t.entregado==='si') rep+=parseFloat(t.ganancia)||0
     })
 
-    resumen.innerHTML = `
+    cotizaciones.forEach(c=>{
+      if(c.confirmada === 'si'){
+        const costo = parseFloat(c.costoProveedor)||0
+        const precio = parseFloat(c.precioCliente)||0
+        ven += (precio - costo)
+      }
+    })
+
+    document.getElementById('resumen').innerHTML = `
       <div class="panel">
-        <div class="card">💰 Total: $${total}</div>
+        <div class="card">🔧 Reparaciones $${rep}</div>
+        <div class="card">🛒 Ventas $${ven}</div>
+        <div class="card">💰 Total $${rep+ven}</div>
       </div>
     `
-lista.innerHTML=''`
 
-filtrados.reverse().forEach(t=>{
+    // MESES
+    cargarMeses(tickets)
 
-  // 🔒 FIX SEGURO (evita romper por comillas)
-  const nombreSeguro = (t.nombre || '').replace(/'/g,"")
+    let filtrados = tickets
 
-  lista.innerHTML+=`
-  <div class="ticket">
-    <b>${t.numero}</b><br>
-    ${nombreSeguro} (${t.telefono || ''})<br>
-    ${t.problema || ''}<br><br>
+    if(modo==='pendientes'){
+      filtrados = tickets.filter(t=>t.entregado!=='si')
+    }
 
-    💲 <input value="${t.precio || ''}" 
-    onchange="guardar('${t.numero}','precio',this.value)">
+    const filtro = document.getElementById('busqueda').value.toLowerCase()
+    const mesSeleccionado = document.getElementById('filtroMes').value
 
-    💰 <input value="${t.ganancia || ''}" 
-    onchange="guardar('${t.numero}','ganancia',this.value)">
+    filtrados = filtrados.filter(t=>{
+      const matchTexto =
+        (t.nombre||'').toLowerCase().includes(filtro) ||
+        (t.telefono||'').includes(filtro)
 
-    <br><br>
+      if(mesSeleccionado === 'todos') return matchTexto
 
-    📝 Detalle:
-    <textarea 
-    onblur="guardar('${t.numero}','detalle',this.value)">
-${t.detalle || ''}
-    </textarea>
+      const d = new Date(t.fecha)
+      const mes = String(d.getMonth()+1).padStart(2,'0')
+      const anio = d.getFullYear()
+      const clave = `${anio}-${mes}`
 
-    <br><br>
+      return matchTexto && clave === mesSeleccionado
+    })
 
-    <button class="btn-success"
-    onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
-    WhatsApp</button>
+    lista.innerHTML = ''
 
-    <button class="btn-secondary"
-    onclick="marcarEntregado('${t.numero}')">
-    Entregado</button>
+    filtrados.reverse().forEach(t=>{
 
-    <button class="btn-danger"
-    onclick="borrar('${t.numero}','${nombreSeguro}')">
-    Eliminar</button>
+      const nombreSeguro = (t.nombre || '').replace(/'/g,"")
 
-  </div>
-  `
-})
+      lista.innerHTML += `
+      <div class="ticket">
+        <b>${t.numero}</b><br>
+        ${nombreSeguro} (${t.telefono})<br>
+        ${t.problema}<br><br>
+
+        💲 <input value="${t.precio||''}" onchange="guardar('${t.numero}','precio',this.value)">
+        💰 <input value="${t.ganancia||''}" onchange="guardar('${t.numero}','ganancia',this.value)">
+
+        <br><br>
+
+        📝 Detalle:
+        <textarea onblur="guardar('${t.numero}','detalle',this.value)">${t.detalle||''}</textarea>
+
+        <br><br>
+
+        <button class="btn-success"
+        onclick="listoWhatsApp('${t.numero}','${nombreSeguro}','${t.telefono}','${t.precio}')">
+        WhatsApp</button>
+
+        <button class="btn-secondary"
+        onclick="marcarEntregado('${t.numero}')">
+        Entregado</button>
+
+        <button class="btn-danger"
+        onclick="borrar('${t.numero}','${nombreSeguro}')">
+        Eliminar</button>
+
+      </div>
+      `
+    })
 
   }catch(e){
     console.error(e)
-    alert('Error de conexión')
+    alert('Error de conexión o token inválido')
   }
 }
 
+// SOCKET
 socket.on('actualizar',()=>cargar())
 
+// INIT
 cargar()
+
 </script>
 
 </body>
