@@ -85,30 +85,20 @@ button:hover {
 </div>
 
 <script>
-async function crear() {
-  const n = document.getElementById('nombre').value.trim()
-  const t = document.getElementById('telefono').value.trim()
-  const p = document.getElementById('problema').value.trim()
+const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({
+    nombre:n,
+    telefono:t,
+    problema:p
+  })
+})
 
-  if (!n || !t || !p) return alert("Completa todo")
+const text = await res.text()
+console.log("RESPUESTA SERVER:", text)
 
-  try {
-
-    // 🔥 CREAR TICKET
-    const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ nombre:n, telefono:t, problema:p })
-    })
-
-    const data = await res.json()
-
-    // ⚠️ VALIDACIÓN IMPORTANTE
-    if(!data || !data.numero){
-      alert('Error creando ticket')
-      console.log(data)
-      return
-    }
+return // ⛔ cortamos acá para ver qué llega
 
     // 🔥 FORMATEO TEL
     let tel = t.replace(/\D/g, '')
