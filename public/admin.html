@@ -298,7 +298,7 @@ function listoWhatsApp(id,nombre,telefono,precio,detalle){
 El servicio con numero de 🧾 Ticket ${id} ha sido realizado ✅
 
 📝 Detalle:
-${detalle || 'Servicio realizado correctamente'}
+${detalle || 'Se realizó el servicio correctamente'}
 
 📦 Podés pasar a retirarlo.
 
@@ -400,7 +400,10 @@ async function cargar(){
     filtrados.reverse().forEach(t=>{
 
       const nombre=(t.nombre||'').replace(/'/g,'')
-      const detalle=(t.detalle||'').replace(/'/g,'')
+      const detalle=(t.detalle||'')
+      .replace(/'/g,"")
+      .replace(/\n/g," ")
+      .replace(/\r/g," ")
 
       const fecha=new Date(t.fecha).toLocaleDateString('es-UY')
 
