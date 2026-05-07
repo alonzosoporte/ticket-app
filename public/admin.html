@@ -297,7 +297,9 @@ function listoWhatsApp(id,nombre,telefono,precio){
 
 El servicio con numero de 🧾 Ticket ${id} ha sido realizado ✅
 
-Podés pasar a retirarlo.
+📝 Detalle: ${detalle || 'Servicio realizado correctamente'}
+
+📦 Podés pasar a retirarlo.
 
 💲 Precio: ${precio || 'A confirmar'}
 
@@ -452,7 +454,8 @@ ${t.detalle||''}</textarea>
           '${t.numero}',
           '${nombre}',
           '${t.telefono}',
-          this.closest('.ticket').querySelector('.precio').value
+          this.closest('.ticket').querySelector('.precio').value, 
+          `${t.detalle || ''}`
           )">
           📲 WhatsApp
           </button>
