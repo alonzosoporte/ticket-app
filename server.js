@@ -128,7 +128,7 @@ app.post('/ticket-publico', async (req, res) => {
       await contador.save()
     }
 
-    const numero = `${anio}-${mes}-${String(contador.valor).padStart(3, '0')}`
+const numero = `${anio}-${mes}-${String(contador.valor).padStart(3, '0')}`
 
     const nuevo = new Ticket({
       numero,
