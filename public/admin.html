@@ -295,10 +295,17 @@ function listoWhatsApp(id,nombre,telefono,precio){
 
   const msg=`Hola ${nombre} 👋
 
-Tu equipo está listo ✅
+El servicio con numero de 🧾 Ticket ${id} ha sido realizado ✅
 
-🧾 ${id}
-💲 ${precio||'A confirmar'}`
+Podés pasar a retirarlo.
+
+💲 Precio: ${precio || 'A confirmar'}
+
+Se puede pagar al momento de retirar el equipo
+o mediante depósito bancario.
+
+🏦 BROU
+CA 001120656-00002`
 
   window.open(
     `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`
