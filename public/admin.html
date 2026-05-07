@@ -397,7 +397,7 @@ async function cargar(){
 
     lista.innerHTML=''
 
-    filtrados.reverse().forEach(t=>{
+    filtrados.forEach(t=>{
 
       const nombre=(t.nombre||'').replace(/'/g,'')
       const detalle=(t.detalle||'')
