@@ -116,6 +116,13 @@ const Cotizacion =
 mongoose.models.Cotizacion ||
 mongoose.model('Cotizacion', CotizacionSchema)
 
+const ProveedorSchema = new mongoose.Schema({
+  nombre:{ type:String, unique:true }
+})
+
+const Proveedor =
+mongoose.models.Proveedor ||
+mongoose.model('Proveedor', ProveedorSchema)
 // ================= SOCKET =================
 io.on('connection',()=>{
   console.log('Cliente conectado')
