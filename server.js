@@ -434,7 +434,65 @@ app.delete('/proveedores/:nombre', auth, async (req, res) => {
     })
   }
 })
+// ================= GARANTIAS =================
+//
 
+app.get('/garantias', auth, async (req, res) => {
+
+  try{
+
+    const data = await Cotizacion.find({
+      confirmada:'si'
+    }).sort({ _id:-1 })
+
+    res.json(data)
+
+  }catch(err){
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error obteniendo garantías'
+    })
+  }
+})
+
+// ACTUALIZAR GARANTIA
+app.put('/garantia/:id', auth, async (req, res) => {
+
+  try{
+
+    const {
+      garantiaHasta,
+      fotoGarantia
+    } = req.body
+
+    const update = {}
+
+    if(garantiaHasta !== undefined){
+      update.garantiaHasta = garantiaHasta
+    }
+
+    if(fotoGarantia !== undefined){
+      update.fotoGarantia = fotoGarantia
+    }
+
+    await Cotizacion.findByIdAndUpdate(
+      req.params.id,
+      { $set:update }
+    )
+
+    res.json({ ok:true })
+
+  }catch(err){
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error actualizando garantía'
+    })
+  }
+})
 // ================= START =================
 const PORT = process.env.PORT || 3000
 
