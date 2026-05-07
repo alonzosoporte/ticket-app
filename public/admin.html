@@ -27,6 +27,15 @@ input, select {
   border:1px solid #ccc;
 }
 
+.nav-top{
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+.btn-secondary{
+  background:#6c757d;
+  color:white;
+}
 button {
   padding:10px;
   border:none;
@@ -77,7 +86,23 @@ textarea {
 </head>
 
 <body>
+<body>
 
+<div class="nav-top">
+
+  <button class="btn-secondary"
+  onclick="location.href='cotizaciones.html'">
+  📊 Cotizaciones
+  </button>
+
+  <button class="btn-secondary"
+  onclick="location.href='garantias.html'">
+  🛡️ Garantías
+  </button>
+
+</div>
+
+<div class="header-pro">
 <script>
 // 🔐 PROTECCIÓN
 const TOKEN = localStorage.getItem('token')
@@ -300,7 +325,12 @@ ${t.detalle||''}</textarea>
           </button>
 
           <button class="btn-success"
-          onclick="listoWhatsApp('${t.numero}','${nombre}','${t.telefono}', this.closest('.ticket').querySelector('.precio').value)">
+          onclick="listoWhatsApp(
+          '${t.numero}',
+          '${nombre}',
+          '${t.telefono}',
+          this.closest('.ticket').querySelector('.precio').value
+          )"
           📲 WhatsApp
           </button>
 
