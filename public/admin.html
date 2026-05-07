@@ -96,7 +96,7 @@ button{
 
 .ticket-top{
   margin-bottom:10px;
-  line-height:1.6;
+  line-height:1.7;
 }
 
 textarea{
@@ -281,7 +281,7 @@ async function borrar(id,nombre){
 }
 
 // WHATSAPP
-function listoWhatsApp(id,nombre,telefono,precio){
+function listoWhatsApp(id,nombre,telefono,precio,detalle){
 
   let tel=(telefono||'').replace(/\D/g,'')
 
@@ -297,7 +297,8 @@ function listoWhatsApp(id,nombre,telefono,precio){
 
 El servicio con numero de 🧾 Ticket ${id} ha sido realizado ✅
 
-📝 Detalle: ${detalle || 'Servicio realizado correctamente'}
+📝 Detalle:
+${detalle || 'Servicio realizado correctamente'}
 
 📦 Podés pasar a retirarlo.
 
@@ -399,6 +400,7 @@ async function cargar(){
     filtrados.reverse().forEach(t=>{
 
       const nombre=(t.nombre||'').replace(/'/g,'')
+      const detalle=(t.detalle||'').replace(/'/g,'')
 
       const fecha=new Date(t.fecha).toLocaleDateString('es-UY')
 
@@ -454,8 +456,8 @@ ${t.detalle||''}</textarea>
           '${t.numero}',
           '${nombre}',
           '${t.telefono}',
-          this.closest('.ticket').querySelector('.precio').value, 
-          `${t.detalle || ''}`
+          this.closest('.ticket').querySelector('.precio').value,
+          '${detalle}'
           )">
           📲 WhatsApp
           </button>
