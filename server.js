@@ -357,6 +357,76 @@ app.delete('/cotizacion/:id', auth, async (req, res) => {
 
   res.json({ ok:true })
 })
+// LISTAR
+app.get('/proveedores', auth, async (req, res) => {
+
+  try{
+
+    const data = await Proveedor
+    .find()
+    .sort({ nombre:1 })
+
+    res.json(data)
+
+  }catch(err){
+
+    res.status(500).json({
+      error:'Error proveedores'
+    })
+  }
+})
+
+// CREAR
+app.post('/proveedores', auth, async (req, res) => {
+
+  try{
+
+    const nombre = req.body.nombre?.trim()
+
+    if(!nombre){
+      return res.status(400).json({
+        error:'Nombre requerido'
+      })
+    }
+
+    const existe = await Proveedor.findOne({ nombre })
+
+    if(existe){
+      return res.json({ ok:true })
+    }
+
+    const nuevo = new Proveedor({ nombre })
+
+    await nuevo.save()
+
+    res.json({ ok:true })
+
+  }catch(err){
+
+    res.status(500).json({
+      error:'Error creando proveedor'
+    })
+  }
+})
+
+// BORRAR
+app.delete('/proveedores/:nombre', auth, async (req, res) => {
+
+  try{
+
+    await Proveedor.deleteOne({
+      nombre:req.params.nombre
+    })
+
+    res.json({ ok:true })
+
+  }catch(err){
+
+    res.status(500).json({
+      error:'Error borrando proveedor'
+    })
+  }
+})
 
 // ================= START =================
 const PORT = process.env.PORT || 3000
