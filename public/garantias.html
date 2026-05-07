@@ -4,51 +4,75 @@
 <meta charset="UTF-8">
 <title>Garantías</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body {
-  font-family: Arial;
+body{
+  font-family:Arial;
   background:#eef2f7;
   padding:20px;
 }
 
-.topbar {
+.topbar{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   margin-bottom:15px;
 }
 
-input, select {
-  padding:8px;
-  border-radius:8px;
+input,select{
+  padding:10px;
+  border-radius:10px;
   border:1px solid #ccc;
 }
 
-button {
-  padding:8px 12px;
+button{
+  padding:10px 12px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;
   font-weight:bold;
 }
 
-.btn { background:#007bff;color:white }
-.btn-success { background:#28a745;color:white }
-.btn-danger { background:#dc3545;color:white }
-.btn-secondary { background:#6c757d;color:white }
+.btn{
+  background:#007bff;
+  color:white;
+}
 
-.card {
+.btn-success{
+  background:#28a745;
+  color:white;
+}
+
+.btn-danger{
+  background:#dc3545;
+  color:white;
+}
+
+.btn-secondary{
+  background:#6c757d;
+  color:white;
+}
+
+.card{
   background:white;
   padding:15px;
   border-radius:12px;
-  margin-bottom:10px;
+  margin-bottom:12px;
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.vencida { color:red; font-weight:bold; }
-.vigente { color:green; font-weight:bold; }
+.vencida{
+  color:red;
+  font-weight:bold;
+}
 
-.thumb {
+.vigente{
+  color:green;
+  font-weight:bold;
+}
+
+.thumb{
   width:60px;
   height:60px;
   object-fit:cover;
@@ -57,12 +81,13 @@ button {
   cursor:pointer;
   transition:0.2s;
 }
+
 .thumb:hover{
   transform:scale(1.1);
 }
 
 /* MODAL */
-.modal {
+.modal{
   display:none;
   position:fixed;
   top:0;
@@ -75,7 +100,7 @@ button {
   z-index:999;
 }
 
-.modal img {
+.modal img{
   max-width:90%;
   max-height:90%;
   border-radius:10px;
@@ -85,18 +110,33 @@ button {
 
 <body>
 
+<script>
+const TOKEN = localStorage.getItem('token')
+
+if(!TOKEN){
+  location.href='login.html'
+}
+</script>
+
 <h2>🛡️ Garantías</h2>
 
 <div class="topbar">
-  <button class="btn-secondary" onclick="location.href='admin.html'">⬅️ Volver</button>
 
-  <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
+  <button class="btn-secondary"
+  onclick="location.href='admin.html'">
+  ⬅️ Volver
+  </button>
+
+  <input id="buscar"
+  placeholder="🔍 Buscar..."
+  oninput="cargar()">
 
   <select id="filtroEstado" onchange="cargar()">
     <option value="vigentes">🟢 Vigentes</option>
     <option value="vencidas">🔴 Vencidas</option>
     <option value="todas">📋 Todas</option>
   </select>
+
 </div>
 
 <div id="lista"></div>
@@ -108,53 +148,82 @@ button {
 
 <script>
 
+const API='https://ticket-pro-xmhs.onrender.com'
+
+// FETCH AUTH
+function fetchAuth(url,options={}){
+
+  return fetch(API+url,{
+    ...options,
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+TOKEN,
+      ...(options.headers || {})
+    }
+  })
+}
+
 // ===== MODAL =====
 function abrirModal(src){
+
   document.getElementById('modal').style.display='flex'
   document.getElementById('imgGrande').src=src
 }
+
 function cerrarModal(){
+
   document.getElementById('modal').style.display='none'
 }
 
 // ===== FOTO GARANTIA =====
-async function subirFoto(id, file){
+async function subirFoto(id,file){
+
   if(!file) return
 
-  const r = new FileReader()
-  r.onload = async () => {
-    await fetch('/garantia/'+id,{
+  const r=new FileReader()
+
+  r.onload=async()=>{
+
+    await fetchAuth('/garantia/'+id,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ fotoGarantia: r.result })
+      body:JSON.stringify({
+        fotoGarantia:r.result
+      })
     })
+
     cargar()
   }
+
   r.readAsDataURL(file)
 }
 
-// ===== GUARDAR FECHA (PRO) =====
-async function guardarFecha(id, valor){
+// ===== GUARDAR FECHA =====
+async function guardarFecha(id,valor){
 
   if(!valor){
     alert('⚠️ Seleccioná una fecha')
     return
   }
 
-  try {
-    const res = await fetch('/garantia/'+id,{
+  try{
+
+    const res=await fetchAuth('/garantia/'+id,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ garantiaHasta: valor })
+      body:JSON.stringify({
+        garantiaHasta:valor
+      })
     })
 
     if(!res.ok) throw new Error()
 
     alert('✅ Garantía actualizada')
+
     cargar()
 
-  } catch(err){
+  }catch(err){
+
     console.error(err)
+
     alert('❌ Error guardando fecha')
   }
 }
@@ -162,93 +231,193 @@ async function guardarFecha(id, valor){
 // ===== CARGAR =====
 async function cargar(){
 
-  const res = await fetch('/garantias')
-  let data = await res.json()
+  try{
 
-  const filtroTexto = document.getElementById('buscar').value.toLowerCase()
-  const estado = document.getElementById('filtroEstado').value
-  const hoy = new Date()
+    const res=await fetchAuth('/garantias')
 
-  // 🔍 BUSCADOR
-  data = data.filter(g =>
-    (g.nombre||'').toLowerCase().includes(filtroTexto) ||
-    (g.celular||'').includes(filtroTexto) ||
-    (g.producto||'').toLowerCase().includes(filtroTexto)
-  )
+    const text=await res.text()
 
-  // 🔽 FILTRO ESTADO
-  data = data.filter(g => {
+    console.log(text)
 
-    if(!g.garantiaHasta) return estado !== 'vencidas'
+    let data=JSON.parse(text)
 
-    const f = new Date(g.garantiaHasta)
+    const filtroTexto=
+    document.getElementById('buscar')
+    .value
+    .toLowerCase()
 
-    if(estado === 'vigentes') return f >= hoy
-    if(estado === 'vencidas') return f < hoy
+    const estado=
+    document.getElementById('filtroEstado')
+    .value
 
-    return true
-  })
+    const hoy=new Date()
 
-  const lista = document.getElementById('lista')
-  lista.innerHTML=''
+    // BUSCADOR
+    data=data.filter(g=>
 
-  data.reverse().forEach(g=>{
+      (g.nombre||'')
+      .toLowerCase()
+      .includes(filtroTexto)
 
-    const fechaGarantia = g.garantiaHasta
-    const vencida = fechaGarantia && fechaGarantia < hoy
+      ||
 
-    const fotos = g.fotos || (g.foto ? [g.foto] : [])
+      (g.celular||'')
+      .includes(filtroTexto)
 
-    lista.innerHTML += `
-    <div class="card">
+      ||
 
-      📅 ${g.fecha ? new Date(g.fecha).toLocaleString() : ''}<br>
+      (g.producto||'')
+      .toLowerCase()
+      .includes(filtroTexto)
+    )
 
-      <b>${g.producto}</b><br>
-      🏢 ${g.proveedor || ''}<br>
-      ${g.nombre} (${g.celular})<br><br>
+    // FILTRO ESTADO
+    data=data.filter(g=>{
 
-      💸 $${g.costoProveedor || 0} → 💰 $${g.precioCliente || 0}<br>
-      🧾 Ganancia $${g.ganancia || (g.precioCliente - g.costoProveedor)}<br><br>
+      if(!g.garantiaHasta){
+        return estado!=='vencidas'
+      }
 
-      🛡️ <b>Garantía hasta:</b><br>
+      const f=new Date(g.garantiaHasta)
 
-      <input type="date"
-      value="${g.garantiaHasta ? g.garantiaHasta.split('T')[0] : ''}"
-      onchange="guardarFecha('${g._id}', this.value)"
-      style="border:2px solid #007bff">
+      if(estado==='vigentes'){
+        return f>=hoy
+      }
 
-      <span class="${vencida ? 'vencida':'vigente'}">
-        ${fechaGarantia ? fechaGarantia : 'Sin fecha'}
-      </span>
+      if(estado==='vencidas'){
+        return f<hoy
+      }
 
-      <br><br>
+      return true
+    })
 
-      ${
-        fotos.length
-        ? `
-          <b>📦 Producto:</b><br>
-          ${fotos.map(f => `
-            <img src="${f}" class="thumb" onclick="abrirModal('${f}')">
+    const lista=document.getElementById('lista')
+
+    lista.innerHTML=''
+
+    data.forEach(g=>{
+
+      const fechaGarantia=g.garantiaHasta
+
+      const vencida=
+      fechaGarantia &&
+      new Date(fechaGarantia)<hoy
+
+      const fotos=
+      g.fotos ||
+      (g.foto ? [g.foto] : [])
+
+      lista.innerHTML+=`
+
+      <div class="card">
+
+        📅 ${
+          g.fecha
+          ? new Date(g.fecha).toLocaleString('es-UY')
+          : ''
+        }<br><br>
+
+        <b>${g.producto}</b><br>
+
+        🏢 ${g.proveedor || ''}<br>
+
+        👤 ${g.nombre} (${g.celular})<br><br>
+
+        💸 $${g.costoProveedor || 0}
+        →
+        💰 $${g.precioCliente || 0}<br>
+
+        🧾 Ganancia
+        $${g.ganancia || ((g.precioCliente||0)-(g.costoProveedor||0))}
+        <br><br>
+
+        🛡️ <b>Garantía hasta:</b><br><br>
+
+        <input type="date"
+
+        value="${
+          g.garantiaHasta
+          ? g.garantiaHasta.split('T')[0]
+          : ''
+        }"
+
+        onchange="guardarFecha('${g._id}',this.value)"
+
+        style="border:2px solid #007bff">
+
+        <span class="${
+          vencida ? 'vencida' : 'vigente'
+        }">
+
+          ${
+            fechaGarantia
+            ? fechaGarantia.split('T')[0]
+            : 'Sin fecha'
+          }
+
+        </span>
+
+        <br><br>
+
+        ${
+          fotos.length
+
+          ?
+
+          `
+          <b>📦 Producto:</b><br><br>
+
+          ${fotos.map(f=>`
+            <img
+            src="${f}"
+            class="thumb"
+            onclick="abrirModal('${f}')">
           `).join('')}
+
           <br><br>
-        `
-        : ''
-      }
+          `
 
-      <b>📸 Garantía:</b><br>
+          : ''
+        }
 
-      ${
-        g.fotoGarantia
-        ? `<img src="${g.fotoGarantia}" class="thumb" onclick="abrirModal('${g.fotoGarantia}')"><br>`
-        : `<span style="color:#888">Sin foto</span><br>`
-      }
+        <b>📸 Garantía:</b><br><br>
 
-      <input type="file" onchange="subirFoto('${g._id}', this.files[0])">
+        ${
+          g.fotoGarantia
 
-    </div>
-    `
-  })
+          ?
+
+          `
+          <img
+          src="${g.fotoGarantia}"
+          class="thumb"
+          onclick="abrirModal('${g.fotoGarantia}')">
+          <br><br>
+          `
+
+          :
+
+          `
+          <span style="color:#888">
+          Sin foto
+          </span><br><br>
+          `
+        }
+
+        <input
+        type="file"
+        onchange="subirFoto('${g._id}',this.files[0])">
+
+      </div>
+      `
+    })
+
+  }catch(err){
+
+    console.error(err)
+
+    alert('❌ Error cargando garantías')
+  }
 }
 
 // INIT
