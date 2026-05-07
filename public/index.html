@@ -101,8 +101,12 @@ button:hover {
     <h2>🛠 Crear Ticket</h2>
 
     <div class="form-grid">
-      <input id="nombre" placeholder="Nombre">
-      <input id="telefono" placeholder="Teléfono">
+      <input id="nombre" placeholder="Nombre y apellido y/o Empresa">
+      <input 
+      id="telefono" 
+      placeholder="Cel"
+      inputmode="numeric"
+      oninput="this.value=this.value.replace(/\D/g,'')">
 
       <input id="problema" class="form-full" placeholder="Problema">
 
