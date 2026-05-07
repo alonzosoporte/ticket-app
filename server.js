@@ -303,6 +303,60 @@ app.delete('/ticket/:numero', auth, async (req,res)=>{
     ok:true
   })
 })
+// CREAR
+app.post('/cotizacion', auth, async (req, res) => {
+  try {
+
+    const nueva = new Cotizacion(req.body)
+
+    await nueva.save()
+
+    io.emit('actualizar')
+
+    res.json({ ok:true })
+
+  } catch (err) {
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error creando cotización'
+    })
+  }
+})
+
+// LISTAR
+app.get('/cotizaciones', auth, async (req, res) => {
+
+  const data = await Cotizacion
+  .find()
+  .sort({ _id:-1 })
+
+  res.json(data)
+})
+
+// ACTUALIZAR
+app.put('/cotizacion/:id', auth, async (req, res) => {
+
+  await Cotizacion.findByIdAndUpdate(
+    req.params.id,
+    { $set:req.body }
+  )
+
+  io.emit('actualizar')
+
+  res.json({ ok:true })
+})
+
+// BORRAR
+app.delete('/cotizacion/:id', auth, async (req, res) => {
+
+  await Cotizacion.findByIdAndDelete(req.params.id)
+
+  io.emit('actualizar')
+
+  res.json({ ok:true })
+})
 
 // ================= START =================
 const PORT = process.env.PORT || 3000
