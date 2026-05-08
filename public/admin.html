@@ -458,8 +458,9 @@ async function cargar(){
         return
       }
 
-      ven +=
-      parseFloat(c.ganancia)||0
+  console.log('SUMANDO:', c.ganancia)
+
+  ven += Number(c.ganancia || 0)
     })
 
     // =========================
