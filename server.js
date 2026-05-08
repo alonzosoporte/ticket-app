@@ -341,6 +341,8 @@ app.post('/cotizacion', auth, async (req, res) => {
 
   try {
 
+    console.log('BODY COTIZACION:', req.body)
+
     const costo =
     parseFloat(req.body.costoProveedor) || 0
 
@@ -350,11 +352,13 @@ app.post('/cotizacion', auth, async (req, res) => {
     const ganancia =
     precio - costo
 
+    console.log('GANANCIA CALCULADA:', ganancia)
+
     const nueva = new Cotizacion({
 
       ...req.body,
 
-      ganancia
+      ganancia: ganancia
     })
 
     await nueva.save()
@@ -369,65 +373,6 @@ app.post('/cotizacion', auth, async (req, res) => {
 
     res.status(500).json({
       error:'Error creando cotización'
-    })
-  }
-})
-
-// ======================================================
-// LISTAR COTIZACIONES
-// ======================================================
-app.get('/cotizaciones', auth, async (req, res) => {
-
-  const data =
-  await Cotizacion
-  .find()
-  .sort({ _id:-1 })
-
-  res.json(data)
-})
-
-// ======================================================
-// ACTUALIZAR COTIZACION
-// ======================================================
-app.put('/cotizacion/:id', auth, async (req, res) => {
-
-  try{
-
-    const data = req.body
-
-    // GANANCIA AUTOMATICA
-    const costo =
-    parseFloat(data.costoProveedor) || 0
-
-    const precio =
-    parseFloat(data.precioCliente) || 0
-
-    data.ganancia = precio - costo
-
-    // ASEGURAR ARRAY
-    if(!data.fotos){
-      data.fotos = []
-    }
-
-    await Cotizacion.findByIdAndUpdate(
-
-      req.params.id,
-
-      { $set:data }
-    )
-
-    io.emit('actualizar')
-
-    res.json({
-      ok:true
-    })
-
-  }catch(err){
-
-    console.error(err)
-
-    res.status(500).json({
-      error:'Error actualizando cotización'
     })
   }
 })
