@@ -497,7 +497,10 @@ async function cargar(){
       return match && clave===mesSel
     })
 
-    filtrados.reverse()
+    filtrados.sort((a,b)=>{
+
+  return new Date(b.fecha) - new Date(a.fecha)
+})
 
     lista.innerHTML=''
 
