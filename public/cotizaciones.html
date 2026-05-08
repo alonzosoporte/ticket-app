@@ -113,6 +113,22 @@ button{
   placeholder="🔍 Buscar..."
   oninput="cargar()">
 
+  <select id="filtroEstado" onchange="cargar()">
+
+    <option value="pendientes">
+      ⏳ Pendientes
+    </option>
+
+    <option value="confirmadas">
+      ✔️ Confirmadas
+    </option>
+
+    <option value="todas">
+      📋 Todas
+    </option>
+
+  </select>
+
   <button class="btn"
   onclick="mostrarForm()">
   ➕ Nueva
@@ -126,7 +142,11 @@ style="display:none;background:white;padding:15px;border-radius:12px;margin-bott
 
 <input id="nombre" placeholder="Nombre">
 
-<input id="celular" placeholder="Celular">
+<input
+id="celular"
+type="number"
+inputmode="numeric"
+placeholder="Celular">
 
 <hr>
 
@@ -151,13 +171,21 @@ onclick="agregarProveedor()">
 
 <br><br>
 
-<input id="costoProveedor"
+<input
+id="costoProveedor"
+type="number"
+inputmode="decimal"
 placeholder="Costo">
 
-<input id="precioCliente"
+<input
+id="precioCliente"
+type="number"
+inputmode="decimal"
 placeholder="Precio cliente">
 
-<input id="ganancia"
+<input
+id="ganancia"
+type="number"
 readonly
 placeholder="Ganancia">
 
@@ -389,31 +417,49 @@ async function guardar(){
 
   const data = {
 
-  nombre:nombre.value,
+    nombre:nombre.value,
 
-  celular:celular.value,
+    celular:celular.value,
 
-  producto:producto.value,
+    producto:producto.value,
 
-  proveedor:proveedor.value,
+    proveedor:proveedor.value,
 
-  costoProveedor:costoProveedor.value,
+    costoProveedor:costoProveedor.value,
 
-  precioCliente:precioCliente.value,
+    precioCliente:precioCliente.value,
 
-  ganancia: ganancia.value,
+    descripcion:descripcion.value
+  }
 
-  descripcion:descripcion.value,
+  if(fotos.length){
+    data.fotos = fotos
+  }
 
-  fotos:fotos
-}
+  // EDITAR
+  if(window.editandoId){
 
-  await fetchAuth('/cotizacion',{
+    await fetchAuth(
+    '/cotizacion/'+window.editandoId,{
 
-    method:'POST',
+      method:'PUT',
 
-    body:JSON.stringify(data)
-  })
+      body:JSON.stringify(data)
+    })
+
+    window.editandoId = null
+  }
+
+  // NUEVA
+  else{
+
+    await fetchAuth('/cotizacion',{
+
+      method:'POST',
+
+      body:JSON.stringify(data)
+    })
+  }
 
   cancelar()
 
@@ -433,6 +479,34 @@ async function confirmar(id){
   })
 
   cargar()
+}
+
+// ===== EDITAR =====
+async function editar(id){
+
+  const res =
+  await fetchAuth('/cotizaciones')
+
+  const data = await res.json()
+
+  const c =
+  data.find(x => x._id === id)
+
+  if(!c) return
+
+  mostrarForm()
+
+  nombre.value = c.nombre || ''
+  celular.value = c.celular || ''
+  producto.value = c.producto || ''
+  proveedor.value = c.proveedor || ''
+  costoProveedor.value = c.costoProveedor || ''
+  precioCliente.value = c.precioCliente || ''
+  descripcion.value = c.descripcion || ''
+
+  calcularGanancia()
+
+  window.editandoId = id
 }
 
 // ===== BORRAR =====
@@ -481,13 +555,27 @@ async function cargar(){
   const filtro =
   buscar.value.toLowerCase()
 
-  // SOLO PENDIENTES
-  const pendientes =
-  data.filter(c=>
-    c.confirmada !== 'si'
-  )
+  // ===== FILTRO ESTADO =====
+  const estado =
+  document.getElementById('filtroEstado').value
 
-  pendientes
+  let filtradas = data
+
+  if(estado === 'pendientes'){
+
+    filtradas = data.filter(c=>
+      c.confirmada !== 'si'
+    )
+  }
+
+  if(estado === 'confirmadas'){
+
+    filtradas = data.filter(c=>
+      c.confirmada === 'si'
+    )
+  }
+
+  filtradas
   .filter(c=>
 
     (c.nombre||'')
@@ -504,6 +592,9 @@ async function cargar(){
   .reverse()
 
   .forEach(c=>{
+
+    const confirmado =
+    c.confirmada === 'si'
 
     const costo =
     parseFloat(c.costoProveedor)||0
@@ -585,15 +676,48 @@ async function cargar(){
 
       <br><br>
 
+      ${
+        confirmado
+
+        ?
+
+        `<span style="color:green;font-weight:bold">
+          ✔️ Confirmada
+         </span>`
+
+        :
+
+        `<span style="color:orange;font-weight:bold">
+          ⏳ Pendiente
+         </span>`
+      }
+
+      <br><br>
+
+      <button class="btn-secondary"
+      onclick="editar('${c._id}')">
+      ✏️ Editar
+      </button>
+
       <button class="btn-danger"
       onclick="borrar('${c._id}')">
       ❌ Eliminar
       </button>
 
-      <button class="btn-success"
-      onclick="confirmar('${c._id}')">
-      ✔️ Confirmar
-      </button>
+      ${
+        !confirmado
+
+        ?
+
+        `<button class="btn-success"
+        onclick="confirmar('${c._id}')">
+        ✔️ Confirmar
+        </button>`
+
+        :
+
+        ''
+      }
 
     </div>
     `
@@ -610,6 +734,8 @@ function cancelar(){
 
   form.style.display='none'
 
+  window.editandoId = null
+
   nombre.value=''
   celular.value=''
   producto.value=''
@@ -618,7 +744,7 @@ function cancelar(){
   precioCliente.value=''
   ganancia.value=''
   descripcion.value=''
-  document.getElementById('fotos').value=''
+  fotos.value=''
 }
 
 // INIT
