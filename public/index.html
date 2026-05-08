@@ -6,86 +6,113 @@
 
 <title>Sistema Tickets</title>
 
+<script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
+
 <style>
-body {
-  font-family: Arial;
-  background: #eef2f7;
-  margin: 0;
+
+body{
+  font-family:Arial;
+  background:#eef2f7;
+  margin:0;
 }
 
-.container {
-  max-width: 900px;
-  margin: 60px auto;
-  padding: 20px;
+.container{
+  max-width:700px;
+  margin:50px auto;
+  padding:20px;
 }
 
-.box {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+.box{
+  background:white;
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 
-h2 {
-  text-align: center;
-  margin-bottom: 30px;
+h2{
+  text-align:center;
+  margin-bottom:30px;
+  color:#003366;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* NAV */
+.nav-admin{
+  text-align:right;
+  margin-bottom:15px;
 }
 
-.form-full {
-  grid-column: 1 / -1;
-}
-
-input, button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
-button {
-  background: #22c55e;
-  color: white;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #16a34a;
-}
-
-/* NAV ADMIN */
-.nav-admin {
-  text-align: right;
-  margin-bottom: 10px;
-}
-
-.nav-admin a {
-  text-decoration: none;
+.nav-admin a{
+  text-decoration:none;
   background:#003366;
   color:white;
-  padding:8px 12px;
-  border-radius:8px;
+  padding:10px 14px;
+  border-radius:10px;
   font-size:14px;
+  font-weight:bold;
 }
 
-/* 📱 CELULAR */
-@media (max-width: 600px) {
-  .container {
-    margin: 20px;
+/* FORM */
+.form-pro{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+}
+
+.form-group label{
+  margin-bottom:8px;
+  font-weight:bold;
+  color:#003366;
+}
+
+.form-group input,
+.form-group textarea{
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #ccc;
+  font-size:15px;
+  box-sizing:border-box;
+}
+
+.form-group textarea{
+  min-height:140px;
+  resize:vertical;
+}
+
+.btn-enviar{
+  width:100%;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  background:#22c55e;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.btn-enviar:hover{
+  background:#16a34a;
+}
+
+/* CELULAR */
+@media(max-width:600px){
+
+  .container{
+    margin:20px auto;
+    padding:15px;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
+  .box{
+    padding:22px;
   }
 }
+
 </style>
 </head>
 
@@ -94,75 +121,149 @@ button:hover {
 <div class="container">
 
   <div class="nav-admin">
-    <a href="login.html">🔐 Admin</a>
+    <a href="login.html">
+    🔐 Admin
+    </a>
   </div>
 
   <div class="box">
+
     <h2>🛠 Crear Ticket</h2>
 
-    <div class="form-grid">
-      <input id="nombre" placeholder="Nombre y apellido y/o Empresa">
-      <input 
-      id="telefono" 
-      placeholder="Cel"
-      inputmode="numeric"
-      oninput="this.value=this.value.replace(/\D/g,'')">
+    <div class="form-pro">
 
-      <input id="problema" class="form-full" placeholder="Problema">
+      <div class="form-group">
 
-      <button class="form-full" onclick="crear()">Enviar Ticket</button>
+        <label>
+        Nombre y Apellido y/o Empresa
+        </label>
+
+        <input
+        id="nombre"
+        placeholder="Ingrese nombre o empresa">
+
+      </div>
+
+      <div class="form-group">
+
+        <label>
+        Cel
+        </label>
+
+        <input
+        id="telefono"
+        type="number"
+        placeholder="Ej: 098123456">
+
+      </div>
+
+      <div class="form-group">
+
+        <label>
+        Describa el problema o tarea a realizar
+        </label>
+
+        <textarea
+        id="problema"
+        placeholder="Explique el problema del equipo o el trabajo a realizar"></textarea>
+
+      </div>
+
+      <button
+      class="btn-enviar"
+      onclick="crear()">
+
+      📩 Enviar Ticket
+
+      </button>
+
     </div>
+
   </div>
 
 </div>
 
 <script>
-async function crear() {
 
-  const n = document.getElementById('nombre').value
-  const t = document.getElementById('telefono').value
-  const p = document.getElementById('problema').value
+const socket =
+io('https://ticket-pro-xmhs.onrender.com')
 
-  if (!n || !t || !p) {
+async function crear(){
+
+  const n =
+  document.getElementById('nombre').value
+
+  const t =
+  document.getElementById('telefono').value
+
+  const p =
+  document.getElementById('problema').value
+
+  if(!n || !t || !p){
+
     alert("Completa todo")
+
     return
   }
 
-  try {
+  try{
 
-    // 🔥 RUTA PUBLICA (SIN LOGIN)
-    const res = await fetch('https://ticket-pro-xmhs.onrender.com/ticket-publico', {
+    const res =
+    await fetch(
+    'https://ticket-pro-xmhs.onrender.com/ticket-publico',{
+
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+
         nombre:n,
         telefono:t,
         problema:p
       })
     })
 
-    const data = await res.json()
+    const data =
+    await res.json()
 
     if(data.error){
+
       alert(data.error)
+
       return
     }
 
-    // 📞 TEL FORMATEADO
-    let tel = t.replace(/\D/g, '')
+    // REFRESCAR ADMIN
+    socket.emit('actualizar')
 
-    if (tel.startsWith('0')) tel = '598' + tel.substring(1)
-    if (!tel.startsWith('598')) tel = '598' + tel
+    // TELEFONO
+    let tel =
+    t.replace(/\D/g,'')
 
-    // 📅 FECHA
-    const fecha = new Date(data.fecha).toLocaleString('es-UY', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if(tel.startsWith('0')){
+      tel='598'+tel.substring(1)
+    }
+
+    if(!tel.startsWith('598')){
+      tel='598'+tel
+    }
+
+    // FECHA
+    const fecha =
+    new Date(data.fecha)
+    .toLocaleString('es-UY',{
+
+      day:'2-digit',
+      month:'2-digit',
+      year:'numeric',
+      hour:'2-digit',
+      minute:'2-digit'
     })
 
+    // MENSAJE
     const mensaje =
 `Hola ${n} 👋
 
@@ -171,25 +272,34 @@ Tu ticket fue creado correctamente ✅
 📅 Fecha solicitud: ${fecha}
 
 🧾 Ticket: ${data.numero}
-🔧 Problema: ${p}
+
+🔧 Problema:
+${p}
 
 El técnico se comunicará contigo.`
 
-    const url = "https://api.whatsapp.com/send?phone=" + tel + "&text=" + encodeURIComponent(mensaje)
+    const url =
+    "https://api.whatsapp.com/send?phone="
+    + tel +
+    "&text=" +
+    encodeURIComponent(mensaje)
 
-    // 📲 REDIRIGE A WHATSAPP
-    window.location.href = url
+    // LIMPIAR
+    document.getElementById('nombre').value=''
+    document.getElementById('telefono').value=''
+    document.getElementById('problema').value=''
 
-    // 🧹 LIMPIAR
-    document.getElementById('nombre').value = ''
-    document.getElementById('telefono').value = ''
-    document.getElementById('problema').value = ''
+    // WHATSAPP
+    window.location.href=url
 
-  } catch (e) {
+  }catch(e){
+
     console.error(e)
+
     alert("Error al crear ticket")
   }
 }
+
 </script>
 
 </body>
