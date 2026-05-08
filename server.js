@@ -337,6 +337,72 @@ app.delete('/ticket/:numero', auth, async (req,res)=>{
 // ======================================================
 // CREAR COTIZACION
 // ======================================================
+// CREAR COTIZACION
+// ======================================================
+app.post('/cotizacion', auth, async (req, res) => {
+
+  try {
+
+    console.log('BODY COTIZACION:', req.body)
+
+    const costo =
+    parseFloat(req.body.costoProveedor) || 0
+
+    const precio =
+    parseFloat(req.body.precioCliente) || 0
+
+    const ganancia =
+    precio - costo
+
+    console.log('GANANCIA CALCULADA:', ganancia)
+
+    const nueva = new Cotizacion({
+
+      ...req.body,
+
+      ganancia: ganancia
+    })
+
+    await nueva.save()
+
+    io.emit('actualizar')
+
+    res.json({ ok:true })
+
+  } catch (err) {
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error creando cotización'
+    })
+  }
+})
+
+// ======================================================
+// LISTAR COTIZACIONES
+// ======================================================
+app.get('/cotizaciones', auth, async (req, res) => {
+
+  try{
+
+    const data =
+    await Cotizacion
+    .find()
+    .sort({ _id:-1 })
+
+    res.json(data)
+
+  }catch(err){
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error obteniendo cotizaciones'
+    })
+  }
+})
+// ======================================================
 app.post('/cotizacion', auth, async (req, res) => {
 
   try {
