@@ -24,6 +24,7 @@ app.post('/login', (req,res)=>{
   const { usuario, clave } = req.body
 
   if(usuario === USER && clave === PASS){
+
     return res.json({
       ok:true,
       token:TOKEN
@@ -35,12 +36,13 @@ app.post('/login', (req,res)=>{
   })
 })
 
-// MIDDLEWARE AUTH
+// ================= AUTH MIDDLEWARE =================
 function auth(req,res,next){
 
   const authHeader = req.headers.authorization
 
   if(!authHeader){
+
     return res.status(401).json({
       error:'No autorizado'
     })
@@ -49,6 +51,7 @@ function auth(req,res,next){
   const token = authHeader.split(' ')[1]
 
   if(token !== TOKEN){
+
     return res.status(403).json({
       error:'Token inválido'
     })
@@ -65,6 +68,8 @@ mongoose.connect(
 .catch(err=>console.log(err))
 
 // ================= SCHEMAS =================
+
+// TICKETS
 const TicketSchema = new mongoose.Schema({
 
   numero:String,
@@ -86,18 +91,27 @@ const TicketSchema = new mongoose.Schema({
 
 const Ticket = mongoose.model('Ticket', TicketSchema)
 
+// COTIZACIONES
 const CotizacionSchema = new mongoose.Schema({
 
   nombre:String,
   celular:String,
   producto:String,
   proveedor:String,
+
   costoProveedor:String,
   precioCliente:String,
+
   ganancia:Number,
+
   descripcion:String,
+
+  // MULTI FOTO
   fotos:[String],
+
+  // COMPATIBILIDAD VIEJA
   foto:String,
+
   garantiaHasta:String,
   fotoGarantia:String,
 
@@ -116,15 +130,22 @@ const Cotizacion =
 mongoose.models.Cotizacion ||
 mongoose.model('Cotizacion', CotizacionSchema)
 
+// PROVEEDORES
 const ProveedorSchema = new mongoose.Schema({
-  nombre:{ type:String, unique:true }
+
+  nombre:{
+    type:String,
+    unique:true
+  }
 })
 
 const Proveedor =
 mongoose.models.Proveedor ||
 mongoose.model('Proveedor', ProveedorSchema)
+
 // ================= SOCKET =================
 io.on('connection',()=>{
+
   console.log('Cliente conectado')
 })
 
@@ -140,15 +161,15 @@ async function generarNumeroTicket(){
   const mes =
   String(hoy.getMonth()+1).padStart(2,'0')
 
-  // inicio mes
+  // INICIO MES
   const inicioMes =
   new Date(anio, hoy.getMonth(), 1)
 
-  // fin mes
+  // FIN MES
   const finMes =
   new Date(anio, hoy.getMonth()+1, 1)
 
-  // contar tickets del mes
+  // CONTAR TICKETS DEL MES
   const cantidad =
   await Ticket.countDocuments({
 
@@ -183,7 +204,8 @@ app.post('/ticket-publico', async (req,res)=>{
       })
     }
 
-    const numero = await generarNumeroTicket()
+    const numero =
+    await generarNumeroTicket()
 
     const nuevo = new Ticket({
 
@@ -234,7 +256,8 @@ app.post('/ticket', auth, async (req,res)=>{
       })
     }
 
-    const numero = await generarNumeroTicket()
+    const numero =
+    await generarNumeroTicket()
 
     const nuevo = new Ticket({
 
@@ -265,7 +288,7 @@ app.post('/ticket', auth, async (req,res)=>{
 })
 
 // ======================================================
-// LISTAR
+// LISTAR TICKETS
 // ======================================================
 app.get('/tickets', auth, async (req,res)=>{
 
@@ -276,7 +299,7 @@ app.get('/tickets', auth, async (req,res)=>{
 })
 
 // ======================================================
-// ACTUALIZAR
+// ACTUALIZAR TICKET
 // ======================================================
 app.put('/ticket/:numero', auth, async (req,res)=>{
 
@@ -296,7 +319,7 @@ app.put('/ticket/:numero', auth, async (req,res)=>{
 })
 
 // ======================================================
-// BORRAR
+// BORRAR TICKET
 // ======================================================
 app.delete('/ticket/:numero', auth, async (req,res)=>{
 
@@ -310,19 +333,42 @@ app.delete('/ticket/:numero', auth, async (req,res)=>{
     ok:true
   })
 })
-// CREAR
-app.post('/cotizacion', auth, async (req, res) => {
-  try {
 
-    const nueva = new Cotizacion(req.body)
+// ======================================================
+// CREAR COTIZACION
+// ======================================================
+app.post('/cotizacion', auth, async (req, res) => {
+
+  try{
+
+    const data = req.body
+
+    // CALCULAR GANANCIA
+    const costo =
+    parseFloat(data.costoProveedor) || 0
+
+    const precio =
+    parseFloat(data.precioCliente) || 0
+
+    data.ganancia = precio - costo
+
+    // ASEGURAR ARRAY
+    if(!data.fotos){
+      data.fotos = []
+    }
+
+    const nueva =
+    new Cotizacion(data)
 
     await nueva.save()
 
     io.emit('actualizar')
 
-    res.json({ ok:true })
+    res.json({
+      ok:true
+    })
 
-  } catch (err) {
+  }catch(err){
 
     console.error(err)
 
@@ -332,44 +378,92 @@ app.post('/cotizacion', auth, async (req, res) => {
   }
 })
 
-// LISTAR
+// ======================================================
+// LISTAR COTIZACIONES
+// ======================================================
 app.get('/cotizaciones', auth, async (req, res) => {
 
-  const data = await Cotizacion
+  const data =
+  await Cotizacion
   .find()
   .sort({ _id:-1 })
 
   res.json(data)
 })
 
-// ACTUALIZAR
+// ======================================================
+// ACTUALIZAR COTIZACION
+// ======================================================
 app.put('/cotizacion/:id', auth, async (req, res) => {
 
-  await Cotizacion.findByIdAndUpdate(
-    req.params.id,
-    { $set:req.body }
+  try{
+
+    const data = req.body
+
+    // GANANCIA AUTOMATICA
+    const costo =
+    parseFloat(data.costoProveedor) || 0
+
+    const precio =
+    parseFloat(data.precioCliente) || 0
+
+    data.ganancia = precio - costo
+
+    // ASEGURAR ARRAY
+    if(!data.fotos){
+      data.fotos = []
+    }
+
+    await Cotizacion.findByIdAndUpdate(
+
+      req.params.id,
+
+      { $set:data }
+    )
+
+    io.emit('actualizar')
+
+    res.json({
+      ok:true
+    })
+
+  }catch(err){
+
+    console.error(err)
+
+    res.status(500).json({
+      error:'Error actualizando cotización'
+    })
+  }
+})
+
+// ======================================================
+// BORRAR COTIZACION
+// ======================================================
+app.delete('/cotizacion/:id', auth, async (req, res) => {
+
+  await Cotizacion.findByIdAndDelete(
+    req.params.id
   )
 
   io.emit('actualizar')
 
-  res.json({ ok:true })
+  res.json({
+    ok:true
+  })
 })
 
-// BORRAR
-app.delete('/cotizacion/:id', auth, async (req, res) => {
+// ======================================================
+// PROVEEDORES
+// ======================================================
 
-  await Cotizacion.findByIdAndDelete(req.params.id)
-
-  io.emit('actualizar')
-
-  res.json({ ok:true })
-})
 // LISTAR
 app.get('/proveedores', auth, async (req, res) => {
 
   try{
 
-    const data = await Proveedor
+    const data =
+    await Proveedor
     .find()
     .sort({ nombre:1 })
 
@@ -388,25 +482,31 @@ app.post('/proveedores', auth, async (req, res) => {
 
   try{
 
-    const nombre = req.body.nombre?.trim()
+    const nombre =
+    req.body.nombre?.trim()
 
     if(!nombre){
+
       return res.status(400).json({
         error:'Nombre requerido'
       })
     }
 
-    const existe = await Proveedor.findOne({ nombre })
+    const existe =
+    await Proveedor.findOne({ nombre })
 
     if(existe){
       return res.json({ ok:true })
     }
 
-    const nuevo = new Proveedor({ nombre })
+    const nuevo =
+    new Proveedor({ nombre })
 
     await nuevo.save()
 
-    res.json({ ok:true })
+    res.json({
+      ok:true
+    })
 
   }catch(err){
 
@@ -425,7 +525,9 @@ app.delete('/proveedores/:nombre', auth, async (req, res) => {
       nombre:req.params.nombre
     })
 
-    res.json({ ok:true })
+    res.json({
+      ok:true
+    })
 
   }catch(err){
 
@@ -434,15 +536,21 @@ app.delete('/proveedores/:nombre', auth, async (req, res) => {
     })
   }
 })
-// ================= GARANTIAS =================
-//
 
+// ======================================================
+// GARANTIAS
+// ======================================================
+
+// LISTAR GARANTIAS
 app.get('/garantias', auth, async (req, res) => {
 
   try{
 
-    const data = await Cotizacion.find({
+    const data =
+    await Cotizacion.find({
+
       confirmada:'si'
+
     }).sort({ _id:-1 })
 
     res.json(data)
@@ -470,19 +578,27 @@ app.put('/garantia/:id', auth, async (req, res) => {
     const update = {}
 
     if(garantiaHasta !== undefined){
-      update.garantiaHasta = garantiaHasta
+      update.garantiaHasta =
+      garantiaHasta
     }
 
     if(fotoGarantia !== undefined){
-      update.fotoGarantia = fotoGarantia
+      update.fotoGarantia =
+      fotoGarantia
     }
 
     await Cotizacion.findByIdAndUpdate(
+
       req.params.id,
+
       { $set:update }
     )
 
-    res.json({ ok:true })
+    io.emit('actualizar')
+
+    res.json({
+      ok:true
+    })
 
   }catch(err){
 
@@ -493,9 +609,14 @@ app.put('/garantia/:id', auth, async (req, res) => {
     })
   }
 })
+
 // ================= START =================
 const PORT = process.env.PORT || 3000
 
 server.listen(PORT,()=>{
-  console.log('Servidor corriendo en puerto', PORT)
+
+  console.log(
+    'Servidor corriendo en puerto',
+    PORT
+  )
 })

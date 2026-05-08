@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <title>Cotizaciones PRO</title>
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
 
 <style>
-body {
-  font-family: Arial;
+body{
+  font-family:Arial;
   background:#eef2f7;
   padding:20px;
 }
 
-.topbar {
+.topbar{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
@@ -21,13 +21,13 @@ body {
   align-items:center;
 }
 
-input, select, textarea {
+input,select,textarea{
   padding:8px 10px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
-button {
+button{
   padding:8px 12px;
   border:none;
   border-radius:10px;
@@ -35,12 +35,27 @@ button {
   font-weight:bold;
 }
 
-.btn { background:#003366; color:white; }
-.btn-success { background:#28a745; color:white; }
-.btn-danger { background:#dc3545; color:white; }
-.btn-secondary { background:#6c757d; color:white; }
+.btn{
+  background:#003366;
+  color:white;
+}
 
-.card {
+.btn-success{
+  background:#28a745;
+  color:white;
+}
+
+.btn-danger{
+  background:#dc3545;
+  color:white;
+}
+
+.btn-secondary{
+  background:#6c757d;
+  color:white;
+}
+
+.card{
   background:white;
   padding:14px;
   margin:10px 0;
@@ -48,16 +63,21 @@ button {
   box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
-.thumb {
-  width:60px;
-  height:60px;
+.thumb{
+  width:70px;
+  height:70px;
   object-fit:cover;
   border-radius:8px;
-  margin:3px;
+  margin:4px;
   cursor:pointer;
+  transition:0.2s;
 }
 
-.modal {
+.thumb:hover{
+  transform:scale(1.08);
+}
+
+.modal{
   display:none;
   position:fixed;
   z-index:999;
@@ -65,14 +85,15 @@ button {
   top:0;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.85);
   justify-content:center;
   align-items:center;
 }
 
-.modal img {
+.modal img{
   max-width:90%;
   max-height:90%;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -82,16 +103,29 @@ button {
 <h2>📊 Cotizaciones</h2>
 
 <div class="topbar">
-  <button class="btn-secondary" onclick="location.href='admin.html'">⬅️ Volver</button>
 
-  <input id="buscar" placeholder="🔍 Buscar..." oninput="cargar()">
+  <button class="btn-secondary"
+  onclick="location.href='admin.html'">
+  ⬅️ Volver
+  </button>
 
-  <button class="btn" onclick="mostrarForm()">➕ Nueva</button>
+  <input id="buscar"
+  placeholder="🔍 Buscar..."
+  oninput="cargar()">
+
+  <button class="btn"
+  onclick="mostrarForm()">
+  ➕ Nueva
+  </button>
+
 </div>
 
-<div id="form" style="display:none;background:white;padding:15px;border-radius:12px;margin-bottom:15px">
+<!-- FORM -->
+<div id="form"
+style="display:none;background:white;padding:15px;border-radius:12px;margin-bottom:15px">
 
 <input id="nombre" placeholder="Nombre">
+
 <input id="celular" placeholder="Celular">
 
 <hr>
@@ -101,103 +135,226 @@ button {
 <br><br>
 
 <select id="proveedor"></select>
-<button class="btn-danger" onclick="eliminarProveedor()">❌</button>
 
-<input id="nuevoProveedor" placeholder="Nuevo proveedor">
-<button class="btn" onclick="agregarProveedor()">➕</button>
+<button class="btn-danger"
+onclick="eliminarProveedor()">
+❌
+</button>
+
+<input id="nuevoProveedor"
+placeholder="Nuevo proveedor">
+
+<button class="btn"
+onclick="agregarProveedor()">
+➕
+</button>
 
 <br><br>
 
-<input id="costoProveedor" placeholder="Costo">
-<input id="precioCliente" placeholder="Precio cliente">
-<input id="ganancia" readonly placeholder="Ganancia">
+<input id="costoProveedor"
+placeholder="Costo">
+
+<input id="precioCliente"
+placeholder="Precio cliente">
+
+<input id="ganancia"
+readonly
+placeholder="Ganancia">
 
 <br><br>
 
-<textarea id="descripcion" placeholder="Descripción"></textarea>
+<textarea id="descripcion"
+placeholder="Descripción"></textarea>
 
 <br><br>
 
-<button class="btn-success" onclick="guardar()">💾 Guardar</button>
-<button class="btn-danger" onclick="cancelar()">❌ Cancelar</button>
+<b>📸 Fotos producto</b><br><br>
+
+<input type="file"
+id="fotos"
+multiple>
+
+<br><br>
+
+<button class="btn-success"
+onclick="guardar()">
+💾 Guardar
+</button>
+
+<button class="btn-danger"
+onclick="cancelar()">
+❌ Cancelar
+</button>
 
 </div>
 
+<!-- LISTA -->
 <div id="lista"></div>
 
-<div id="modal" class="modal" onclick="cerrarModal()">
+<!-- MODAL -->
+<div id="modal"
+class="modal"
+onclick="cerrarModal()">
+
   <img id="imgGrande">
+
 </div>
 
 <script>
 
-const API = 'https://ticket-pro-xmhs.onrender.com'
-const TOKEN = localStorage.getItem('token')
+const API =
+'https://ticket-pro-xmhs.onrender.com'
 
+const TOKEN =
+localStorage.getItem('token')
+
+// LOGIN
 if(!TOKEN){
-  location.href = 'login.html'
+  location.href='login.html'
 }
 
-// 🔐 FETCH CON TOKEN
-function fetchAuth(url, options = {}){
-  return fetch(API + url, {
+// SOCKET
+const socket = io(API)
+
+socket.on('actualizar',()=>{
+
+  cargar()
+})
+
+// FETCH AUTH
+function fetchAuth(url,options={}){
+
+  return fetch(API+url,{
+
     ...options,
+
     headers:{
       'Content-Type':'application/json',
-      'Authorization': 'Bearer ' + TOKEN,
+      'Authorization':'Bearer '+TOKEN,
       ...(options.headers || {})
     }
   })
 }
 
-// SOCKET
-const socket = io(API)
-socket.on('actualizar', cargar)
+// ===== MODAL =====
+function abrirModal(src){
+
+  document.getElementById('modal')
+  .style.display='flex'
+
+  document.getElementById('imgGrande')
+  .src=src
+}
+
+function cerrarModal(){
+
+  document.getElementById('modal')
+  .style.display='none'
+}
+
+// ===== LEER MULTI FOTO =====
+function leerFotos(input){
+
+  return new Promise(resolve=>{
+
+    const files=[...input.files]
+
+    if(!files.length){
+      resolve([])
+      return
+    }
+
+    let fotos=[]
+    let cargadas=0
+
+    files.forEach(file=>{
+
+      const r=new FileReader()
+
+      r.onload=()=>{
+
+        fotos.push(r.result)
+
+        cargadas++
+
+        if(cargadas===files.length){
+          resolve(fotos)
+        }
+      }
+
+      r.readAsDataURL(file)
+    })
+  })
+}
 
 // ===== PROVEEDORES =====
 async function cargarProveedores(){
 
-  const res = await fetchAuth('/proveedores')
+  const res =
+  await fetchAuth('/proveedores')
 
   if(!res.ok){
-    console.log("Error proveedores:", res.status)
+
+    console.log(
+      'Error proveedores:',
+      res.status
+    )
+
     return
   }
 
   const data = await res.json()
 
-  proveedor.innerHTML = `<option value="">-- Seleccionar proveedor --</option>`
+  proveedor.innerHTML=
+  `<option value="">-- Seleccionar proveedor --</option>`
 
   if(!Array.isArray(data)) return
 
   data.forEach(p=>{
-    proveedor.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`
+
+    proveedor.innerHTML += `
+    <option value="${p.nombre}">
+    ${p.nombre}
+    </option>`
   })
 }
 
 async function agregarProveedor(){
 
-  const nombre = nuevoProveedor.value.trim()
-  if(!nombre) return alert('Escribí proveedor')
+  const nombre =
+  nuevoProveedor.value.trim()
+
+  if(!nombre){
+    return alert('Escribí proveedor')
+  }
 
   await fetchAuth('/proveedores',{
+
     method:'POST',
-    body: JSON.stringify({nombre})
+
+    body:JSON.stringify({ nombre })
   })
 
-  nuevoProveedor.value = ''
+  nuevoProveedor.value=''
+
   await cargarProveedores()
-  proveedor.value = nombre
+
+  proveedor.value=nombre
 }
 
 async function eliminarProveedor(){
 
   const nombre = proveedor.value
-  if(!nombre) return alert('Seleccioná proveedor')
+
+  if(!nombre){
+    return alert('Seleccioná proveedor')
+  }
 
   if(!confirm('Eliminar proveedor?')) return
 
-  await fetchAuth('/proveedores/'+encodeURIComponent(nombre),{
+  await fetchAuth(
+  '/proveedores/'+encodeURIComponent(nombre),{
+
     method:'DELETE'
   })
 
@@ -206,124 +363,260 @@ async function eliminarProveedor(){
 
 // ===== GANANCIA =====
 function calcularGanancia(){
-  const c = parseFloat(costoProveedor.value)||0
-  const p = parseFloat(precioCliente.value)||0
+
+  const c =
+  parseFloat(costoProveedor.value)||0
+
+  const p =
+  parseFloat(precioCliente.value)||0
+
   ganancia.value = p - c
 }
 
-costoProveedor.oninput = calcularGanancia
-precioCliente.oninput = calcularGanancia
+costoProveedor.oninput =
+calcularGanancia
+
+precioCliente.oninput =
+calcularGanancia
+
+// ===== GUARDAR =====
+async function guardar(){
+
+  const fotos =
+  await leerFotos(
+    document.getElementById('fotos')
+  )
+
+  const data = {
+
+    nombre:nombre.value,
+
+    celular:celular.value,
+
+    producto:producto.value,
+
+    proveedor:proveedor.value,
+
+    costoProveedor:costoProveedor.value,
+
+    precioCliente:precioCliente.value,
+
+    descripcion:descripcion.value,
+
+    fotos:fotos
+  }
+
+  await fetchAuth('/cotizacion',{
+
+    method:'POST',
+
+    body:JSON.stringify(data)
+  })
+
+  cancelar()
+
+  cargar()
+}
+
+// ===== CONFIRMAR =====
+async function confirmar(id){
+
+  await fetchAuth('/cotizacion/'+id,{
+
+    method:'PUT',
+
+    body:JSON.stringify({
+      confirmada:'si'
+    })
+  })
+
+  cargar()
+}
+
+// ===== BORRAR =====
+async function borrar(id){
+
+  if(!confirm('Eliminar?')) return
+
+  await fetchAuth('/cotizacion/'+id,{
+
+    method:'DELETE'
+  })
+
+  cargar()
+}
 
 // ===== CARGAR =====
 async function cargar(){
 
-  const res = await fetchAuth('/cotizaciones')
+  const res =
+  await fetchAuth('/cotizaciones')
 
   if(!res.ok){
-    console.log("ERROR:", res.status)
+
+    console.log(
+      'ERROR:',
+      res.status
+    )
+
     return
   }
 
   const data = await res.json()
 
   if(!Array.isArray(data)){
-    console.log("NO ES ARRAY:", data)
+
+    console.log(
+      'NO ES ARRAY:',
+      data
+    )
+
     return
   }
 
-  lista.innerHTML = ''
+  lista.innerHTML=''
 
-  const filtro = buscar.value.toLowerCase()
+  const filtro =
+  buscar.value.toLowerCase()
 
-  data
-  .filter(c =>
-    (c.nombre||'').toLowerCase().includes(filtro) ||
-    (c.producto||'').toLowerCase().includes(filtro)
+  // SOLO PENDIENTES
+  const pendientes =
+  data.filter(c=>
+    c.confirmada !== 'si'
   )
-  .reverse()
-  .forEach(c => {
 
-    const costo = parseFloat(c.costoProveedor)||0
-    const precio = parseFloat(c.precioCliente)||0
-    const gan = precio - costo
+  pendientes
+  .filter(c=>
+
+    (c.nombre||'')
+    .toLowerCase()
+    .includes(filtro)
+
+    ||
+
+    (c.producto||'')
+    .toLowerCase()
+    .includes(filtro)
+  )
+
+  .reverse()
+
+  .forEach(c=>{
+
+    const costo =
+    parseFloat(c.costoProveedor)||0
+
+    const precio =
+    parseFloat(c.precioCliente)||0
+
+    const gan =
+    parseFloat(c.ganancia)||0
 
     lista.innerHTML += `
+
     <div class="card">
 
-      📅 ${c.fecha ? new Date(c.fecha).toLocaleString('es-UY') : ''}<br><br>
-
-      <b>${c.producto || ''}</b><br>
-      🏢 ${c.proveedor || 'Sin proveedor'}<br>
-      ${c.nombre || ''} (${c.celular || ''})<br><br>
-
-      💰 <b>Precio cliente $${precio}</b><br>
-      🧾 <b>Ganancia $${gan}</b><br><br>
-
-      ${
-        c.confirmada === 'si'
-        ? `<span style="color:green;font-weight:bold">✔️ Confirmada</span>`
-        : `<span style="color:orange;font-weight:bold">⏳ Pendiente</span>`
+      📅 ${
+        c.fecha
+        ? new Date(c.fecha)
+        .toLocaleString('es-UY')
+        : ''
       }
 
       <br><br>
 
-      <button class="btn-danger" onclick="borrar('${c._id}')">❌</button>
-      ${
-        c.confirmada !== 'si'
-        ? `<button class="btn-success" onclick="confirmar('${c._id}')">✔️ Confirmar</button>`
-        : ''
+      <b>${c.producto || ''}</b><br>
+
+      🏢 ${
+        c.proveedor ||
+        'Sin proveedor'
       }
+
+      <br>
+
+      👤 ${c.nombre || ''}
+
+      (${c.celular || ''})
+
+      <br><br>
+
+      💰 <b>
+      Precio cliente $${precio}
+      </b>
+
+      <br>
+
+      🧾 <b>
+      Ganancia $${gan}
+      </b>
+
+      <br><br>
+
+      📝 ${
+        c.descripcion || ''
+      }
+
+      <br><br>
+
+      ${
+        (c.fotos||[]).length
+
+        ?
+
+        `
+        <b>📸 Fotos:</b><br><br>
+
+        ${(c.fotos||[]).map(f=>`
+
+          <img
+          src="${f}"
+          class="thumb"
+          onclick="abrirModal('${f}')">
+
+        `).join('')}
+        `
+
+        :
+
+        ''
+      }
+
+      <br><br>
+
+      <button class="btn-danger"
+      onclick="borrar('${c._id}')">
+      ❌ Eliminar
+      </button>
+
+      <button class="btn-success"
+      onclick="confirmar('${c._id}')">
+      ✔️ Confirmar
+      </button>
 
     </div>
     `
   })
 }
 
-// ===== GUARDAR =====
-async function guardar(){
-
-  const data = {
-    nombre:nombre.value,
-    celular:celular.value,
-    producto:producto.value,
-    proveedor:proveedor.value,
-    costoProveedor:costoProveedor.value,
-    precioCliente:precioCliente.value,
-    descripcion:descripcion.value
-  }
-
-  await fetchAuth('/cotizacion',{
-    method:'POST',
-    body: JSON.stringify(data)
-  })
-
-  cancelar()
-  cargar()
-}
-
-// ===== CONFIRMAR =====
-async function confirmar(id){
-  await fetchAuth('/cotizacion/'+id,{
-    method:'PUT',
-    body: JSON.stringify({confirmada:'si'})
-  })
-  cargar()
-}
-
-// ===== BORRAR =====
-async function borrar(id){
-  if(!confirm('Eliminar?')) return
-  await fetchAuth('/cotizacion/'+id,{method:'DELETE'})
-  cargar()
-}
-
-// UI
+// ===== UI =====
 function mostrarForm(){
+
   form.style.display='block'
 }
 
 function cancelar(){
+
   form.style.display='none'
+
+  nombre.value=''
+  celular.value=''
+  producto.value=''
+  proveedor.value=''
+  costoProveedor.value=''
+  precioCliente.value=''
+  ganancia.value=''
+  descripcion.value=''
+  fotos.value=''
 }
 
 // INIT
