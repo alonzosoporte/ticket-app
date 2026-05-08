@@ -39,6 +39,7 @@ input,select,textarea{
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
+  box-sizing:border-box;
 }
 
 /* BOTONES */
@@ -92,6 +93,7 @@ button{
   padding:15px;
   margin-bottom:15px;
   border-radius:12px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
 .ticket-top{
@@ -101,8 +103,8 @@ button{
 
 textarea{
   width:100%;
-  min-height:70px;
-  resize:none;
+  min-height:100px;
+  resize:vertical;
   margin-top:10px;
 }
 
@@ -110,7 +112,36 @@ textarea{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-top:12px;
+  margin-top:15px;
+}
+
+.precio-ganancia{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+.precio-ganancia div{
+  flex:1;
+}
+
+.toggle-detalle{
+  margin-top:10px;
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.detalle-box{
+  display:none;
+  margin-top:10px;
+}
+
+.mostrar{
+  display:block;
 }
 </style>
 </head>
@@ -203,6 +234,15 @@ function fetchAuth(url,options={}){
       'Authorization':'Bearer '+TOKEN
     }
   })
+}
+
+// MOSTRAR / OCULTAR DETALLE
+function toggleDetalle(id){
+
+  const box =
+  document.getElementById('detalle-'+id)
+
+  box.classList.toggle('mostrar')
 }
 
 // MESES
@@ -340,9 +380,6 @@ ${detalle || 'Se realizó el servicio correctamente'}
 
 💲 Precio: ${precio || 'A confirmar'}
 
-Se puede pagar al momento de retirar el equipo
-o mediante depósito bancario.
-
 🏦 BROU
 CA 001120656-00002`
 
@@ -435,7 +472,6 @@ async function cargar(){
     // VENTAS
     // =========================
     cotizaciones.forEach(c=>{
-    console.log('COTIZACION:', c)
 
       if(c.confirmada !== 'si') return
 
@@ -458,9 +494,7 @@ async function cargar(){
         return
       }
 
-  console.log('SUMANDO:', c.ganancia)
-
-  ven += Number(c.ganancia || 0)
+      ven += Number(c.ganancia || 0)
     })
 
     // =========================
@@ -575,28 +609,46 @@ async function cargar(){
 
         </div>
 
-        💲 Precio<br>
+        <div class="precio-ganancia">
 
-        <input
-        class="precio"
-        value="${t.precio||''}"
-        onchange="guardar('${t.numero}','precio',this.value)">
+          <div>
+            💲 Precio<br>
 
-        <br><br>
+            <input
+            class="precio"
+            type="number"
+            value="${t.precio||''}"
+            onchange="guardar('${t.numero}','precio',this.value)">
+          </div>
 
-        💰 Ganancia<br>
+          <div>
+            💰 Ganancia<br>
 
-        <input
-        value="${t.ganancia||''}"
-        onchange="guardar('${t.numero}','ganancia',this.value)">
+            <input
+            type="number"
+            value="${t.ganancia||''}"
+            onchange="guardar('${t.numero}','ganancia',this.value)">
+          </div>
 
-        <br><br>
+        </div>
 
-        📝 Detalle
+        <div
+        class="toggle-detalle"
+        onclick="toggleDetalle('${t.numero}')">
 
-        <textarea
-        onblur="guardar('${t.numero}','detalle',this.value)">
+        📝 Detalle (click para abrir/cerrar)
+
+        </div>
+
+        <div
+        class="detalle-box"
+        id="detalle-${t.numero}">
+
+          <textarea
+          onblur="guardar('${t.numero}','detalle',this.value)">
 ${t.detalle||''}</textarea>
+
+        </div>
 
         <div class="acciones-ticket">
 
@@ -647,4 +699,4 @@ cargar()
 </script>
 
 </body>
-</html
+</html>
