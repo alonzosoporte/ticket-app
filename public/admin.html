@@ -330,6 +330,37 @@ async function cargar(){
 
     let rep=0
     let ven=0
+    // SUMAR VENTAS
+try{
+
+  const resCot = await fetchAuth('/cotizaciones')
+  const cotizaciones = await resCot.json()
+
+  cotizaciones.forEach(c=>{
+
+    if(c.confirmada !== 'si') return
+
+    if(!c.fecha) return
+
+    const d = new Date(c.fecha)
+
+    const mes = String(d.getMonth()+1).padStart(2,'0')
+    const anio = d.getFullYear()
+
+    const clave = `${anio}-${mes}`
+
+    if(mesSel !== 'todos' && clave !== mesSel){
+      return
+    }
+
+    ven += parseFloat(c.ganancia) || 0
+
+  })
+
+}catch(err){
+
+  console.log('Error ventas', err)
+}
 
     // SUMAR REPARACIONES
     tickets.forEach(t=>{
