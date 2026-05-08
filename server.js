@@ -161,15 +161,12 @@ async function generarNumeroTicket(){
   const mes =
   String(hoy.getMonth()+1).padStart(2,'0')
 
-  // INICIO MES
   const inicioMes =
   new Date(anio, hoy.getMonth(), 1)
 
-  // FIN MES
   const finMes =
   new Date(anio, hoy.getMonth()+1, 1)
 
-  // CONTAR TICKETS DEL MES
   const cantidad =
   await Ticket.countDocuments({
 
@@ -337,8 +334,6 @@ app.delete('/ticket/:numero', auth, async (req,res)=>{
 // ======================================================
 // CREAR COTIZACION
 // ======================================================
-// CREAR COTIZACION
-// ======================================================
 app.post('/cotizacion', auth, async (req, res) => {
 
   try {
@@ -367,7 +362,9 @@ app.post('/cotizacion', auth, async (req, res) => {
 
     io.emit('actualizar')
 
-    res.json({ ok:true })
+    res.json({
+      ok:true
+    })
 
   } catch (err) {
 
@@ -402,43 +399,42 @@ app.get('/cotizaciones', auth, async (req, res) => {
     })
   }
 })
+
 // ======================================================
-app.post('/cotizacion', auth, async (req, res) => {
+// ACTUALIZAR COTIZACION
+// ======================================================
+app.put('/cotizacion/:id', auth, async (req, res) => {
 
-  try {
+  try{
 
-    console.log('BODY COTIZACION:', req.body)
+    console.log('ACTUALIZANDO:', req.params.id)
+    console.log('BODY:', req.body)
 
-    const costo =
-    parseFloat(req.body.costoProveedor) || 0
+    const actualizada =
+    await Cotizacion.findByIdAndUpdate(
 
-    const precio =
-    parseFloat(req.body.precioCliente) || 0
+      req.params.id,
 
-    const ganancia =
-    precio - costo
+      { $set:req.body },
 
-    console.log('GANANCIA CALCULADA:', ganancia)
+      { new:true }
+    )
 
-    const nueva = new Cotizacion({
-
-      ...req.body,
-
-      ganancia: ganancia
-    })
-
-    await nueva.save()
+    console.log('RESULTADO:', actualizada)
 
     io.emit('actualizar')
 
-    res.json({ ok:true })
+    res.json({
+      ok:true,
+      data:actualizada
+    })
 
-  } catch (err) {
+  }catch(err){
 
     console.error(err)
 
     res.status(500).json({
-      error:'Error creando cotización'
+      error:'Error actualizando cotización'
     })
   }
 })
