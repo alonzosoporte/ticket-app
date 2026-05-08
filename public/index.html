@@ -152,8 +152,12 @@ h2{
 
         <input
         id="telefono"
-        type="numeric"
-        placeholder="Ej: 098123456">
+        type="tel"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        autocomplete="off"
+        placeholder="Ej: 098123456"
+        oninput="this.value=this.value.replace(/\D/g,'')">
 
       </div>
 
