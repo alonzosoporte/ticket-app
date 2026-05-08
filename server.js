@@ -339,36 +339,31 @@ app.delete('/ticket/:numero', auth, async (req,res)=>{
 // ======================================================
 app.post('/cotizacion', auth, async (req, res) => {
 
-  try{
+  try {
 
-    const data = req.body
-
-    // CALCULAR GANANCIA
     const costo =
-    parseFloat(data.costoProveedor) || 0
+    parseFloat(req.body.costoProveedor) || 0
 
     const precio =
-    parseFloat(data.precioCliente) || 0
+    parseFloat(req.body.precioCliente) || 0
 
-    data.ganancia = precio - costo
+    const ganancia =
+    precio - costo
 
-    // ASEGURAR ARRAY
-    if(!data.fotos){
-      data.fotos = []
-    }
+    const nueva = new Cotizacion({
 
-    const nueva =
-    new Cotizacion(data)
+      ...req.body,
+
+      ganancia
+    })
 
     await nueva.save()
 
     io.emit('actualizar')
 
-    res.json({
-      ok:true
-    })
+    res.json({ ok:true })
 
-  }catch(err){
+  } catch (err) {
 
     console.error(err)
 
