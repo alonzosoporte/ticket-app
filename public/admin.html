@@ -175,9 +175,14 @@ if(!TOKEN){
 <!-- HEADER -->
 <div class="header-pro">
 
-  <input id="busqueda"
-  placeholder="🔍 Buscar..."
-  oninput="cargar()">
+ <input 
+id="busqueda"
+placeholder="🔍 Buscar..."
+inputmode="numeric"
+oninput="
+this.value=this.value.replace(/[^a-zA-Z0-9\s]/g,'');
+cargar()
+">
 
   <select id="filtroMes" onchange="cargar()">
     <option value="todos">📅 Todos</option>
@@ -210,8 +215,21 @@ if(!TOKEN){
 
 const API='https://ticket-pro-xmhs.onrender.com'
 
-const socket =
-io('https://ticket-pro-xmhs.onrender.com')
+const socket = io(API,{
+  transports:['websocket','polling']
+  socket.on('connect',()=>{
+
+  console.log('SOCKET CONECTADO')
+})
+
+socket.off('actualizar')
+
+socket.on('actualizar',()=>{
+
+  console.log('ACTUALIZAR RECIBIDO')
+
+  cargar()
+})
 
 let modo='pendientes'
 
