@@ -101,6 +101,17 @@ button{
   line-height:1.7;
 }
 
+.ticket-inputs{
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+
+.ticket-inputs div{
+  max-width:140px;
+}
 textarea{
   width:100%;
   min-height:100px;
@@ -614,9 +625,14 @@ async function cargar(){
           <div>
             💲 Precio<br>
 
+            <div class="ticket-inputs">
+
+          <div>
+            💲 Precio<br>
+
             <input
-            class="precio"
             type="number"
+            class="precio"
             value="${t.precio||''}"
             onchange="guardar('${t.numero}','precio',this.value)">
           </div>
@@ -629,6 +645,8 @@ async function cargar(){
             value="${t.ganancia||''}"
             onchange="guardar('${t.numero}','ganancia',this.value)">
           </div>
+
+</div>
 
         </div>
 
