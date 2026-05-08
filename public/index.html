@@ -152,12 +152,19 @@ h2{
 
         <input
         id="telefono"
-        type="tel"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        autocomplete="off"
         placeholder="Ej: 098123456"
-        oninput="this.value=this.value.replace(/\D/g,'')">
+        maxlength="15"
+
+        onkeypress="
+        if(event.charCode < 48 || event.charCode > 57){
+        event.preventDefault()
+        }
+        "
+
+        oninput="
+        this.value=this.value.replace(/\D/g,'')
+        "
+        >
 
       </div>
 
