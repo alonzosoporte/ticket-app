@@ -149,14 +149,6 @@ textarea{
 
 <body>
 
-<script>
-const TOKEN = localStorage.getItem('token')
-
-if(!TOKEN){
-  location.href='login.html'
-}
-</script>
-
 <!-- NAV -->
 <div class="nav-top">
 
@@ -175,14 +167,10 @@ if(!TOKEN){
 <!-- HEADER -->
 <div class="header-pro">
 
- <input 
-id="busqueda"
-placeholder="🔍 Buscar..."
-inputmode="numeric"
-oninput="
-this.value=this.value.replace(/[^a-zA-Z0-9\s]/g,'');
-cargar()
-">
+  <input 
+  id="busqueda"
+  placeholder="🔍 Buscar..."
+  oninput="cargar()">
 
   <select id="filtroMes" onchange="cargar()">
     <option value="todos">📅 Todos</option>
@@ -213,36 +201,36 @@ cargar()
 
 <script>
 
+const TOKEN = localStorage.getItem('token')
+
+if(!TOKEN){
+  location.href='login.html'
+}
+
 const API='https://ticket-pro-xmhs.onrender.com'
 
+// SOCKET.IO
 const socket = io(API,{
   transports:['websocket','polling']
-  socket.on('connect',()=>{
-
-  console.log('SOCKET CONECTADO')
 })
 
-socket.off('actualizar')
-
-socket.on('actualizar',()=>{
-
-  console.log('ACTUALIZAR RECIBIDO')
-
-  cargar()
-})
+// SOCKET CONECTADO
 socket.on('connect',()=>{
 
   console.log('SOCKET CONECTADO')
 })
 
+// EVITAR DUPLICADOS
 socket.off('actualizar')
 
+// ACTUALIZACION TIEMPO REAL
 socket.on('actualizar',()=>{
 
   console.log('ACTUALIZAR RECIBIDO')
 
   cargar()
 })
+
 let modo='pendientes'
 
 // LOGOUT
@@ -424,36 +412,11 @@ async function cargar(){
 
   try{
 
-    // =========================
-    // TICKETS
-    // =========================
     const res =
     await fetchAuth('/tickets')
 
     const tickets =
     await res.json()
-
-    // =========================
-    // COTIZACIONES
-    // =========================
-    let cotizaciones=[]
-
-    try{
-
-      const resCot =
-      await fetchAuth('/cotizaciones')
-
-      cotizaciones =
-      await resCot.json()
-
-      if(!Array.isArray(cotizaciones)){
-        cotizaciones=[]
-      }
-
-    }catch(err){
-
-      console.log('Error ventas', err)
-    }
 
     cargarMeses(tickets)
 
@@ -466,31 +429,8 @@ async function cargar(){
     .toLowerCase()
 
     let rep=0
-    let ven=0
 
-    // =========================
-    // REPARACIONES
-    // =========================
     tickets.forEach(t=>{
-
-      if(!t.fecha) return
-
-      const d=new Date(t.fecha)
-
-      const mes=
-      String(d.getMonth()+1)
-      .padStart(2,'0')
-
-      const anio=d.getFullYear()
-
-      const clave=`${anio}-${mes}`
-
-      if(
-        mesSel!=='todos' &&
-        clave!==mesSel
-      ){
-        return
-      }
 
       if(t.entregado==='si'){
 
@@ -499,38 +439,6 @@ async function cargar(){
       }
     })
 
-    // =========================
-    // VENTAS
-    // =========================
-    cotizaciones.forEach(c=>{
-
-      if(c.confirmada !== 'si') return
-
-      if(!c.fecha) return
-
-      const d=new Date(c.fecha)
-
-      const mes=
-      String(d.getMonth()+1)
-      .padStart(2,'0')
-
-      const anio=d.getFullYear()
-
-      const clave=`${anio}-${mes}`
-
-      if(
-        mesSel!=='todos' &&
-        clave!==mesSel
-      ){
-        return
-      }
-
-      ven += Number(c.ganancia || 0)
-    })
-
-    // =========================
-    // RESUMEN
-    // =========================
     document.getElementById('resumen')
     .innerHTML=`
 
@@ -540,20 +448,11 @@ async function cargar(){
       🔧 Reparaciones $${rep}
       </div>
 
-      <div class="card">
-      🛒 Ventas $${ven}
-      </div>
-
-      <div class="card">
-      💰 Total $${rep+ven}
-      </div>
-
     </div>
     `
 
     let filtrados=[...tickets]
 
-    // SOLO PENDIENTES
     if(modo==='pendientes'){
 
       filtrados=
@@ -562,7 +461,6 @@ async function cargar(){
       )
     }
 
-    // FILTRO
     filtrados=filtrados.filter(t=>{
 
       const match=
@@ -599,7 +497,6 @@ async function cargar(){
       return match && clave===mesSel
     })
 
-    // MÁS NUEVOS ARRIBA
     filtrados.reverse()
 
     lista.innerHTML=''
@@ -717,12 +614,6 @@ ${t.detalle||''}</textarea>
     alert('Error conexión')
   }
 }
-
-// SOCKET
-socket.on('actualizar',()=>{
-
-  cargar()
-})
 
 // INIT
 cargar()
