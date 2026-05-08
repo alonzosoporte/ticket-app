@@ -401,6 +401,8 @@ async function guardar(){
 
     precioCliente:precioCliente.value,
 
+    ganancia:ganancia.value,
+
     descripcion:descripcion.value,
 
     fotos:fotos
@@ -616,7 +618,7 @@ function cancelar(){
   precioCliente.value=''
   ganancia.value=''
   descripcion.value=''
-  fotos.value=''
+  document.getElementById('fotos').value=''
 }
 
 // INIT
