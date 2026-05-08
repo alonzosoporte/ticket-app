@@ -230,7 +230,19 @@ socket.on('actualizar',()=>{
 
   cargar()
 })
+socket.on('connect',()=>{
 
+  console.log('SOCKET CONECTADO')
+})
+
+socket.off('actualizar')
+
+socket.on('actualizar',()=>{
+
+  console.log('ACTUALIZAR RECIBIDO')
+
+  cargar()
+})
 let modo='pendientes'
 
 // LOGOUT
