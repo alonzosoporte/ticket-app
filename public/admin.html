@@ -671,22 +671,25 @@ async function cargar(){
   <div>
     🛡️ Garantía<br>
 
-    <select
-    onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+   <select
+onchange="guardar('${t.numero}','garantiaServicio',this.value)">
 
-      <option value="">Sin garantía</option>
+  <option value="">
+    Sin garantía
+  </option>
 
-      <option value="3 meses"
-      ${t.garantia==='3 meses'?'selected':''}>
-      3 meses
-      </option>
+  <option value="3 meses"
+  ${t.garantiaServicio==='3 meses'?'selected':''}>
+  3 meses
+  </option>
 
-      <option value="6 meses"
-      ${t.garantia==='6 meses'?'selected':''}>
-      6 meses
-      </option>
+  <option value="6 meses"
+  ${t.garantiaServicio==='6 meses'?'selected':''}>
+  6 meses
+  </option>
 
-    </select>
+</select>
+        
   </div>
 
   <div>
