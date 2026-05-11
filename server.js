@@ -81,6 +81,8 @@ const TicketSchema = new mongoose.Schema({
   problema:String,
   descripcion:String,
   detalle:String,
+  tecnico:String,
+  garantiaServicio:String,
   precio:String,
   ganancia:String,
   estado:String,
