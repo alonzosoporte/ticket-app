@@ -658,25 +658,44 @@ async function cargar(){
           🔧 ${t.problema}
 
         </div>
+<div class="precio-ganancia">
 
+  <div class="datos-ticket">
+
+  <!-- FILA SUPERIOR -->
+  <div class="fila-superior">
 
     <div class="campo-box">
-      🛡️ Garantía<br>
+      👨 Técnico<br>
 
       <select
-      onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+      onchange="guardar('${t.numero}','tecnico',this.value)">
 
-        <option value="">Sin garantía</option>
+        <option value="">Sin seleccionar</option>
 
-        <option value="3 meses"
-        ${t.garantiaServicio==='3 meses'?'selected':''}>
-        3 meses
+        <option value="PCR"
+        ${t.tecnico==='PCR'?'selected':''}>
+        PCR
         </option>
 
-        <option value="6 meses"
-        ${t.garantiaServicio==='6 meses'?'selected':''}>
-        6 meses
+        <option value="Javier"
+        ${t.tecnico==='Javier'?'selected':''}>
+        Javier
         </option>
+
+        <option value="Mauricio"
+        ${t.tecnico==='Mauricio'?'selected':''}>
+        Mauricio
+        </option>
+
+        <option value="Electroshop"
+        ${t.tecnico==='Electroshop'?'selected':''}>
+        Electroshop
+        </option>
+
+      </select>
+    </div>
+
 
       </select>
     </div>
