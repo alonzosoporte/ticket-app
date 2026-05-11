@@ -403,11 +403,18 @@ async function generarGarantia(
   doc.setFontSize(13)
 
   doc.text(
-    'Soporte Tecnico: 098555861',
-    105,
-    282,
-    { align:'center' }
-  )
+  'SOPORTE TECNICO',
+  105,
+  275,
+  { align:'center' }
+)
+
+doc.text(
+  '098555861',
+  105,
+  283,
+  { align:'center' }
+)
 
   // DESCARGAR
   doc.save(`garantia ${nombre}.pdf`)
