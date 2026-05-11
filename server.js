@@ -5,6 +5,9 @@ const http = require('http')
 const { Server } = require('socket.io')
 
 const app = express()
+app.get('/ping',(req,res)=>{
+  res.send('ok')
+})
 const server = http.createServer(app)
 const io = new Server(server)
 
