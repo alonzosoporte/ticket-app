@@ -404,10 +404,12 @@ async function generarGarantia(
     // ========= ICONOS =========
     doc.setFontSize(18)
 
-    doc.text('📄',35,138)
-    doc.text('👤',35,156)
-    doc.text('📞',35,174)
-    doc.text('🛡️',35,192)
+   doc.setFillColor(...azul)
+
+    doc.circle(38,135,6,'F')
+    doc.circle(38,153,6,'F')
+    doc.circle(38,171,6,'F')
+    doc.circle(38,189,6,'F')
 
     // ========= LABELS =========
     doc.setFontSize(12)
@@ -416,7 +418,7 @@ async function generarGarantia(
 
     doc.text('TICKET',58,138)
     doc.text('CLIENTE',58,156)
-    doc.text('TELÉFONO',58,174)
+    doc.text('CELULAR',58,174)
     doc.text('GARANTÍA',58,192)
 
     // ========= DATOS =========
@@ -443,7 +445,7 @@ async function generarGarantia(
 
     doc.setFontSize(22)
 
-    doc.text('🏅',35,223)
+    doc.circle(38,220,7,'S')
 
     doc.setFontSize(11)
 
@@ -482,7 +484,7 @@ async function generarGarantia(
 
     doc.setTextColor(...oscuro)
 
-    doc.text('📅',35,260)
+    doc.circle(38,258,5,'S')
 
     doc.text(
       'FECHA DE EMISIÓN',
@@ -501,7 +503,7 @@ async function generarGarantia(
     // SOPORTE
     doc.setFontSize(11)
 
-    doc.text('🎧',120,260)
+   doc.circle(123,258,5,'S')
 
     doc.text(
       'SOPORTE TÉCNICO',
