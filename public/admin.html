@@ -72,6 +72,11 @@ button{
   color:white;
 }
 
+.btn-pdf{
+  background:#ff9800;
+  color:white;
+}
+
 /* PANEL */
 .panel{
   display:flex;
@@ -130,6 +135,7 @@ textarea{
 
 .fila-superior{
   margin-bottom:15px;
+  align-items:flex-end;
 }
 
 .campo-box{
@@ -235,6 +241,8 @@ textarea{
 <!-- LISTA -->
 <div id="lista"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 
 const TOKEN = localStorage.getItem('token')
@@ -281,6 +289,61 @@ function fetchAuth(url,options={}){
       'Authorization':'Bearer '+TOKEN
     }
   })
+}
+
+// PDF GARANTIA
+async function generarGarantia(
+  numero,
+  nombre,
+  telefono,
+  garantia
+){
+
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF()
+
+  try{
+
+    const img = new Image()
+
+    img.src='logo.png'
+
+    await new Promise(resolve=>{
+      img.onload=resolve
+      img.onerror=resolve
+    })
+
+    doc.addImage(img,'PNG',75,10,60,30)
+
+  }catch(e){
+
+    console.log('Logo no cargó')
+  }
+
+  doc.setFontSize(18)
+
+  doc.text('GARANTIA ELECTRONICA',55,55)
+
+  doc.setFontSize(13)
+
+  doc.text(`🧾 Ticket: ${numero}`,20,80)
+  doc.text(`👤 Cliente: ${nombre}`,20,95)
+  doc.text(`📱 Teléfono: ${telefono}`,20,110)
+
+  doc.text(
+    `🛡️ Garantía: ${garantia || 'Sin garantía'}`,
+    20,
+    125
+  )
+
+  doc.text(
+    'Gracias por confiar en nuestro servicio.',
+    20,
+    150
+  )
+
+  doc.save(`garantia ${nombre}.pdf`)
 }
 
 // TOGGLE
@@ -479,7 +542,6 @@ async function cargar(){
     let rep=0
     let ven=0
 
-    // REPARACIONES
     tickets.forEach(t=>{
 
       if(t.entregado==='si'){
@@ -489,7 +551,6 @@ async function cargar(){
       }
     })
 
-    // VENTAS
     cotizaciones.forEach(c=>{
 
       if(c.confirmada==='si'){
@@ -498,7 +559,6 @@ async function cargar(){
       }
     })
 
-    // RESUMEN
     document.getElementById('resumen')
     .innerHTML=`
 
@@ -521,7 +581,6 @@ async function cargar(){
 
     let filtrados=[...tickets]
 
-    // SOLO PENDIENTES
     if(modo==='pendientes'){
 
       filtrados=
@@ -530,7 +589,6 @@ async function cargar(){
       )
     }
 
-    // FILTRO
     filtrados=filtrados.filter(t=>{
 
       const match=
@@ -557,7 +615,8 @@ async function cargar(){
       const d=new Date(t.fecha)
 
       const mes=
-      String(d.getMonth()+1).padStart(2,'0')
+      String(d.getMonth()+1)
+      .padStart(2,'0')
 
       const anio=d.getFullYear()
 
@@ -566,7 +625,6 @@ async function cargar(){
       return match && clave===mesSel
     })
 
-    // NUEVOS ARRIBA
     filtrados.sort((a,b)=>{
 
       return new Date(b.fecha) - new Date(a.fecha)
@@ -665,6 +723,23 @@ async function cargar(){
                 </option>
 
               </select>
+            </div>
+
+            <div class="campo-box">
+
+              <button
+              class="btn-pdf"
+              onclick="generarGarantia(
+              '${t.numero}',
+              '${nombre}',
+              '${t.telefono}',
+              '${t.garantiaServicio || ''}'
+              )">
+
+              📄 Garantía electrónica
+
+              </button>
+
             </div>
 
           </div>
