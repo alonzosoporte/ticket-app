@@ -303,6 +303,22 @@ async function generarGarantia(
 
   const doc = new jsPDF()
 
+  // FONDO
+  doc.setFillColor(245,245,245)
+  doc.rect(0,0,210,297,'F')
+
+  // HEADER
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,30,'F')
+
+  // TITULO HEADER
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(22)
+  doc.text('GARANTIA ELECTRONICA',105,19,{
+    align:'center'
+  })
+
+  // LOGO
   try{
 
     const img = new Image()
@@ -314,38 +330,88 @@ async function generarGarantia(
       img.onerror=resolve
     })
 
-    doc.addImage(img,'PNG',75,10,60,30)
+    doc.addImage(img,'PNG',60,38,90,45)
 
   }catch(e){
 
-    console.log('Logo no cargó')
+    console.log('logo error')
   }
 
-  doc.setFontSize(18)
+  // TITULO
+  doc.setTextColor(30,30,30)
 
-  doc.text('GARANTIA ELECTRONICA',55,55)
+  doc.setFontSize(28)
+
+  doc.text(
+    'CERTIFICADO DE GARANTIA',
+    105,
+    100,
+    { align:'center' }
+  )
+
+  // CAJA CENTRAL
+  doc.setDrawColor(220,220,220)
+  doc.setFillColor(255,255,255)
+
+  doc.roundedRect(
+    20,
+    115,
+    170,
+    85,
+    5,
+    5,
+    'FD'
+  )
+
+  // DATOS
+  doc.setFontSize(16)
+
+  doc.text(`Ticket: ${numero}`,35,135)
+
+  doc.text(`Cliente: ${nombre}`,35,152)
+
+  doc.text(`Telefono: ${telefono}`,35,169)
+
+  doc.text(
+    `Garantia: ${garantia || 'Sin garantia'}`,
+    35,
+    186
+  )
+
+  // TEXTO
+  doc.setFontSize(12)
+
+  doc.text(
+    'Esta garantia cubre fallas relacionadas al servicio realizado.',
+    25,
+    225
+  )
+
+  doc.text(
+    'No cubre golpes, humedad ni daños provocados por terceros.',
+    25,
+    233
+  )
+
+  // FOOTER
+  doc.setFillColor(118,136,161)
+
+  doc.rect(0,270,210,27,'F')
+
+  doc.setTextColor(255,255,255)
 
   doc.setFontSize(13)
 
-  doc.text(`🧾 Ticket: ${numero}`,20,80)
-  doc.text(`👤 Cliente: ${nombre}`,20,95)
-  doc.text(`📱 Teléfono: ${telefono}`,20,110)
-
   doc.text(
-    `🛡️ Garantía: ${garantia || 'Sin garantía'}`,
-    20,
-    125
+    'Soporte Tecnico: 098555861',
+    105,
+    282,
+    { align:'center' }
   )
 
-  doc.text(
-    'Gracias por confiar en nuestro servicio.',
-    20,
-    150
-  )
-
+  // DESCARGAR
   doc.save(`garantia ${nombre}.pdf`)
 }
-
 // TOGGLE
 function toggleDetalle(id){
 
