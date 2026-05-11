@@ -637,36 +637,90 @@ async function cargar(){
         </div>
 <div class="precio-ganancia">
 
-  <div>
-    👨 Técnico<br>
+  <div class="datos-ticket">
 
-    <select
-    onchange="guardar('${t.numero}','tecnico',this.value)">
+  <!-- FILA SUPERIOR -->
+  <div class="fila-superior">
 
-      <option value="">Sin seleccionar</option>
+    <div class="campo-box">
+      👨 Técnico<br>
 
-      <option value="PCR"
-      ${t.tecnico==='PCR'?'selected':''}>
-      PCR
-      </option>
+      <select
+      onchange="guardar('${t.numero}','tecnico',this.value)">
 
-      <option value="Javier"
-      ${t.tecnico==='Javier'?'selected':''}>
-      Javier
-      </option>
+        <option value="">Sin seleccionar</option>
 
-      <option value="Mauricio"
-      ${t.tecnico==='Mauricio'?'selected':''}>
-      Mauricio
-      </option>
+        <option value="PCR"
+        ${t.tecnico==='PCR'?'selected':''}>
+        PCR
+        </option>
 
-      <option value="Electroshop"
-      ${t.tecnico==='Electroshop'?'selected':''}>
-      Electroshop
-      </option>
+        <option value="Javier"
+        ${t.tecnico==='Javier'?'selected':''}>
+        Javier
+        </option>
 
-    </select>
+        <option value="Mauricio"
+        ${t.tecnico==='Mauricio'?'selected':''}>
+        Mauricio
+        </option>
+
+        <option value="Electroshop"
+        ${t.tecnico==='Electroshop'?'selected':''}>
+        Electroshop
+        </option>
+
+      </select>
+    </div>
+
+    <div class="campo-box">
+      🛡️ Garantía<br>
+
+      <select
+      onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+
+        <option value="">Sin garantía</option>
+
+        <option value="3 meses"
+        ${t.garantiaServicio==='3 meses'?'selected':''}>
+        3 meses
+        </option>
+
+        <option value="6 meses"
+        ${t.garantiaServicio==='6 meses'?'selected':''}>
+        6 meses
+        </option>
+
+      </select>
+    </div>
+
   </div>
+
+  <!-- FILA INFERIOR -->
+  <div class="fila-inferior">
+
+    <div class="campo-box">
+      💲 Precio<br>
+
+      <input
+      class="precio"
+      type="number"
+      value="${t.precio||''}"
+      onchange="guardar('${t.numero}','precio',this.value)">
+    </div>
+
+    <div class="campo-box">
+      💰 Ganancia<br>
+
+      <input
+      type="number"
+      value="${t.ganancia||''}"
+      onchange="guardar('${t.numero}','ganancia',this.value)">
+    </div>
+
+  </div>
+
+</div>
 
   <div>
     🛡️ Garantía<br>
@@ -689,7 +743,7 @@ onchange="guardar('${t.numero}','garantiaServicio',this.value)">
   </option>
 
 </select>
-        
+
   </div>
 
   <div>
