@@ -652,39 +652,22 @@ async function cargar(){
             </div>
 
             <div class="campo-box">
-  🛡️ Garantía<br>
+              🛡️ Garantía<br>
 
-  <select
-  onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+              <select
+              onchange="guardar('${t.numero}','garantiaServicio',this.value)">
 
-    <option value="">Sin garantía</option>
+                <option value="">Sin garantía</option>
 
-    <option value="3 meses"
-    ${t.garantiaServicio==='3 meses'?'selected':''}>
-    3 meses
-    </option>
+                <option value="3 meses"
+                ${t.garantiaServicio==='3 meses'?'selected':''}>
+                3 meses
+                </option>
 
-    <option value="6 meses"
-    ${t.garantiaServicio==='6 meses'?'selected':''}>
-    6 meses
-    </option>
-
-  </select>
-
-  <button
-  class="btn"
-  style="margin-top:8px;width:100%;"
-  onclick="generarGarantia(
-  '${t.numero}',
-  '${nombre}',
-  '${t.telefono}',
-  '${t.garantiaServicio}'
-  )">
-
-  📄 Garantía electrónica
-
-  </button>
-</div>
+                <option value="6 meses"
+                ${t.garantiaServicio==='6 meses'?'selected':''}>
+                6 meses
+                </option>
 
               </select>
             </div>
