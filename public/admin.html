@@ -635,29 +635,81 @@ async function cargar(){
           🔧 ${t.problema}
 
         </div>
+<div class="precio-ganancia">
 
-        <div class="precio-ganancia">
+  <div>
+    👨 Técnico<br>
 
-          <div>
-            💲 Precio<br>
+    <select
+    onchange="guardar('${t.numero}','tecnico',this.value)">
 
-            <input
-            class="precio"
-            type="number"
-            value="${t.precio||''}"
-            onchange="guardar('${t.numero}','precio',this.value)">
-          </div>
+      <option value="">Sin seleccionar</option>
 
-          <div>
-            💰 Ganancia<br>
+      <option value="PCR"
+      ${t.tecnico==='PCR'?'selected':''}>
+      PCR
+      </option>
 
-            <input
-            type="number"
-            value="${t.ganancia||''}"
-            onchange="guardar('${t.numero}','ganancia',this.value)">
-          </div>
+      <option value="Javier"
+      ${t.tecnico==='Javier'?'selected':''}>
+      Javier
+      </option>
 
-        </div>
+      <option value="Mauricio"
+      ${t.tecnico==='Mauricio'?'selected':''}>
+      Mauricio
+      </option>
+
+      <option value="Electroshop"
+      ${t.tecnico==='Electroshop'?'selected':''}>
+      Electroshop
+      </option>
+
+    </select>
+  </div>
+
+  <div>
+    🛡️ Garantía<br>
+
+    <select
+    onchange="guardar('${t.numero}','garantia',this.value)">
+
+      <option value="">Sin garantía</option>
+
+      <option value="3 meses"
+      ${t.garantia==='3 meses'?'selected':''}>
+      3 meses
+      </option>
+
+      <option value="6 meses"
+      ${t.garantia==='6 meses'?'selected':''}>
+      6 meses
+      </option>
+
+    </select>
+  </div>
+
+  <div>
+    💲 Precio<br>
+
+    <input
+    class="precio"
+    type="number"
+    value="${t.precio||''}"
+    onchange="guardar('${t.numero}','precio',this.value)">
+  </div>
+
+  <div>
+    💰 Ganancia<br>
+
+    <input
+    type="number"
+    value="${t.ganancia||''}"
+    onchange="guardar('${t.numero}','ganancia',this.value)">
+  </div>
+
+</div>
+        
 
         <div
         class="toggle-detalle"
