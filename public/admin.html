@@ -379,7 +379,8 @@ async function generarGarantia(
     // ========= ICONO =========
     doc.setFontSize(24)
 
-    doc.text('🛡️',105,112,{align:'center'})
+    doc.setFillColor(...azul)
+    doc.circle(105,110,6,'F')
 
     // ========= CAJA PRINCIPAL =========
     doc.setFillColor(...gris)
@@ -451,11 +452,10 @@ async function generarGarantia(
 
     doc.setTextColor(50,50,50)
 
-    doc.text(
-      'Esta garantía cubre fallas técnicas relacionadas',
-      58,
-      217
-    )
+    doc.setFont('helvetica','normal')
+
+  doc.text(
+  'Esta garantia cubre fallas tecnicas relacionadas',
 
     doc.text(
       'con el servicio brindado, durante el período',
