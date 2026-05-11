@@ -292,133 +292,7 @@ function fetchAuth(url,options={}){
 }
 
 // PDF GARANTIA
-async function generarGarantia(
-  numero,
-  nombre,
-  telefono,
-  garantia
-){
 
-  const { jsPDF } = window.jspdf
-
-  const doc = new jsPDF()
-
-  // FONDO
-  doc.setFillColor(245,245,245)
-  doc.rect(0,0,210,297,'F')
-
-  // HEADER
-  doc.setFillColor(118,136,161)
-  doc.rect(0,0,210,30,'F')
-
-  // TITULO HEADER
-  doc.setTextColor(255,255,255)
-  doc.setFontSize(22)
-  doc.text('GARANTIA ELECTRONICA',105,19,{
-    align:'center'
-  })
-
-  // LOGO
-  try{
-
-    const img = new Image()
-
-    img.src='logo.png'
-
-    await new Promise(resolve=>{
-      img.onload=resolve
-      img.onerror=resolve
-    })
-
-    doc.addImage(img,'PNG',60,38,90,45)
-
-  }catch(e){
-
-    console.log('logo error')
-  }
-
-  // TITULO
-  doc.setTextColor(30,30,30)
-
-  doc.setFontSize(28)
-
-  doc.text(
-    'CERTIFICADO DE GARANTIA',
-    105,
-    100,
-    { align:'center' }
-  )
-
-  // CAJA CENTRAL
-  doc.setDrawColor(220,220,220)
-  doc.setFillColor(255,255,255)
-
-  doc.roundedRect(
-    20,
-    115,
-    170,
-    85,
-    5,
-    5,
-    'FD'
-  )
-
-  // DATOS
-  doc.setFontSize(16)
-
-  doc.text(`Ticket: ${numero}`,35,135)
-
-  doc.text(`Cliente: ${nombre}`,35,152)
-
-  doc.text(`Telefono: ${telefono}`,35,169)
-
-  doc.text(
-    `Garantia: ${garantia || 'Sin garantia'}`,
-    35,
-    186
-  )
-
-  // TEXTO
-  doc.setFontSize(12)
-
-  doc.text(
-    'Esta garantia cubre fallas relacionadas al servicio realizado.',
-    25,
-    225
-  )
-
-  doc.text(
-    'No cubre golpes, humedad ni daños provocados por terceros.',
-    25,
-    233
-  )
-
-  // FOOTER
-  doc.setFillColor(118,136,161)
-
-  doc.rect(0,270,210,27,'F')
-
-  doc.setTextColor(255,255,255)
-
-  doc.setFontSize(13)
-
-  doc.text(
-  'SOPORTE TECNICO',
-  105,
-  275,
-  { align:'center' }
-)
-
-doc.text(
-  '098555861',
-  105,
-  283,
-  { align:'center' }
-)
-
-  // DESCARGAR
-  doc.save(`garantia ${nombre}.pdf`)
-}
 // TOGGLE
 function toggleDetalle(id){
 
@@ -778,22 +652,39 @@ async function cargar(){
             </div>
 
             <div class="campo-box">
-              🛡️ Garantía<br>
+  🛡️ Garantía<br>
 
-              <select
-              onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+  <select
+  onchange="guardar('${t.numero}','garantiaServicio',this.value)">
 
-                <option value="">Sin garantía</option>
+    <option value="">Sin garantía</option>
 
-                <option value="3 meses"
-                ${t.garantiaServicio==='3 meses'?'selected':''}>
-                3 meses
-                </option>
+    <option value="3 meses"
+    ${t.garantiaServicio==='3 meses'?'selected':''}>
+    3 meses
+    </option>
 
-                <option value="6 meses"
-                ${t.garantiaServicio==='6 meses'?'selected':''}>
-                6 meses
-                </option>
+    <option value="6 meses"
+    ${t.garantiaServicio==='6 meses'?'selected':''}>
+    6 meses
+    </option>
+
+  </select>
+
+  <button
+  class="btn"
+  style="margin-top:8px;width:100%;"
+  onclick="generarGarantia(
+  '${t.numero}',
+  '${nombre}',
+  '${t.telefono}',
+  '${t.garantiaServicio}'
+  )">
+
+  📄 Garantía electrónica
+
+  </button>
+</div>
 
               </select>
             </div>
