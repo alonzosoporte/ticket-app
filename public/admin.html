@@ -74,6 +74,22 @@ button{
   color:white;
 }
 
+.panel{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.card{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  flex:1;
+  font-weight:bold;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
 .ticket{
   background:white;
   padding:15px;
@@ -207,6 +223,8 @@ textarea{
 
 </div>
 
+<div id="resumen"></div>
+
 <div id="lista"></div>
 
 <script>
@@ -326,6 +344,40 @@ async function borrar(id,nombre){
   cargar()
 }
 
+function listoWhatsApp(
+  id,
+  nombre,
+  telefono,
+  precio,
+  detalle
+){
+
+  let tel=
+  (telefono||'').replace(/\D/g,'')
+
+  if(tel.startsWith('0')){
+    tel='598'+tel.substring(1)
+  }
+
+  if(!tel.startsWith('598')){
+    tel='598'+tel
+  }
+
+  const msg=`Hola ${nombre} 👋
+
+El servicio con número de 🧾 Ticket ${id} ha sido realizado ✅
+
+📝 Detalle:
+${detalle || 'Servicio realizado correctamente'}
+
+💲 Precio: ${precio || 'A confirmar'}
+
+📦 Podés pasar a retirarlo.`
+
+  window.open(
+    `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`
+  )
+}
 
 async function generarGarantia(
   numero,
@@ -338,18 +390,11 @@ async function generarGarantia(
 
   const doc = new jsPDF('p','mm','a4')
 
-  // ========= FONDO =========
   doc.setFillColor(245,247,250)
   doc.rect(0,0,210,297,'F')
 
-  // ========= HEADER =========
   doc.setFillColor(118,136,161)
   doc.rect(0,0,210,18,'F')
-
-  doc.setDrawColor(255,255,255)
-  doc.setLineWidth(2)
-
-  doc.line(75,0,92,18)
 
   doc.setTextColor(255,255,255)
   doc.setFontSize(17)
@@ -357,11 +402,11 @@ async function generarGarantia(
 
   doc.text(
     'GARANTÍA ELECTRÓNICA',
-    128,
-    11
+    105,
+    11,
+    { align:'center' }
   )
 
-  // ========= LOGO =========
   const logo = new Image()
 
   logo.src = 'logo.png'
@@ -377,7 +422,6 @@ async function generarGarantia(
       45
     )
 
-    // ========= TITULO =========
     doc.setTextColor(15,25,45)
 
     doc.setFontSize(28)
@@ -394,14 +438,9 @@ async function generarGarantia(
       { align:'center' }
     )
 
-    // ========= LINEAS =========
     doc.setDrawColor(118,136,161)
-
-    doc.setLineWidth(0.6)
-
     doc.line(15,102,195,102)
 
-    // ========= CARD PRINCIPAL =========
     doc.setFillColor(255,255,255)
 
     doc.roundedRect(
@@ -425,63 +464,32 @@ async function generarGarantia(
       5
     )
 
-    // ========= SEPARADORES =========
     doc.setDrawColor(230,230,230)
 
     doc.line(30,136,180,136)
     doc.line(30,154,180,154)
     doc.line(30,172,180,172)
 
-    // ========= LABELS =========
     doc.setTextColor(40,40,40)
 
     doc.setFontSize(11)
 
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
+    doc.setFont('helvetica','bold')
 
     doc.text('TICKET',38,128)
     doc.text('CLIENTE',38,146)
     doc.text('CELULAR',38,164)
     doc.text('GARANTÍA',38,182)
 
-    // ========= VALORES =========
     doc.setTextColor(15,25,45)
 
     doc.setFontSize(18)
 
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
+    doc.text(String(numero),92,128)
+    doc.text(String(nombre),92,146)
+    doc.text(String(telefono),92,164)
+    doc.text(garantia || 'Sin garantía',92,182)
 
-    doc.text(
-      String(numero),
-      92,
-      128
-    )
-
-    doc.text(
-      String(nombre),
-      92,
-      146
-    )
-
-    doc.text(
-      String(telefono),
-      92,
-      164
-    )
-
-    doc.text(
-      garantia || 'Sin garantía',
-      92,
-      182
-    )
-
-    // ========= INFO BOX =========
     doc.setFillColor(248,250,252)
 
     doc.roundedRect(
@@ -505,143 +513,73 @@ async function generarGarantia(
       4
     )
 
-    // ========= TEXTO INFO =========
     doc.setTextColor(55,55,55)
 
     doc.setFontSize(12)
 
-    doc.setFont(
-      'helvetica',
-      'normal'
+    doc.setFont('helvetica','normal')
+
+    doc.text(
+      'Esta garantía cubre fallas técnicas relacionadas',
+      38,
+      211
     )
 
-      doc.text(
-    'Esta garantía cubre fallas técnicas relacionadas',
-    38,
-    211
-  )
+    doc.text(
+      'con el servicio brindado durante el período',
+      38,
+      219
+    )
 
-  doc.text(
-    'con el servicio brindado durante el período',
-    38,
-    219
-  )
+    doc.text(
+      'indicado a partir de la fecha de reparación.',
+      38,
+      227
+    )
 
-  doc.text(
-    'indicado a partir de la fecha de reparación.',
-    38,
-    227
-  )
-
-    // ========= LINEA FOOT =========
     doc.setDrawColor(118,136,161)
 
-    doc.setLineWidth(0.4)
+    doc.line(12,245,198,245)
 
-    doc.line(
-      12,
-      245,
-      198,
-      245
-    )
-
-    // ========= FECHA =========
     doc.setTextColor(40,40,40)
 
     doc.setFontSize(9)
 
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
+    doc.setFont('helvetica','bold')
 
-    doc.text(
-      'FECHA DE EMISIÓN',
-      42,
-      258
-    )
+    doc.text('FECHA DE EMISIÓN',42,258)
 
-    doc.setFont(
-      'helvetica',
-      'normal'
-    )
+    doc.setFont('helvetica','normal')
 
     doc.setFontSize(11)
 
     doc.text(
-      new Date()
-      .toLocaleDateString('es-UY'),
+      new Date().toLocaleDateString('es-UY'),
       42,
       268
     )
 
-    // ========= DIVISOR =========
-    doc.setDrawColor(210,210,210)
+    doc.line(105,252,105,272)
 
-    doc.line(
-      105,
-      252,
-      105,
-      272
-    )
-
-    // ========= SOPORTE =========
     doc.setFontSize(9)
 
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
+    doc.setFont('helvetica','bold')
 
-    doc.text(
-      'SOPORTE TÉCNICO',
-      135,
-      258
-    )
+    doc.text('SOPORTE TÉCNICO',135,258)
 
-    doc.setFont(
-      'helvetica',
-      'normal'
-    )
+    doc.setFont('helvetica','normal')
 
     doc.setFontSize(11)
 
-    doc.text(
-      '098555861',
-      137,
-      268
-    )
+    doc.text('098555861',137,268)
 
-    // ========= FOOTER =========
     doc.setFillColor(118,136,161)
 
-    doc.rect(
-      0,
-      285,
-      210,
-      12,
-      'F'
-    )
-
-    doc.setDrawColor(255,255,255)
-
-    doc.setLineWidth(2)
-
-    doc.line(
-      170,
-      297,
-      182,
-      285
-    )
+    doc.rect(0,285,210,12,'F')
 
     doc.setTextColor(255,255,255)
 
     doc.setFontSize(14)
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    )
 
     doc.text(
       'Gracias por confiar en nuestro servicio.',
@@ -650,7 +588,6 @@ async function generarGarantia(
       { align:'center' }
     )
 
-    // ========= DESCARGAR =========
     doc.save(
       `garantia-${nombre}.pdf`
     )
@@ -666,6 +603,65 @@ async function cargar(){
 
     const tickets =
     await res.json()
+
+    let cotizaciones=[]
+
+    try{
+
+      const resCot =
+      await fetchAuth('/cotizaciones')
+
+      cotizaciones =
+      await resCot.json()
+
+      if(!Array.isArray(cotizaciones)){
+        cotizaciones=[]
+      }
+
+    }catch(err){
+
+      console.log(err)
+    }
+
+    let rep=0
+    let ven=0
+
+    tickets.forEach(t=>{
+
+      if(t.entregado==='si'){
+
+        rep +=
+        parseFloat(t.ganancia)||0
+      }
+    })
+
+    cotizaciones.forEach(c=>{
+
+      if(c.confirmada==='si'){
+
+        ven += Number(c.ganancia||0)
+      }
+    })
+
+    document.getElementById('resumen')
+    .innerHTML=`
+
+    <div class="panel">
+
+      <div class="card">
+      🔧 Reparaciones $${rep}
+      </div>
+
+      <div class="card">
+      🛒 Ventas $${ven}
+      </div>
+
+      <div class="card">
+      💰 Total $${rep+ven}
+      </div>
+
+    </div>
+    `
 
     let filtrados=[...tickets]
 
@@ -839,6 +835,17 @@ ${t.detalle||''}</textarea>
           ✔ Entregado
           </button>
 
+          <button class="btn-success"
+          onclick="listoWhatsApp(
+          '${t.numero}',
+          '${nombre}',
+          '${t.telefono}',
+          this.closest('.ticket').querySelector('.precio').value,
+          '${detalle}'
+          )">
+          📲 WhatsApp
+          </button>
+
           <button class="btn-danger"
           onclick="borrar('${t.numero}','${nombre}')">
           ❌ Eliminar
@@ -864,4 +871,3 @@ cargar()
 
 </body>
 </html>
-
