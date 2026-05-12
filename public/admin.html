@@ -204,7 +204,7 @@ textarea{
   <input 
   id="busqueda"
   placeholder="🔍 Buscar..."
-  oninput="cargar()">
+  onblur="cargar()">
 
   <button class="btn"
   onclick="modo='pendientes';cargar()">
@@ -695,184 +695,191 @@ async function cargar(){
     filtrados.forEach(t=>{
 
       const nombre=
-      (t.nombre||'')
-      .replace(/'/g,'')
+  (t.nombre||'')
+  .replace(/'/g,'')
 
-      const detalle=
-      (t.detalle||'')
-      .replace(/'/g,"")
-      .replace(/\n/g," ")
+  const detalle=
+  (t.detalle||'')
+  .replace(/'/g,"")
+  .replace(/\n/g," ")
 
-      const fecha=
-      new Date(t.fecha)
-      .toLocaleDateString('es-UY')
+  const fecha=
+  new Date(t.fecha)
+  .toLocaleDateString('es-UY')
 
-      lista.innerHTML += `
+  return `
 
-      <div class="ticket">
+  <div class="ticket">
 
-        <div class="ticket-top">
+    <div class="ticket-top">
 
-          📅 ${fecha}<br>
+      📅 ${fecha}<br>
 
-          🧾 <b>
-          Ticket ${t.numero}
-          </b><br>
+      🧾 <b>
+      Ticket ${t.numero}
+      </b><br>
 
-          👤 ${nombre}<br>
+      👤 ${nombre}<br>
 
-          📱 ${t.telefono}<br><br>
+      📱 ${t.telefono}<br><br>
 
-          🔧 ${t.problema}
+      🔧 ${t.problema}
 
+    </div>
+
+    <div class="datos-ticket">
+
+      <div class="fila-superior">
+
+        <div class="campo-box">
+          👨 Técnico<br>
+
+          <select
+          onchange="guardar('${t.numero}','tecnico',this.value)">
+
+            <option value="">Sin seleccionar</option>
+
+            <option value="PCR"
+            ${t.tecnico==='PCR'?'selected':''}>
+            PCR
+            </option>
+
+            <option value="Javier"
+            ${t.tecnico==='Javier'?'selected':''}>
+            Javier
+            </option>
+
+            <option value="Mauricio"
+            ${t.tecnico==='Mauricio'?'selected':''}>
+            Mauricio
+            </option>
+
+            <option value="Electroshop"
+            ${t.tecnico==='Electroshop'?'selected':''}>
+            Electroshop
+            </option>
+
+          </select>
         </div>
 
-        <div class="datos-ticket">
+        <div class="campo-box">
+          🛡️ Garantía<br>
 
-          <div class="fila-superior">
+          <select
+          onchange="guardar('${t.numero}','garantiaServicio',this.value)">
 
-            <div class="campo-box">
-              👨 Técnico<br>
+            <option value="">Sin garantía</option>
 
-              <select
-              oninput="guardar('${t.numero}','tecnico',this.value)">
+            <option value="3 meses"
+            ${t.garantiaServicio==='3 meses'?'selected':''}>
+            3 meses
+            </option>
 
-                <option value="">Sin seleccionar</option>
+            <option value="6 meses"
+            ${t.garantiaServicio==='6 meses'?'selected':''}>
+            6 meses
+            </option>
 
-                <option value="PCR"
-                ${t.tecnico==='PCR'?'selected':''}>
-                PCR
-                </option>
-
-                <option value="Javier"
-                ${t.tecnico==='Javier'?'selected':''}>
-                Javier
-                </option>
-
-                <option value="Mauricio"
-                ${t.tecnico==='Mauricio'?'selected':''}>
-                Mauricio
-                </option>
-
-                <option value="Electroshop"
-                ${t.tecnico==='Electroshop'?'selected':''}>
-                Electroshop
-                </option>
-
-              </select>
-            </div>
-
-            <div class="campo-box">
-              🛡️ Garantía<br>
-
-              <select
-              oninput="guardar('${t.numero}','garantiaServicio',this.value)">
-
-                <option value="">Sin garantía</option>
-
-                <option value="3 meses"
-                ${t.garantiaServicio==='3 meses'?'selected':''}>
-                3 meses
-                </option>
-
-                <option value="6 meses"
-                ${t.garantiaServicio==='6 meses'?'selected':''}>
-                6 meses
-                </option>
-
-              </select>
-            </div>
-
-            <div class="campo-box">
-
-              <button
-              class="btn-pdf"
-              onclick="generarGarantia(
-              '${t.numero}',
-              '${nombre}',
-              '${t.telefono}',
-              '${t.garantiaServicio || ''}'
-              )">
-
-              📄 Garantía electrónica
-
-              </button>
-
-            </div>
-
-          </div>
-
-          <div class="fila-inferior">
-
-            <div class="campo-box">
-              💲 Precio<br>
-
-              <input
-              class="precio"
-              type="number"
-              value="${t.precio||''}"
-              oninput="guardar('${t.numero}','precio',this.value)">
-            </div>
-
-            <div class="campo-box">
-              💰 Ganancia<br>
-
-              <input
-              type="number"
-              value="${t.ganancia||''}"
-              oninput="guardar('${t.numero}','ganancia',this.value)">
-            </div>
-
-          </div>
-
+          </select>
         </div>
 
-        <div
-        class="toggle-detalle"
-        onclick="toggleDetalle('${t.numero}')">
+        <div class="campo-box">
 
-        📝 Detalle
-
-        </div>
-
-        <div
-        class="detalle-box"
-        id="detalle-${t.numero}">
-
-          <textarea
-          onblur="guardar('${t.numero}','detalle',this.value)">
-${t.detalle||''}</textarea>
-
-        </div>
-
-        <div class="acciones-ticket">
-
-          <button class="btn-secondary"
-          onclick="marcarEntregado('${t.numero}')">
-          ✔ Entregado
-          </button>
-
-          <button class="btn-success"
-          onclick="listoWhatsApp(
+          <button
+          class="btn-pdf"
+          onclick="generarGarantia(
           '${t.numero}',
           '${nombre}',
           '${t.telefono}',
-          this.closest('.ticket').querySelector('.precio').value,
-          '${detalle}'
+          '${t.garantiaServicio || ''}'
           )">
-          📲 WhatsApp
-          </button>
 
-          <button class="btn-danger"
-          onclick="borrar('${t.numero}','${nombre}')">
-          ❌ Eliminar
+          📄 Garantía electrónica
+
           </button>
 
         </div>
 
       </div>
-      `
-    })
+
+      <div class="fila-inferior">
+
+        <div class="campo-box">
+          💲 Precio<br>
+
+          <input
+          class="precio"
+          type="number"
+          value="${t.precio||''}"
+          onblur="guardar('${t.numero}','precio',this.value)">
+        </div>
+
+        <div class="campo-box">
+          💰 Ganancia<br>
+
+          <input
+          type="number"
+          value="${t.ganancia||''}"
+          onblur="guardar('${t.numero}','ganancia',this.value)">
+        </div>
+
+      </div>
+
+    </div>
+
+    <div
+    class="toggle-detalle"
+    onclick="toggleDetalle('${t.numero}')">
+
+    📝 Detalle
+
+    </div>
+
+    <div
+    class="detalle-box"
+    id="detalle-${t.numero}">
+
+      <textarea
+      onblur="guardar('${t.numero}','detalle',this.value)">
+${t.detalle||''}</textarea>
+
+    </div>
+
+    <div class="acciones-ticket">
+
+      <button class="btn-secondary"
+      onclick="marcarEntregado('${t.numero}')">
+      ✔ Entregado
+      </button>
+
+      <button class="btn-success"
+      onclick="listoWhatsApp(
+      '${t.numero}',
+      '${nombre}',
+      '${t.telefono}',
+      this.closest('.ticket').querySelector('.precio').value,
+      '${detalle}'
+      )">
+      📲 WhatsApp
+      </button>
+
+      <button class="btn-danger"
+      onclick="borrar('${t.numero}','${nombre}')">
+      ❌ Eliminar
+      </button>
+
+    </div>
+
+  </div>
+  `
+}).join('')
+
+if(lista.innerHTML !== htmlTickets){
+
+  lista.innerHTML = htmlTickets
+
+  window.scrollTo(0, scrollActual)
+}
 
   }catch(e){
 
