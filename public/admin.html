@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -49,11 +50,30 @@ button{
   cursor:pointer;
 }
 
-.btn{background:#003366;color:white;}
-.btn-success{background:#28a745;color:white;}
-.btn-danger{background:#dc3545;color:white;}
-.btn-secondary{background:#6c757d;color:white;}
-.btn-pdf{background:#7688A1;color:white;}
+.btn{
+  background:#003366;
+  color:white;
+}
+
+.btn-success{
+  background:#28a745;
+  color:white;
+}
+
+.btn-danger{
+  background:#dc3545;
+  color:white;
+}
+
+.btn-secondary{
+  background:#6c757d;
+  color:white;
+}
+
+.btn-pdf{
+  background:#7688A1;
+  color:white;
+}
 
 .ticket{
   background:white;
@@ -63,11 +83,39 @@ button{
   box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
+.ticket-top{
+  margin-bottom:10px;
+  line-height:1.7;
+}
+
+textarea{
+  width:100%;
+  min-height:100px;
+  resize:vertical;
+  margin-top:10px;
+}
+
+.acciones-ticket{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:15px;
+}
+
+.datos-ticket{
+  margin-top:15px;
+}
+
 .fila-superior,
 .fila-inferior{
   display:flex;
-  gap:15px;
+  gap:20px;
   flex-wrap:wrap;
+}
+
+.fila-superior{
+  margin-bottom:15px;
+  align-items:flex-end;
 }
 
 .campo-box{
@@ -79,17 +127,41 @@ button{
   width:100%;
 }
 
-.acciones-ticket{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:15px;
+.toggle-detalle{
+  margin-top:10px;
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.detalle-box{
+  display:none;
+  margin-top:10px;
+}
+
+.mostrar{
+  display:block;
 }
 
 @media(max-width:700px){
+
   .fila-superior,
   .fila-inferior{
     flex-direction:column;
+  }
+
+  .campo-box{
+    width:100%;
+  }
+
+  .acciones-ticket{
+    flex-direction:column;
+  }
+
+  button{
+    width:100%;
   }
 }
 
@@ -99,22 +171,80 @@ button{
 <body>
 
 <div class="nav-top">
-  <button class="btn-secondary" onclick="location.href='cotizaciones.html'">Cotizaciones</button>
-  <button class="btn-secondary" onclick="location.href='garantias.html'">Garantías</button>
+
+  <button class="btn-secondary"
+  onclick="location.href='cotizaciones.html'">
+  📊 Cotizaciones
+  </button>
+
+  <button class="btn-secondary"
+  onclick="location.href='garantias.html'">
+  🛡️ Garantías
+  </button>
+
+</div>
+
+<div class="header-pro">
+
+  <input 
+  id="busqueda"
+  placeholder="🔍 Buscar..."
+  oninput="cargar()">
+
+  <button class="btn"
+  onclick="modo='pendientes';cargar()">
+  Pendientes
+  </button>
+
+  <button class="btn-success"
+  onclick="modo='todos';cargar()">
+  Todos
+  </button>
+
+  <button class="btn-danger"
+  onclick="logout()">
+  Salir
+  </button>
+
 </div>
 
 <div id="lista"></div>
 
 <script>
 
-const API='https://ticket-pro-xmhs.onrender.com'
-const TOKEN=localStorage.getItem('token')
+const TOKEN = localStorage.getItem('token')
 
-if(!TOKEN) location.href='login.html'
+if(!TOKEN){
+  location.href='login.html'
+}
+
+const API='https://ticket-pro-xmhs.onrender.com'
+
+const socket = io(API,{
+  transports:['websocket','polling']
+})
+
+socket.off('actualizar')
+
+socket.on('actualizar',()=>{
+  cargar()
+})
+
+let modo='pendientes'
+
+function logout(){
+
+  localStorage.removeItem('token')
+
+  location.href='login.html'
+}
 
 function fetchAuth(url,options={}){
+
   return fetch(API+url,{
+
     ...options,
+
     headers:{
       'Content-Type':'application/json',
       'Authorization':'Bearer '+TOKEN
@@ -122,110 +252,372 @@ function fetchAuth(url,options={}){
   })
 }
 
-/* =========================
-   PDF GARANTIA
-========================= */
+function toggleDetalle(id){
 
-function generarGarantia(id,nombre,telefono,garantia){
+  const box =
+  document.getElementById('detalle-'+id)
+
+  box.classList.toggle('mostrar')
+}
+
+async function guardar(id,campo,valor){
+
+  await fetchAuth('/ticket/'+id,{
+
+    method:'PUT',
+
+    body:JSON.stringify({
+      [campo]:valor
+    })
+  })
+}
+
+async function marcarEntregado(id){
+
+  await fetchAuth('/ticket/'+id,{
+
+    method:'PUT',
+
+    body:JSON.stringify({
+      entregado:'si'
+    })
+  })
+
+  cargar()
+}
+
+async function borrar(id,nombre){
+
+  if(!confirm(`¿Eliminar ticket de ${nombre}?`)){
+    return
+  }
+
+  await fetchAuth('/ticket/'+id,{
+    method:'DELETE'
+  })
+
+  cargar()
+}
+
+function generarGarantia(
+  numero,
+  nombre,
+  telefono,
+  garantia
+){
+
+  if(!garantia){
+
+    alert('Seleccioná una garantía')
+    return
+  }
 
   const { jsPDF } = window.jspdf
+
   const doc = new jsPDF()
 
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,35,'F')
+
   const logo = new Image()
-  logo.src = 'logo.png'
 
-  logo.onload = function(){
+  logo.src='logo.png'
 
-    doc.addImage(logo,'PNG',65,10,80,40)
+  logo.onload = ()=>{
 
-    doc.setFont('helvetica','bold')
-    doc.setFontSize(18)
-    doc.text('GARANTIA ELECTRONICA',105,60,{align:'center'})
+    doc.addImage(
+      logo,
+      'PNG',
+      15,
+      6,
+      25,
+      25
+    )
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(20)
+
+    doc.text(
+      'GARANTIA ELECTRONICA',
+      105,
+      22,
+      {align:'center'}
+    )
+
+    doc.setTextColor(0,0,0)
+
+    doc.setDrawColor(220)
+
+    doc.roundedRect(
+      15,
+      50,
+      180,
+      85,
+      4,
+      4
+    )
 
     doc.setFontSize(12)
 
-    doc.text('TICKET: '+id,20,85)
-    doc.text('CLIENTE: '+nombre,20,100)
-    doc.text('CELULAR: '+telefono,20,115)
-    doc.text('GARANTIA: '+garantia,20,130)
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text('TICKET',25,70)
+    doc.text('CLIENTE',25,88)
+    doc.text('CELULAR',25,106)
+    doc.text('GARANTIA',25,124)
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    )
+
+    doc.text(numero,75,70)
+    doc.text(nombre,75,88)
+    doc.text(telefono,75,106)
+    doc.text(garantia,75,124)
 
     doc.setFontSize(10)
-    doc.text('Esta garantia cubre fallas tecnicas relacionadas con el servicio brindado.',20,155)
-    doc.text('Valido a partir de la fecha de entrega.',20,165)
 
-    doc.text('Gracias por confiar en nuestro servicio.',20,185)
+    doc.text(
+      'Esta garantia cubre fallas tecnicas relacionadas',
+      25,
+      155
+    )
 
-    doc.save(`garantia_${nombre}.pdf`)
+    doc.text(
+      'con el servicio brindado durante el periodo indicado.',
+      25,
+      163
+    )
+
+    doc.setFillColor(118,136,161)
+
+    doc.rect(0,270,210,27,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.text(
+      'Soporte tecnico: 098555861',
+      15,
+      286
+    )
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio',
+      105,
+      286,
+      {align:'center'}
+    )
+
+    doc.save(
+      'garantia-'+nombre+'.pdf'
+    )
   }
 }
 
-/* =========================
-   CARGAR TICKETS
-========================= */
-
 async function cargar(){
 
-  const res = await fetchAuth('/tickets')
-  const tickets = await res.json()
+  try{
 
-  const lista = document.getElementById('lista')
-  lista.innerHTML=''
+    const res =
+    await fetchAuth('/tickets')
 
-  tickets.forEach(t=>{
+    const tickets =
+    await res.json()
 
-    lista.innerHTML += `
-    <div class="ticket">
+    let filtrados=[...tickets]
 
-      <div class="fila-superior">
+    if(modo==='pendientes'){
 
-        <div class="campo-box">
-          Técnico<br>
-          <select onchange="guardar('${t.numero}','tecnico',this.value)">
-            <option value="">Sin seleccionar</option>
-            <option value="Javier" ${t.tecnico==='Javier'?'selected':''}>Javier</option>
-          </select>
+      filtrados=
+      filtrados.filter(
+        t=>t.entregado!=='si'
+      )
+    }
+
+    lista.innerHTML=''
+
+    filtrados.forEach(t=>{
+
+      const nombre=
+      (t.nombre||'')
+      .replace(/'/g,'')
+
+      const detalle=
+      (t.detalle||'')
+      .replace(/'/g,"")
+      .replace(/\n/g," ")
+
+      const fecha=
+      new Date(t.fecha)
+      .toLocaleDateString('es-UY')
+
+      lista.innerHTML += `
+
+      <div class="ticket">
+
+        <div class="ticket-top">
+
+          📅 ${fecha}<br>
+
+          🧾 <b>
+          Ticket ${t.numero}
+          </b><br>
+
+          👤 ${nombre}<br>
+
+          📱 ${t.telefono}<br><br>
+
+          🔧 ${t.problema}
+
         </div>
 
-        <div class="campo-box">
-          Garantía<br>
-          <select onchange="guardar('${t.numero}','garantiaServicio',this.value)">
-            <option value="">Sin garantía</option>
-            <option value="3 meses" ${t.garantiaServicio==='3 meses'?'selected':''}>3 meses</option>
-            <option value="6 meses" ${t.garantiaServicio==='6 meses'?'selected':''}>6 meses</option>
-          </select>
+        <div class="datos-ticket">
+
+          <div class="fila-superior">
+
+            <div class="campo-box">
+              👨 Técnico<br>
+
+              <select
+              onchange="guardar('${t.numero}','tecnico',this.value)">
+
+                <option value="">Sin seleccionar</option>
+
+                <option value="PCR"
+                ${t.tecnico==='PCR'?'selected':''}>
+                PCR
+                </option>
+
+                <option value="Javier"
+                ${t.tecnico==='Javier'?'selected':''}>
+                Javier
+                </option>
+
+                <option value="Mauricio"
+                ${t.tecnico==='Mauricio'?'selected':''}>
+                Mauricio
+                </option>
+
+                <option value="Electroshop"
+                ${t.tecnico==='Electroshop'?'selected':''}>
+                Electroshop
+                </option>
+
+              </select>
+            </div>
+
+            <div class="campo-box">
+              🛡️ Garantía<br>
+
+              <select
+              onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+
+                <option value="">Sin garantía</option>
+
+                <option value="3 meses"
+                ${t.garantiaServicio==='3 meses'?'selected':''}>
+                3 meses
+                </option>
+
+                <option value="6 meses"
+                ${t.garantiaServicio==='6 meses'?'selected':''}>
+                6 meses
+                </option>
+
+              </select>
+            </div>
+
+            <div class="campo-box">
+
+              <button
+              class="btn-pdf"
+              onclick="generarGarantia(
+              '${t.numero}',
+              '${nombre}',
+              '${t.telefono}',
+              '${t.garantiaServicio || ''}'
+              )">
+
+              📄 Garantía electrónica
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="fila-inferior">
+
+            <div class="campo-box">
+              💲 Precio<br>
+
+              <input
+              class="precio"
+              type="number"
+              value="${t.precio||''}"
+              onchange="guardar('${t.numero}','precio',this.value)">
+            </div>
+
+            <div class="campo-box">
+              💰 Ganancia<br>
+
+              <input
+              type="number"
+              value="${t.ganancia||''}"
+              onchange="guardar('${t.numero}','ganancia',this.value)">
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="campo-box">
-          <button class="btn-pdf"
-          onclick="generarGarantia(
-            '${t.numero}',
-            '${t.nombre}',
-            '${t.telefono}',
-            '${t.garantiaServicio||''}'
-          )">
-          Garantía electrónica
+        <div
+        class="toggle-detalle"
+        onclick="toggleDetalle('${t.numero}')">
+
+        📝 Detalle
+
+        </div>
+
+        <div
+        class="detalle-box"
+        id="detalle-${t.numero}">
+
+          <textarea
+          onblur="guardar('${t.numero}','detalle',this.value)">
+${t.detalle||''}</textarea>
+
+        </div>
+
+        <div class="acciones-ticket">
+
+          <button class="btn-secondary"
+          onclick="marcarEntregado('${t.numero}')">
+          ✔ Entregado
           </button>
+
+          <button class="btn-danger"
+          onclick="borrar('${t.numero}','${nombre}')">
+          ❌ Eliminar
+          </button>
+
         </div>
 
       </div>
+      `
+    })
 
-      <div class="fila-inferior">
+  }catch(e){
 
-        <div class="campo-box">
-          Precio<br>
-          <input type="number" value="${t.precio||''}">
-        </div>
+    console.error(e)
 
-        <div class="campo-box">
-          Ganancia<br>
-          <input type="number" value="${t.ganancia||''}">
-        </div>
-
-      </div>
-
-    </div>
-    `
-  })
+    alert('Error conexión')
+  }
 }
 
 cargar()
@@ -234,3 +626,4 @@ cargar()
 
 </body>
 </html>
+```
