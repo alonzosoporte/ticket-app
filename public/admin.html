@@ -298,123 +298,284 @@ async function borrar(id,nombre){
   cargar()
 }
 
-function generarGarantia(
+async function generarGarantia(
   numero,
   nombre,
   telefono,
   garantia
 ){
 
-  if(!garantia){
-
-    alert('Seleccioná una garantía')
-    return
-  }
-
   const { jsPDF } = window.jspdf
 
   const doc = new jsPDF()
 
-  doc.setFillColor(118,136,161)
-  doc.rect(0,0,210,35,'F')
-
+  // ===== LOGO =====
   const logo = new Image()
 
-  logo.src='logo.png'
+  logo.src='/logo.png'
 
-  logo.onload = ()=>{
+  logo.onload = function(){
 
+    // =========================
+    // FONDO GENERAL
+    // =========================
+    doc.setFillColor(245,247,250)
+
+    doc.rect(
+      0,
+      0,
+      210,
+      297,
+      'F'
+    )
+
+    // =========================
+    // HEADER
+    // =========================
+    doc.setFillColor(118,136,161)
+
+    doc.roundedRect(
+      10,
+      10,
+      190,
+      42,
+      6,
+      6,
+      'F'
+    )
+
+    // LOGO
     doc.addImage(
       logo,
       'PNG',
-      15,
-      6,
-      25,
-      25
+      18,
+      16,
+      24,
+      24
     )
 
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(20)
-
-    doc.text(
-      'GARANTIA ELECTRONICA',
-      105,
-      22,
-      {align:'center'}
-    )
-
-    doc.setTextColor(0,0,0)
-
-    doc.setDrawColor(220)
-
-    doc.roundedRect(
-      15,
-      50,
-      180,
-      85,
-      4,
-      4
-    )
-
-    doc.setFontSize(12)
-
+    // TITULO
     doc.setFont(
       'helvetica',
       'bold'
     )
 
-    doc.text('TICKET',25,70)
-    doc.text('CLIENTE',25,88)
-    doc.text('CELULAR',25,106)
-    doc.text('GARANTIA',25,124)
+    doc.setFontSize(23)
+
+    doc.setTextColor(255,255,255)
+
+    doc.text(
+      'GARANTÍA ELECTRÓNICA',
+      52,
+      28
+    )
+
+    // SUB
+    doc.setFontSize(10)
 
     doc.setFont(
       'helvetica',
       'normal'
     )
 
-    doc.text(numero,75,70)
-    doc.text(nombre,75,88)
-    doc.text(telefono,75,106)
-    doc.text(garantia,75,124)
+    doc.text(
+      'Documento de servicio técnico',
+      52,
+      36
+    )
+
+    // =========================
+    // CAJA PRINCIPAL
+    // =========================
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      15,
+      65,
+      180,
+      120,
+      6,
+      6,
+      'F'
+    )
+
+    // BORDE SUAVE
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      15,
+      65,
+      180,
+      120,
+      6,
+      6
+    )
+
+    // =========================
+    // TITULO DATOS
+    // =========================
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.setTextColor(70,70,70)
+
+    doc.setFontSize(14)
+
+    doc.text(
+      'DATOS DEL CLIENTE',
+      25,
+      82
+    )
+
+    // LINEA
+    doc.setDrawColor(118,136,161)
+
+    doc.setLineWidth(0.8)
+
+    doc.line(
+      25,
+      86,
+      185,
+      86
+    )
+
+    // =========================
+    // TABLA
+    // =========================
+    const datos = [
+
+      ['Ticket', numero],
+      ['Cliente', nombre],
+      ['Celular', telefono],
+      ['Garantía', garantia || 'Sin garantía']
+
+    ]
+
+    let y = 102
+
+    datos.forEach(item=>{
+
+      // LABEL
+      doc.setFillColor(238,242,247)
+
+      doc.roundedRect(
+        25,
+        y-7,
+        45,
+        12,
+        2,
+        2,
+        'F'
+      )
+
+      doc.setFontSize(11)
+
+      doc.setFont(
+        'helvetica',
+        'bold'
+      )
+
+      doc.setTextColor(80,80,80)
+
+      doc.text(
+        item[0],
+        30,
+        y
+      )
+
+      // VALOR
+      doc.setFillColor(255,255,255)
+
+      doc.roundedRect(
+        73,
+        y-7,
+        100,
+        12,
+        2,
+        2
+      )
+
+      doc.setFont(
+        'helvetica',
+        'normal'
+      )
+
+      doc.setTextColor(30,30,30)
+
+      doc.text(
+        String(item[1]),
+        78,
+        y
+      )
+
+      y += 22
+    })
+
+    // =========================
+    // CAJA GARANTIA
+    // =========================
+    doc.setFillColor(248,249,252)
+
+    doc.roundedRect(
+      25,
+      165,
+      160,
+      28,
+      4,
+      4,
+      'F'
+    )
 
     doc.setFontSize(10)
 
+    doc.setTextColor(90,90,90)
+
     doc.text(
-      'Esta garantia cubre fallas tecnicas relacionadas',
-      25,
-      155
+      'La garantía cubre únicamente fallas',
+      32,
+      177
     )
 
     doc.text(
-      'con el servicio brindado durante el periodo indicado.',
-      25,
-      163
+      'relacionadas con el servicio realizado.',
+      32,
+      184
     )
 
+    // =========================
+    // FOOTER
+    // =========================
     doc.setFillColor(118,136,161)
 
-    doc.rect(0,270,210,27,'F')
+    doc.roundedRect(
+      10,
+      260,
+      190,
+      22,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setFontSize(11)
 
     doc.setTextColor(255,255,255)
 
     doc.text(
-      'Soporte tecnico: 098555861',
-      15,
-      286
+      'Celular: 098555861',
+      20,
+      274
     )
 
-    doc.text(
-      'Gracias por confiar en nuestro servicio',
-      105,
-      286,
-      {align:'center'}
-    )
+    // =========================
+    // DESCARGAR
+    // =========================
+    const archivo =
+    `garantia-${nombre}.pdf`
 
-    doc.save(
-      'garantia-'+nombre+'.pdf'
-    )
+    doc.save(archivo)
   }
 }
 
@@ -625,4 +786,4 @@ cargar()
 
 </body>
 </html>
-```
+
