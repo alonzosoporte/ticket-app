@@ -243,9 +243,8 @@ const socket = io(API,{
 
 socket.off('actualizar')
 
-let escribiendo = false
-
 let timeoutRecarga
+let ultimaEdicion = 0
 
 socket.on('actualizar',()=>{
 
@@ -253,13 +252,26 @@ socket.on('actualizar',()=>{
 
   timeoutRecarga = setTimeout(()=>{
 
-    if(document.activeElement.tagName === 'INPUT') return
-    if(document.activeElement.tagName === 'TEXTAREA') return
-    if(document.activeElement.tagName === 'SELECT') return
+    const activo = document.activeElement
+
+    const escribiendoAhora =
+      activo &&
+      (
+        activo.tagName === 'INPUT' ||
+        activo.tagName === 'TEXTAREA' ||
+        activo.tagName === 'SELECT'
+      )
+
+    const hacePocoEdito =
+      Date.now() - ultimaEdicion < 3000
+
+    if(escribiendoAhora || hacePocoEdito){
+      return
+    }
 
     cargar()
 
-  },1200)
+  },2500)
 })
 
 let modo='pendientes'
@@ -296,6 +308,8 @@ let timeoutGuardar = {}
 
 async function guardar(id,campo,valor){
 
+  ultimaEdicion = Date.now()
+
   clearTimeout(timeoutGuardar[id+campo])
 
   timeoutGuardar[id+campo] = setTimeout(async()=>{
@@ -316,7 +330,7 @@ async function guardar(id,campo,valor){
       console.log(err)
     }
 
-  },700)
+  },1200)
 }
   
 
