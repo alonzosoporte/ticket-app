@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
@@ -15,14 +16,12 @@ body{
   padding:15px;
 }
 
-/* NAV */
 .nav-top{
   display:flex;
   gap:10px;
   margin-bottom:15px;
 }
 
-/* HEADER */
 .header-pro{
   display:flex;
   flex-wrap:wrap;
@@ -35,7 +34,6 @@ body{
   border-left:5px solid #003366;
 }
 
-/* INPUTS */
 input,select,textarea{
   padding:10px;
   border-radius:10px;
@@ -43,7 +41,6 @@ input,select,textarea{
   box-sizing:border-box;
 }
 
-/* BOTONES */
 button{
   padding:10px 12px;
   border:none;
@@ -52,48 +49,12 @@ button{
   cursor:pointer;
 }
 
-.btn{
-  background:#003366;
-  color:white;
-}
+.btn{background:#003366;color:white;}
+.btn-success{background:#28a745;color:white;}
+.btn-danger{background:#dc3545;color:white;}
+.btn-secondary{background:#6c757d;color:white;}
+.btn-pdf{background:#7688A1;color:white;}
 
-.btn-success{
-  background:#28a745;
-  color:white;
-}
-
-.btn-danger{
-  background:#dc3545;
-  color:white;
-}
-
-.btn-secondary{
-  background:#6c757d;
-  color:white;
-}
-
-.btn-pdf{
-  background:#ff9800;
-  color:white;
-}
-
-/* PANEL */
-.panel{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-}
-
-.card{
-  background:white;
-  padding:12px;
-  border-radius:12px;
-  flex:1;
-  font-weight:bold;
-}
-
-/* TICKETS */
 .ticket{
   background:white;
   padding:15px;
@@ -102,40 +63,11 @@ button{
   box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
-.ticket-top{
-  margin-bottom:10px;
-  line-height:1.7;
-}
-
-textarea{
-  width:100%;
-  min-height:100px;
-  resize:vertical;
-  margin-top:10px;
-}
-
-.acciones-ticket{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:15px;
-}
-
-/* NUEVO LAYOUT */
-.datos-ticket{
-  margin-top:15px;
-}
-
 .fila-superior,
 .fila-inferior{
   display:flex;
-  gap:20px;
+  gap:15px;
   flex-wrap:wrap;
-}
-
-.fila-superior{
-  margin-bottom:15px;
-  align-items:flex-end;
 }
 
 .campo-box{
@@ -147,42 +79,17 @@ textarea{
   width:100%;
 }
 
-.toggle-detalle{
-  margin-top:10px;
-  background:#f1f1f1;
-  padding:10px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
+.acciones-ticket{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:15px;
 }
 
-.detalle-box{
-  display:none;
-  margin-top:10px;
-}
-
-.mostrar{
-  display:block;
-}
-
-/* MOBILE */
 @media(max-width:700px){
-
   .fila-superior,
   .fila-inferior{
     flex-direction:column;
-  }
-
-  .campo-box{
-    width:100%;
-  }
-
-  .acciones-ticket{
-    flex-direction:column;
-  }
-
-  button{
-    width:100%;
   }
 }
 
@@ -191,99 +98,23 @@ textarea{
 
 <body>
 
-<!-- NAV -->
 <div class="nav-top">
-
-  <button class="btn-secondary"
-  onclick="location.href='cotizaciones.html'">
-  📊 Cotizaciones
-  </button>
-
-  <button class="btn-secondary"
-  onclick="location.href='garantias.html'">
-  🛡️ Garantías
-  </button>
-
+  <button class="btn-secondary" onclick="location.href='cotizaciones.html'">Cotizaciones</button>
+  <button class="btn-secondary" onclick="location.href='garantias.html'">Garantías</button>
 </div>
 
-<!-- HEADER -->
-<div class="header-pro">
-
-  <input 
-  id="busqueda"
-  placeholder="🔍 Buscar..."
-  oninput="cargar()">
-
-  <select id="filtroMes" onchange="cargar()">
-    <option value="todos">📅 Todos</option>
-  </select>
-
-  <button class="btn"
-  onclick="modo='pendientes';cargar()">
-  Pendientes
-  </button>
-
-  <button class="btn-success"
-  onclick="modo='todos';cargar()">
-  Todos
-  </button>
-
-  <button class="btn-danger"
-  onclick="logout()">
-  Salir
-  </button>
-
-</div>
-
-<!-- RESUMEN -->
-<div id="resumen"></div>
-
-<!-- LISTA -->
 <div id="lista"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 
-const TOKEN = localStorage.getItem('token')
-
-if(!TOKEN){
-  location.href='login.html'
-}
-
 const API='https://ticket-pro-xmhs.onrender.com'
+const TOKEN=localStorage.getItem('token')
 
-// SOCKET
-const socket = io(API,{
-  transports:['websocket','polling']
-})
+if(!TOKEN) location.href='login.html'
 
-socket.off('actualizar')
-
-socket.on('actualizar',()=>{
-
-  console.log('ACTUALIZAR RECIBIDO')
-
-  cargar()
-})
-
-let modo='pendientes'
-
-// LOGOUT
-function logout(){
-
-  localStorage.removeItem('token')
-
-  location.href='login.html'
-}
-
-// FETCH AUTH
 function fetchAuth(url,options={}){
-
   return fetch(API+url,{
-
     ...options,
-
     headers:{
       'Content-Type':'application/json',
       'Authorization':'Bearer '+TOKEN
@@ -291,742 +122,112 @@ function fetchAuth(url,options={}){
   })
 }
 
-// PDF GARANTIA
-// PDF GARANTIA
-async function generarGarantia(
-  numero,
-  nombre,
-  telefono,
-  garantia
-){
+/* =========================
+   PDF GARANTIA
+========================= */
 
-  if(!garantia){
-
-    alert('Seleccioná una garantía')
-    return
-  }
+function generarGarantia(id,nombre,telefono,garantia){
 
   const { jsPDF } = window.jspdf
+  const doc = new jsPDF()
 
-  const doc = new jsPDF({
-    orientation:'portrait',
-    unit:'mm',
-    format:'a4'
-  })
+  const logo = new Image()
+  logo.src = 'logo.png'
 
-  // ========= COLORES =========
-  const azul = [118,136,161]
-  const gris = [245,245,245]
-  const oscuro = [30,40,55]
+  logo.onload = function(){
 
-  // ========= HEADER =========
-  doc.setFillColor(...azul)
-  doc.rect(0,0,210,18,'F')
+    doc.addImage(logo,'PNG',65,10,80,40)
 
-  doc.setTextColor(255,255,255)
-  doc.setFontSize(18)
-
-  doc.text(
-    'GARANTÍA ELECTRÓNICA',
-    125,
-    12
-  )
-
-  // ========= LINEAS HEADER =========
-  doc.setDrawColor(255,255,255)
-
-  doc.setLineWidth(2)
-
-  doc.line(75,0,90,18)
-
-  // ========= LOGO =========
-  const img = new Image()
-
-  img.src='logo.png'
-
-  img.onload = ()=>{
-
-    // LOGO
-    doc.addImage(
-      img,
-      'PNG',
-      55,
-      25,
-      100,
-      55
-    )
-
-    // ========= TITULO =========
-    doc.setTextColor(...oscuro)
-
-    doc.setFontSize(28)
-
-    doc.text(
-      'GARANTÍA ELECTRÓNICA',
-      105,
-      100,
-      { align:'center' }
-    )
-
-    // ========= LINEAS =========
-    doc.setDrawColor(...azul)
-
-    doc.setLineWidth(0.5)
-
-    doc.line(20,110,80,110)
-    doc.line(130,110,190,110)
-
-    // ========= ICONO =========
-    doc.setFontSize(24)
-
-    doc.setFillColor(...azul)
-    doc.circle(105,110,6,'F')
-
-    // ========= CAJA PRINCIPAL =========
-    doc.setFillColor(...gris)
-
-    doc.roundedRect(
-      20,
-      122,
-      170,
-      72,
-      5,
-      5,
-      'FD'
-    )
-
-    // ========= SEPARADORES =========
-    doc.setDrawColor(220,220,220)
-
-    doc.line(28,145,182,145)
-    doc.line(28,163,182,163)
-    doc.line(28,181,182,181)
-
-    // ========= ICONOS =========
+    doc.setFont('helvetica','bold')
     doc.setFontSize(18)
+    doc.text('GARANTIA ELECTRONICA',105,60,{align:'center'})
 
-   doc.setFillColor(...azul)
-
-    doc.circle(38,135,6,'F')
-    doc.circle(38,153,6,'F')
-    doc.circle(38,171,6,'F')
-    doc.circle(38,189,6,'F')
-
-    // ========= LABELS =========
     doc.setFontSize(12)
 
-    doc.setTextColor(70,70,70)
+    doc.text('TICKET: '+id,20,85)
+    doc.text('CLIENTE: '+nombre,20,100)
+    doc.text('CELULAR: '+telefono,20,115)
+    doc.text('GARANTIA: '+garantia,20,130)
 
-    doc.text('TICKET',58,138)
-    doc.text('CLIENTE',58,156)
-    doc.text('CELULAR',58,174)
-    doc.text('GARANTÍA',58,192)
+    doc.setFontSize(10)
+    doc.text('Esta garantia cubre fallas tecnicas relacionadas con el servicio brindado.',20,155)
+    doc.text('Valido a partir de la fecha de entrega.',20,165)
 
-    // ========= DATOS =========
-    doc.setFontSize(18)
+    doc.text('Gracias por confiar en nuestro servicio.',20,185)
 
-    doc.setTextColor(...oscuro)
-
-    doc.text(numero,95,138)
-    doc.text(nombre,95,156)
-    doc.text(telefono,95,174)
-    doc.text(garantia,95,192)
-
-    // ========= INFO BOX =========
-    doc.setDrawColor(...azul)
-
-    doc.roundedRect(
-      20,
-      205,
-      170,
-      28,
-      4,
-      4
-    )
-
-    doc.setFontSize(22)
-
-    doc.circle(38,220,7,'S')
-
-    doc.setFontSize(11)
-
-    doc.setTextColor(50,50,50)
-
-    doc.setFont('helvetica','normal')
-
-  doc.text(
-  'Esta garantia cubre fallas tecnicas relacionadas',
-
-    doc.text(
-      'con el servicio brindado, durante el período',
-      58,
-      224
-    )
-
-    doc.text(
-      'indicado a partir de la fecha de entrega.',
-      58,
-      231
-    )
-
-    // ========= FOOTER SUPERIOR =========
-    doc.setDrawColor(...azul)
-
-    doc.line(0,245,210,245)
-
-    // FECHA
-    const hoy = new Date()
-
-    const fecha =
-    hoy.toLocaleDateString('es-UY')
-
-    doc.setFontSize(11)
-
-    doc.setTextColor(...oscuro)
-
-    doc.circle(38,258,5,'S')
-
-    doc.text(
-      'FECHA DE EMISIÓN',
-      55,
-      257
-    )
-
-    doc.setFontSize(14)
-
-    doc.text(
-      fecha,
-      55,
-      265
-    )
-
-    // SOPORTE
-    doc.setFontSize(11)
-
-   doc.circle(123,258,5,'S')
-
-    doc.text(
-      'SOPORTE TÉCNICO',
-      138,
-      257
-    )
-
-    doc.setFontSize(14)
-
-    doc.text(
-      '098555861',
-      138,
-      265
-    )
-
-    // ========= FOOTER =========
-    doc.setFillColor(...azul)
-
-    doc.rect(0,277,210,20,'F')
-
-    doc.setDrawColor(255,255,255)
-
-    doc.setLineWidth(2)
-
-    doc.line(165,277,180,297)
-
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(16)
-
-    doc.text(
-      'Gracias por confiar en nuestro servicio.',
-      105,
-      289,
-      { align:'center' }
-    )
-
-    // ========= DESCARGAR =========
-    doc.save(
-      'garantia-'+nombre+'.pdf'
-    )
+    doc.save(`garantia_${nombre}.pdf`)
   }
 }
-// TOGGLE
-function toggleDetalle(id){
 
-  const box =
-  document.getElementById('detalle-'+id)
+/* =========================
+   CARGAR TICKETS
+========================= */
 
-  box.classList.toggle('mostrar')
-}
+async function cargar(){
 
-// MESES
-function cargarMeses(tickets){
+  const res = await fetchAuth('/tickets')
+  const tickets = await res.json()
 
-  const select =
-  document.getElementById('filtroMes')
-
-  const actual = select.value
-
-  const nombres=[
-    'Enero','Febrero','Marzo','Abril',
-    'Mayo','Junio','Julio','Agosto',
-    'Septiembre','Octubre','Noviembre','Diciembre'
-  ]
-
-  const meses=new Set()
+  const lista = document.getElementById('lista')
+  lista.innerHTML=''
 
   tickets.forEach(t=>{
 
-    if(!t.fecha) return
+    lista.innerHTML += `
+    <div class="ticket">
 
-    const d=new Date(t.fecha)
+      <div class="fila-superior">
 
-    const mes=
-    String(d.getMonth()+1).padStart(2,'0')
+        <div class="campo-box">
+          Técnico<br>
+          <select onchange="guardar('${t.numero}','tecnico',this.value)">
+            <option value="">Sin seleccionar</option>
+            <option value="Javier" ${t.tecnico==='Javier'?'selected':''}>Javier</option>
+          </select>
+        </div>
 
-    const anio=d.getFullYear()
+        <div class="campo-box">
+          Garantía<br>
+          <select onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+            <option value="">Sin garantía</option>
+            <option value="3 meses" ${t.garantiaServicio==='3 meses'?'selected':''}>3 meses</option>
+            <option value="6 meses" ${t.garantiaServicio==='6 meses'?'selected':''}>6 meses</option>
+          </select>
+        </div>
 
-    meses.add(`${anio}-${mes}`)
-  })
+        <div class="campo-box">
+          <button class="btn-pdf"
+          onclick="generarGarantia(
+            '${t.numero}',
+            '${t.nombre}',
+            '${t.telefono}',
+            '${t.garantiaServicio||''}'
+          )">
+          Garantía electrónica
+          </button>
+        </div>
 
-  select.innerHTML=
-  `<option value="todos">📅 Todos</option>`
-
-  ;[...meses]
-  .sort()
-  .reverse()
-  .forEach(m=>{
-
-    const partes=m.split('-')
-
-    const anio=partes[0]
-    const mes=partes[1]
-
-    const nombre=
-    nombres[parseInt(mes)-1]
-
-    select.innerHTML += `
-    <option value="${m}">
-      ${nombre} ${anio}
-    </option>`
-  })
-
-  const hoy=new Date()
-
-  const actualMes=
-  `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`
-
-  select.value =
-  actual !== 'todos'
-  ? actual
-  : actualMes
-}
-
-// GUARDAR
-async function guardar(id,campo,valor){
-
-  await fetchAuth('/ticket/'+id,{
-
-    method:'PUT',
-
-    body:JSON.stringify({
-      [campo]:valor
-    })
-  })
-}
-
-// ENTREGADO
-async function marcarEntregado(id){
-
-  await fetchAuth('/ticket/'+id,{
-
-    method:'PUT',
-
-    body:JSON.stringify({
-      entregado:'si'
-    })
-  })
-
-  cargar()
-}
-
-// BORRAR
-async function borrar(id,nombre){
-
-  if(!confirm(`¿Eliminar ticket de ${nombre}?`)){
-    return
-  }
-
-  await fetchAuth('/ticket/'+id,{
-    method:'DELETE'
-  })
-
-  cargar()
-}
-
-// WHATSAPP
-function listoWhatsApp(
-  id,
-  nombre,
-  telefono,
-  precio,
-  detalle
-){
-
-  let tel=
-  (telefono||'').replace(/\D/g,'')
-
-  if(tel.startsWith('0')){
-    tel='598'+tel.substring(1)
-  }
-
-  if(!tel.startsWith('598')){
-    tel='598'+tel
-  }
-
-  const msg=`Hola ${nombre} 👋
-
-El servicio con numero de 🧾 Ticket ${id} ha sido realizado ✅
-
-📝 Detalle:
-${detalle || 'Se realizó el servicio correctamente'}
-
-📦 Podés pasar a retirarlo.
-
-💲 Precio: ${precio || 'A confirmar'}
-
-🏦 BROU
-CA 001120656-00002`
-
-  window.open(
-    `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`
-  )
-}
-
-// CARGAR
-async function cargar(){
-
-  try{
-
-    const res =
-    await fetchAuth('/tickets')
-
-    const tickets =
-    await res.json()
-
-    let cotizaciones=[]
-
-    try{
-
-      const resCot =
-      await fetchAuth('/cotizaciones')
-
-      cotizaciones =
-      await resCot.json()
-
-      if(!Array.isArray(cotizaciones)){
-        cotizaciones=[]
-      }
-
-    }catch(err){
-
-      console.log(err)
-    }
-
-    cargarMeses(tickets)
-
-    const mesSel=
-    document.getElementById('filtroMes').value
-
-    const filtro=
-    document.getElementById('busqueda')
-    .value
-    .toLowerCase()
-
-    let rep=0
-    let ven=0
-
-    tickets.forEach(t=>{
-
-      if(t.entregado==='si'){
-
-        rep +=
-        parseFloat(t.ganancia)||0
-      }
-    })
-
-    cotizaciones.forEach(c=>{
-
-      if(c.confirmada==='si'){
-
-        ven += Number(c.ganancia||0)
-      }
-    })
-
-    document.getElementById('resumen')
-    .innerHTML=`
-
-    <div class="panel">
-
-      <div class="card">
-      🔧 Reparaciones $${rep}
       </div>
 
-      <div class="card">
-      🛒 Ventas $${ven}
-      </div>
+      <div class="fila-inferior">
 
-      <div class="card">
-      💰 Total $${rep+ven}
+        <div class="campo-box">
+          Precio<br>
+          <input type="number" value="${t.precio||''}">
+        </div>
+
+        <div class="campo-box">
+          Ganancia<br>
+          <input type="number" value="${t.ganancia||''}">
+        </div>
+
       </div>
 
     </div>
     `
-
-    let filtrados=[...tickets]
-
-    if(modo==='pendientes'){
-
-      filtrados=
-      filtrados.filter(
-        t=>t.entregado!=='si'
-      )
-    }
-
-    filtrados=filtrados.filter(t=>{
-
-      const match=
-
-      (t.nombre||'')
-      .toLowerCase()
-      .includes(filtro)
-
-      ||
-
-      (t.telefono||'')
-      .includes(filtro)
-
-      ||
-
-      (t.numero||'')
-      .toLowerCase()
-      .includes(filtro)
-
-      if(mesSel==='todos'){
-        return match
-      }
-
-      const d=new Date(t.fecha)
-
-      const mes=
-      String(d.getMonth()+1)
-      .padStart(2,'0')
-
-      const anio=d.getFullYear()
-
-      const clave=`${anio}-${mes}`
-
-      return match && clave===mesSel
-    })
-
-    filtrados.sort((a,b)=>{
-
-      return new Date(b.fecha) - new Date(a.fecha)
-    })
-
-    lista.innerHTML=''
-
-    filtrados.forEach(t=>{
-
-      const nombre=
-      (t.nombre||'')
-      .replace(/'/g,'')
-
-      const detalle=
-      (t.detalle||'')
-      .replace(/'/g,"")
-      .replace(/\n/g," ")
-      .replace(/\r/g," ")
-
-      const fecha=
-      new Date(t.fecha)
-      .toLocaleDateString('es-UY')
-
-      lista.innerHTML += `
-
-      <div class="ticket">
-
-        <div class="ticket-top">
-
-          📅 ${fecha}<br>
-
-          🧾 <b>
-          Ticket ${t.numero}
-          </b><br>
-
-          👤 ${nombre}<br>
-
-          📱 ${t.telefono}<br><br>
-
-          🔧 ${t.problema}
-
-        </div>
-
-        <div class="datos-ticket">
-
-          <!-- FILA SUPERIOR -->
-          <div class="fila-superior">
-
-            <div class="campo-box">
-              👨 Técnico<br>
-
-              <select
-              onchange="guardar('${t.numero}','tecnico',this.value)">
-
-                <option value="">Sin seleccionar</option>
-
-                <option value="PCR"
-                ${t.tecnico==='PCR'?'selected':''}>
-                PCR
-                </option>
-
-                <option value="Javier"
-                ${t.tecnico==='Javier'?'selected':''}>
-                Javier
-                </option>
-
-                <option value="Mauricio"
-                ${t.tecnico==='Mauricio'?'selected':''}>
-                Mauricio
-                </option>
-
-                <option value="Electroshop"
-                ${t.tecnico==='Electroshop'?'selected':''}>
-                Electroshop
-                </option>
-
-              </select>
-            </div>
-
-            <div class="campo-box">
-              🛡️ Garantía<br>
-
-              <select
-              onchange="guardar('${t.numero}','garantiaServicio',this.value)">
-
-                <option value="">Sin garantía</option>
-
-                <option value="3 meses"
-                ${t.garantiaServicio==='3 meses'?'selected':''}>
-                3 meses
-                </option>
-
-                <option value="6 meses"
-                ${t.garantiaServicio==='6 meses'?'selected':''}>
-                6 meses
-                </option>
-
-              </select>
-            </div>
-
-            <div class="campo-box">
-
-              <button
-              class="btn-pdf"
-              onclick="generarGarantia(
-              '${t.numero}',
-              '${nombre}',
-              '${t.telefono}',
-              '${t.garantiaServicio || ''}'
-              )">
-
-              📄 Garantía electrónica
-
-              </button>
-
-            </div>
-
-          </div>
-
-          <!-- FILA INFERIOR -->
-          <div class="fila-inferior">
-
-            <div class="campo-box">
-              💲 Precio<br>
-
-              <input
-              class="precio"
-              type="number"
-              value="${t.precio||''}"
-              onchange="guardar('${t.numero}','precio',this.value)">
-            </div>
-
-            <div class="campo-box">
-              💰 Ganancia<br>
-
-              <input
-              type="number"
-              value="${t.ganancia||''}"
-              onchange="guardar('${t.numero}','ganancia',this.value)">
-            </div>
-
-          </div>
-
-        </div>
-
-        <div
-        class="toggle-detalle"
-        onclick="toggleDetalle('${t.numero}')">
-
-        📝 Detalle (click para abrir/cerrar)
-
-        </div>
-
-        <div
-        class="detalle-box"
-        id="detalle-${t.numero}">
-
-          <textarea
-          onblur="guardar('${t.numero}','detalle',this.value)">
-${t.detalle||''}</textarea>
-
-        </div>
-
-        <div class="acciones-ticket">
-
-          <button class="btn-secondary"
-          onclick="marcarEntregado('${t.numero}')">
-          ✔ Entregado
-          </button>
-
-          <button class="btn-success"
-          onclick="listoWhatsApp(
-          '${t.numero}',
-          '${nombre}',
-          '${t.telefono}',
-          this.closest('.ticket').querySelector('.precio').value,
-          '${detalle}'
-          )">
-          📲 WhatsApp
-          </button>
-
-          <button class="btn-danger"
-          onclick="borrar('${t.numero}','${nombre}')">
-          ❌ Eliminar
-          </button>
-
-        </div>
-
-      </div>
-      `
-    })
-
-  }catch(e){
-
-    console.error(e)
-
-    alert('Error conexión')
-  }
+  })
 }
 
-// INIT
 cargar()
 
 </script>
