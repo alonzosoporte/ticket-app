@@ -380,17 +380,21 @@ function listoWhatsApp(
     tel='598'+tel
   }
 
-  const msg=`Hola ${nombre} 👋
+ const msg=`Hola ${nombre} 👋
 
-Su servicio 🧾 ${id} ha sido realizado ✅
+El servicio con número de 🧾 Ticket ${id} ha sido realizado ✅
 
 📝 Detalle:
 ${detalle || 'Servicio realizado correctamente'}
 
 💲 Precio: ${precio || 'A confirmar'}
 
+🏦 Transferencia bancaria BROU:
+CA 001120656-00002
 
-📦 Podés pasar a retirarlo.`
+📦 También podés pagar al momento de retirar el equipo.
+
+Gracias por confiar en nuestro servicio.`
 
   window.open(
     `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`
