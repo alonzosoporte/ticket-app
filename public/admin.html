@@ -309,84 +309,44 @@ async function generarGarantia(
 
   const doc = new jsPDF('p','mm','a4')
 
+  // ========= FONDO =========
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
+
+  // ========= HEADER =========
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,18,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(16)
+  doc.setFont('helvetica','bold')
+
+  doc.text(
+    'GARANTÍA ELECTRÓNICA',
+    140,
+    11
+  )
+
+  // ========= LOGO =========
   const logo = new Image()
 
-  logo.src='/logo.png'
+  logo.src = 'logo.png'
 
-  logo.onload = function(){
+  logo.onload = () => {
 
-    // =========================
-    // FONDO
-    // =========================
-    doc.setFillColor(245,245,245)
-
-    doc.rect(
-      0,
-      0,
-      210,
-      297,
-      'F'
-    )
-
-    // =========================
-    // HEADER
-    // =========================
-    doc.setFillColor(118,136,161)
-
-    doc.rect(
-      0,
-      0,
-      210,
-      18,
-      'F'
-    )
-
-    // LINEA BLANCA
-    doc.setDrawColor(255,255,255)
-
-    doc.setLineWidth(2)
-
-    doc.line(
-      78,
-      0,
-      92,
-      18
-    )
-
-    // TITULO HEADER
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(18)
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
-
-    doc.text(
-      'GARANTÍA ELECTRÓNICA',
-      125,
-      11
-    )
-
-    // =========================
-    // LOGO
-    // =========================
     doc.addImage(
       logo,
       'PNG',
-      62,
-      20,
-      82,
-      45
+      60,
+      22,
+      90,
+      42
     )
 
-    // =========================
-    // TITULO CENTRAL
-    // =========================
-    doc.setTextColor(20,30,45)
+    // ========= TITULO =========
+    doc.setTextColor(15,25,45)
 
-    doc.setFontSize(24)
+    doc.setFontSize(28)
 
     doc.setFont(
       'helvetica',
@@ -396,56 +356,29 @@ async function generarGarantia(
     doc.text(
       'GARANTÍA ELECTRÓNICA',
       105,
-      88,
+      90,
       { align:'center' }
     )
 
-    // =========================
-    // LINEAS DECORATIVAS
-    // =========================
-    doc.setDrawColor(140,155,175)
+    // ========= LINEAS =========
+    doc.setDrawColor(118,136,161)
 
     doc.setLineWidth(0.5)
 
-    doc.line(
-      22,
-      95,
-      88,
-      95
-    )
+    doc.line(25,100,85,100)
 
-    doc.line(
-      122,
-      95,
-      188,
-      95
-    )
+    doc.line(125,100,185,100)
 
-    // CENTRO
-    doc.setFillColor(230,235,242)
-
-    doc.roundedRect(
-      100,
-      89,
-      10,
-      10,
-      3,
-      3,
-      'F'
-    )
-
-    // =========================
-    // CAJA PRINCIPAL
-    // =========================
+    // ========= CARD =========
     doc.setFillColor(255,255,255)
 
     doc.roundedRect(
       20,
-      108,
+      112,
       170,
-      78,
-      5,
-      5,
+      72,
+      4,
+      4,
       'F'
     )
 
@@ -453,16 +386,14 @@ async function generarGarantia(
 
     doc.roundedRect(
       20,
-      108,
+      112,
       170,
-      78,
-      5,
-      5
+      72,
+      4,
+      4
     )
 
-    // =========================
-    // DATOS
-    // =========================
+    // ========= FILAS =========
     const filas = [
 
       ['TICKET', numero],
@@ -472,14 +403,25 @@ async function generarGarantia(
 
     ]
 
-    let y = 122
+    let y = 128
 
     filas.forEach((f,index)=>{
 
-      // LABEL
-      doc.setTextColor(40,40,40)
+      if(index>0){
 
-      doc.setFontSize(13)
+        doc.setDrawColor(230,230,230)
+
+        doc.line(
+          32,
+          y-8,
+          182,
+          y-8
+        )
+      }
+
+      doc.setTextColor(50,50,50)
+
+      doc.setFontSize(11)
 
       doc.setFont(
         'helvetica',
@@ -488,72 +430,55 @@ async function generarGarantia(
 
       doc.text(
         f[0],
-        40,
+        38,
         y
       )
 
-      // VALOR
-      doc.setFontSize(18)
+      doc.setTextColor(15,25,45)
+
+      doc.setFontSize(17)
 
       doc.setFont(
         'helvetica',
         'bold'
       )
 
-      doc.setTextColor(15,25,40)
-
       doc.text(
         String(f[1]),
-        95,
+        92,
         y
       )
 
-      // LINEAS
-      if(index < 3){
-
-        doc.setDrawColor(230,230,230)
-
-        doc.line(
-          30,
-          y+10,
-          180,
-          y+10
-        )
-      }
-
-      y += 20
+      y += 18
     })
 
-    // =========================
-    // CAJA DESCRIPCION
-    // =========================
-    doc.setFillColor(248,249,252)
+    // ========= INFO =========
+    doc.setFillColor(248,250,252)
 
     doc.roundedRect(
       20,
-      198,
+      195,
       170,
-      32,
+      28,
       4,
       4,
       'F'
     )
 
-    doc.setDrawColor(160,175,195)
+    doc.setDrawColor(170,180,195)
 
     doc.roundedRect(
       20,
-      198,
+      195,
       170,
-      32,
+      28,
       4,
       4
     )
 
-    // TEXTO
     doc.setTextColor(60,60,60)
 
-    doc.setFontSize(11)
+    doc.setFontSize(10)
 
     doc.setFont(
       'helvetica',
@@ -563,40 +488,35 @@ async function generarGarantia(
     doc.text(
       'Esta garantía cubre fallas técnicas relacionadas',
       35,
-      212
+      208
     )
 
     doc.text(
       'con el servicio brindado, durante el período',
       35,
-      220
+      217
     )
 
     doc.text(
       'indicado a partir de la fecha de entrega.',
       35,
-      228
+      226
     )
 
-    // =========================
-    // FOOTER INFO
-    // =========================
-    doc.setDrawColor(140,155,175)
+    // ========= FOOTER =========
+    doc.setDrawColor(118,136,161)
 
     doc.line(
-      15,
+      8,
       238,
-      195,
+      202,
       238
     )
 
-    const fecha =
-    new Date().toLocaleDateString('es-UY')
-
     // FECHA
-    doc.setTextColor(60,60,60)
+    doc.setTextColor(40,40,40)
 
-    doc.setFontSize(10)
+    doc.setFontSize(9)
 
     doc.setFont(
       'helvetica',
@@ -605,8 +525,8 @@ async function generarGarantia(
 
     doc.text(
       'FECHA DE EMISIÓN',
-      50,
-      250
+      32,
+      252
     )
 
     doc.setFont(
@@ -614,13 +534,28 @@ async function generarGarantia(
       'normal'
     )
 
+    doc.setFontSize(11)
+
     doc.text(
-      fecha,
-      50,
-      258
+      new Date()
+      .toLocaleDateString('es-UY'),
+      32,
+      262
+    )
+
+    // LINEA CENTRAL
+    doc.setDrawColor(210,210,210)
+
+    doc.line(
+      105,
+      246,
+      105,
+      270
     )
 
     // SOPORTE
+    doc.setFontSize(9)
+
     doc.setFont(
       'helvetica',
       'bold'
@@ -628,8 +563,8 @@ async function generarGarantia(
 
     doc.text(
       'SOPORTE TÉCNICO',
-      135,
-      250
+      132,
+      252
     )
 
     doc.setFont(
@@ -637,43 +572,28 @@ async function generarGarantia(
       'normal'
     )
 
+    doc.setFontSize(11)
+
     doc.text(
       '098555861',
-      135,
-      258
+      132,
+      262
     )
 
-    // DIVISOR
-    doc.setDrawColor(210,210,210)
-
-    doc.line(
-      105,
-      244,
-      105,
-      264
-    )
-
-    // =========================
-    // FOOTER FINAL
-    // =========================
+    // ========= FOOT FINAL =========
     doc.setFillColor(118,136,161)
 
     doc.rect(
       0,
-      286,
+      285,
       210,
-      11,
+      12,
       'F'
     )
 
     doc.setTextColor(255,255,255)
 
-    doc.setFontSize(12)
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    )
+    doc.setFontSize(14)
 
     doc.text(
       'Gracias por confiar en nuestro servicio.',
@@ -682,9 +602,7 @@ async function generarGarantia(
       { align:'center' }
     )
 
-    // =========================
-    // DESCARGAR
-    // =========================
+    // ========= GUARDAR =========
     doc.save(
       `garantia-${nombre}.pdf`
     )
