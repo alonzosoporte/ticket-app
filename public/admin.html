@@ -329,7 +329,7 @@ async function generarGarantia(
     )
 
     // =========================
-    // HEADER AZUL
+    // HEADER
     // =========================
     doc.setFillColor(118,136,161)
 
@@ -341,7 +341,7 @@ async function generarGarantia(
       'F'
     )
 
-    // LINEA BLANCA DECORATIVA
+    // LINEA BLANCA
     doc.setDrawColor(255,255,255)
 
     doc.setLineWidth(2)
@@ -375,10 +375,10 @@ async function generarGarantia(
     doc.addImage(
       logo,
       'PNG',
-      60,
-      28,
-      90,
-      55
+      58,
+      32,
+      94,
+      58
     )
 
     // =========================
@@ -396,7 +396,7 @@ async function generarGarantia(
     doc.text(
       'GARANTÍA ELECTRÓNICA',
       105,
-      110,
+      114,
       { align:'center' }
     )
 
@@ -419,25 +419,17 @@ async function generarGarantia(
       122
     )
 
-    // ESCUDO
-    doc.setFillColor(118,136,161)
+    // CUADRO CENTRAL
+    doc.setFillColor(230,235,242)
 
-    doc.circle(
-      105,
-      122,
-      8,
+    doc.roundedRect(
+      99,
+      115,
+      12,
+      12,
+      3,
+      3,
       'F'
-    )
-
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(12)
-
-    doc.text(
-      '✓',
-      105,
-      124,
-      { align:'center' }
     )
 
     // =========================
@@ -466,7 +458,7 @@ async function generarGarantia(
       5
     )
 
-    // FILAS
+    // DATOS
     const filas = [
 
       ['TICKET', numero],
@@ -480,17 +472,20 @@ async function generarGarantia(
 
     filas.forEach((f,index)=>{
 
-      // ICONO CIRCULO
-      doc.setFillColor(118,136,161)
+      // CUADRO SUAVE
+      doc.setFillColor(230,235,242)
 
-      doc.circle(
-        38,
-        y-2,
-        7,
+      doc.roundedRect(
+        28,
+        y-8,
+        14,
+        14,
+        3,
+        3,
         'F'
       )
 
-      // TEXTO LABEL
+      // LABEL
       doc.setTextColor(40,40,40)
 
       doc.setFontSize(11)
@@ -502,8 +497,8 @@ async function generarGarantia(
 
       doc.text(
         f[0],
-        58,
-        y
+        52,
+        y-1
       )
 
       // VALOR
@@ -518,11 +513,11 @@ async function generarGarantia(
 
       doc.text(
         String(f[1]),
-        98,
-        y
+        92,
+        y-1
       )
 
-      // LINEA
+      // LINEAS
       if(index < 3){
 
         doc.setDrawColor(230,230,230)
@@ -564,25 +559,17 @@ async function generarGarantia(
       4
     )
 
-    // ICONO
-    doc.setFillColor(118,136,161)
+    // ICONO SIMPLE
+    doc.setFillColor(230,235,242)
 
-    doc.circle(
-      38,
-      233,
-      8,
+    doc.roundedRect(
+      28,
+      225,
+      14,
+      14,
+      3,
+      3,
       'F'
-    )
-
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(11)
-
-    doc.text(
-      '✓',
-      38,
-      235,
-      { align:'center' }
     )
 
     // TEXTO
@@ -625,10 +612,10 @@ async function generarGarantia(
       255
     )
 
-    // FECHA
     const fecha =
     new Date().toLocaleDateString('es-UY')
 
+    // FECHA
     doc.setTextColor(60,60,60)
 
     doc.setFontSize(9)
@@ -712,7 +699,7 @@ async function generarGarantia(
       { align:'center' }
     )
 
-    // DESCARGA
+    // DESCARGAR
     doc.save(
       `garantia-${nombre}.pdf`
     )
