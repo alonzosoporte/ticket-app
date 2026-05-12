@@ -245,11 +245,21 @@ socket.off('actualizar')
 
 let escribiendo = false
 
+let timeoutRecarga
+
 socket.on('actualizar',()=>{
 
-  if(escribiendo) return
+  clearTimeout(timeoutRecarga)
 
-  cargar()
+  timeoutRecarga = setTimeout(()=>{
+
+    if(document.activeElement.tagName === 'INPUT') return
+    if(document.activeElement.tagName === 'TEXTAREA') return
+    if(document.activeElement.tagName === 'SELECT') return
+
+    cargar()
+
+  },1200)
 })
 
 let modo='pendientes'
@@ -282,15 +292,13 @@ function toggleDetalle(id){
   box.classList.toggle('mostrar')
 }
 
-let timeoutGuardar
+let timeoutGuardar = {}
 
 async function guardar(id,campo,valor){
 
-  escribiendo = true
+  clearTimeout(timeoutGuardar[id+campo])
 
-  clearTimeout(timeoutGuardar)
-
-  timeoutGuardar = setTimeout(async()=>{
+  timeoutGuardar[id+campo] = setTimeout(async()=>{
 
     try{
 
@@ -308,14 +316,9 @@ async function guardar(id,campo,valor){
       console.log(err)
     }
 
-    setTimeout(()=>{
-
-      escribiendo = false
-
-    },1500)
-
-  },600)
+  },700)
 }
+  
 
 async function marcarEntregado(id){
 
