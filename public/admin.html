@@ -692,7 +692,7 @@ async function cargar(){
 
     lista.innerHTML=''
 
-    filtrados.forEach(t=>{
+    const htmlTickets = filtrados.map(t=>{
 
       const nombre=
   (t.nombre||'')
@@ -877,10 +877,7 @@ ${t.detalle||''}</textarea>
 if(lista.innerHTML !== htmlTickets){
 
   lista.innerHTML = htmlTickets
-
-  window.scrollTo(0, scrollActual)
 }
-
   }catch(e){
 
     console.error(e)
