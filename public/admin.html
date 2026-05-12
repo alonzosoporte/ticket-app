@@ -852,16 +852,16 @@ ${t.detalle||''}</textarea>
       ✔ Entregado
       </button>
 
-      <button class="btn-success"
-      onclick="listoWhatsApp(
-      '${t.numero}',
-      '${nombre}',
-      '${t.telefono}',
-      this.closest('.ticket').querySelector('.precio').value,
-      '${detalle}'
-      )">
-      📲 WhatsApp
-      </button>
+    <button class="btn-success"
+    onclick="listoWhatsApp(
+    '${t.numero}',
+    '${nombre}',
+    '${t.telefono}',
+    this.closest('.ticket').querySelector('.precio').value,
+    this.closest('.ticket').querySelector('textarea').value
+    )">
+    📲 WhatsApp
+    </button>
 
       <button class="btn-danger"
       onclick="borrar('${t.numero}','${nombre}')">
