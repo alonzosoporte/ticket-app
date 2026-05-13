@@ -504,6 +504,156 @@ async function generarGarantia(
       { align:'center' }
     )
 
+    doc.setDrawColor(118,136,161)
+    doc.line(15,102,195,102)
+
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      78,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      78,
+      5,
+      5
+    )
+
+    doc.setDrawColor(230,230,230)
+
+    doc.line(30,136,180,136)
+    doc.line(30,154,180,154)
+    doc.line(30,172,180,172)
+
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('TICKET',38,128)
+    doc.text('CLIENTE',38,146)
+    doc.text('CELULAR',38,164)
+    doc.text('GARANTÍA',38,182)
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(18)
+
+    doc.text(String(numero),92,128)
+    doc.text(String(nombre),92,146)
+    doc.text(String(telefono),92,164)
+    doc.text(garantia || 'Sin garantía',92,182)
+
+    doc.setFillColor(248,250,252)
+
+    doc.roundedRect(
+      20,
+      200,
+      170,
+      32,
+      4,
+      4,
+      'F'
+    )
+
+    doc.setDrawColor(160,175,195)
+
+    doc.roundedRect(
+      20,
+      200,
+      170,
+      32,
+      4,
+      4
+    )
+
+    doc.setTextColor(55,55,55)
+
+    doc.setFontSize(12)
+
+    doc.setFont('helvetica','normal')
+
+    doc.text(
+      'Esta garantía cubre fallas técnicas relacionadas',
+      38,
+      211
+    )
+
+    doc.text(
+      'con el servicio brindado durante el período',
+      38,
+      219
+    )
+
+    doc.text(
+      'indicado a partir de la fecha de reparación.',
+      38,
+      227
+    )
+
+    doc.setDrawColor(118,136,161)
+
+    doc.line(12,245,198,245)
+
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(9)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('FECHA DE EMISIÓN',42,258)
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(11)
+
+    doc.text(
+      new Date().toLocaleDateString('es-UY'),
+      42,
+      268
+    )
+
+    doc.line(105,252,105,272)
+
+    doc.setFontSize(9)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('SOPORTE TÉCNICO',135,258)
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(11)
+
+    doc.text('098555861',137,268)
+
+    doc.setFillColor(118,136,161)
+
+    doc.rect(0,285,210,12,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(14)
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio.',
+      105,
+      293,
+      { align:'center' }
+    )
+
     doc.save(
       `garantia-${nombre}.pdf`
     )
@@ -611,18 +761,52 @@ async function cargar(){
     let rep = 0
     let ven = 0
 
+    const filtroRep =
+    selectRep.value
+
+    const filtroVen =
+    selectVen.value
+
     tickets.forEach(t=>{
 
-      if(t.entregado==='si'){
-        rep += parseFloat(t.ganancia)||0
+      if(t.entregado !== 'si') return
+
+      if(!t.fecha) return
+
+      const f = new Date(t.fecha)
+
+      const mesTicket =
+      `${f.getFullYear()}-${f.getMonth()}`
+
+      if(
+        filtroRep !== 'todos' &&
+        filtroRep !== mesTicket
+      ){
+        return
       }
+
+      rep += parseFloat(t.ganancia)||0
     })
 
     cotizaciones.forEach(c=>{
 
-      if(c.confirmada==='si'){
-        ven += Number(c.ganancia||0)
+      if(c.confirmada !== 'si') return
+
+      if(!c.fecha) return
+
+      const f = new Date(c.fecha)
+
+      const mesVenta =
+      `${f.getFullYear()}-${f.getMonth()}`
+
+      if(
+        filtroVen !== 'todos' &&
+        filtroVen !== mesVenta
+      ){
+        return
       }
+
+      ven += Number(c.ganancia||0)
     })
 
     document.getElementById('totalRep')
@@ -649,6 +833,11 @@ async function cargar(){
       const nombre=
       (t.nombre||'')
       .replace(/'/g,'')
+
+      const detalle=
+      (t.detalle||'')
+      .replace(/'/g,"")
+      .replace(/\n/g," ")
 
       const fecha=
       new Date(t.fecha)
@@ -748,6 +937,72 @@ async function cargar(){
             </div>
 
           </div>
+
+          <div class="fila-inferior">
+
+            <div class="campo-box">
+              💲 Precio<br>
+
+              <input
+              class="precio"
+              type="number"
+              value="${t.precio||''}"
+              onblur="guardar('${t.numero}','precio',this.value)">
+            </div>
+
+            <div class="campo-box">
+              💰 Ganancia<br>
+
+              <input
+              type="number"
+              value="${t.ganancia||''}"
+              onblur="guardar('${t.numero}','ganancia',this.value)">
+            </div>
+
+          </div>
+
+        </div>
+
+        <div
+        class="toggle-detalle"
+        onclick="toggleDetalle('${t.numero}')">
+
+        📝 Detalle
+
+        </div>
+
+        <div
+        class="detalle-box"
+        id="detalle-${t.numero}">
+
+          <textarea
+          onblur="guardar('${t.numero}','detalle',this.value)">
+${t.detalle||''}</textarea>
+
+        </div>
+
+        <div class="acciones-ticket">
+
+          <button class="btn-secondary"
+          onclick="marcarEntregado('${t.numero}')">
+          ✔ Entregado
+          </button>
+
+          <button class="btn-success"
+          onclick="listoWhatsApp(
+          '${t.numero}',
+          '${nombre}',
+          '${t.telefono}',
+          this.closest('.ticket').querySelector('.precio').value,
+          this.closest('.ticket').querySelector('textarea').value
+          )">
+          📲 WhatsApp
+          </button>
+
+          <button class="btn-danger"
+          onclick="borrar('${t.numero}','${nombre}')">
+          ❌ Eliminar
+          </button>
 
         </div>
 
