@@ -286,7 +286,30 @@ async function guardarNumeroSerie(id,valor){
     alert('❌ Error guardando número de serie')
   }
 }
+// ===== ELIMINAR =====
 
+async function eliminarGarantia(id){
+
+  if(!confirm('¿Eliminar garantía?')){
+    return
+  }
+
+  try{
+
+    await fetchAuth('/garantia/'+id,{
+
+      method:'DELETE'
+    })
+
+    cargar()
+
+  }catch(err){
+
+    console.error(err)
+
+    alert('❌ Error eliminando garantía')
+  }
+}
 // ===== CARGAR =====
 async function cargar(){
 
@@ -295,11 +318,11 @@ async function cargar(){
     const res =
     await fetchAuth('/garantias')
 
-    const text =
-    await res.text()
+    const res =
+await fetchAuth('/garantias')
 
-    let data =
-    JSON.parse(text)
+const data =
+await res.json()
 
     const filtroTexto =
     document.getElementById('buscar')
