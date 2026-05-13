@@ -1135,20 +1135,43 @@ async function cargar(){
 
             <div class="campo-box">
 
-              <button
-              class="btn-pdf"
-              onclick="generarGarantia(
-              '${t.numero}',
-              '${nombre}',
-              '${t.telefono}',
-              '${t.garantiaServicio || ''}'
-              )">
+  <div style="
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  ">
 
-              📄 Garantía electrónica
+    <button
+    class="btn-pdf"
+    onclick="generarGarantia(
+    '${t.numero}',
+    '${nombre}',
+    '${t.telefono}',
+    '${t.garantiaServicio || ''}'
+    )">
 
-              </button>
+    📄 Garantía electrónica
 
-            </div>
+    </button>
+
+    <button
+    class="btn-success"
+    onclick="generarFactura(
+    '${t.numero}',
+    '${nombre}',
+    '${t.telefono}',
+    '${(t.problema || '').replace(/'/g,'')}',
+    this.closest('.ticket').querySelector('textarea').value,
+    this.closest('.ticket').querySelector('.precio').value
+    )">
+
+    📄 Factura PDF
+
+    </button>
+
+  </div>
+
+</div>
 
           </div>
 
