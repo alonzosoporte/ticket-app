@@ -659,7 +659,221 @@ async function generarGarantia(
     )
   }
 }
+async function generarFactura(
+  numero,
+  nombre,
+  telefono,
+  problema,
+  detalle,
+  precio
+){
 
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF('p','mm','a4')
+
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
+
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,18,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(17)
+  doc.setFont('helvetica','bold')
+
+  doc.text(
+    'FACTURA ELECTRÓNICA',
+    105,
+    11,
+    { align:'center' }
+  )
+
+  const logo = new Image()
+
+  logo.src = 'logo.png'
+
+  logo.onload = () => {
+
+    doc.addImage(
+      logo,
+      'PNG',
+      55,
+      22,
+      100,
+      45
+    )
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(28)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'FACTURA ELECTRÓNICA',
+      105,
+      92,
+      { align:'center' }
+    )
+
+    doc.setDrawColor(118,136,161)
+    doc.line(15,102,195,102)
+
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      95,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      95,
+      5,
+      5
+    )
+
+    doc.setDrawColor(230,230,230)
+
+    doc.line(30,132,180,132)
+    doc.line(30,148,180,148)
+    doc.line(30,164,180,164)
+    doc.line(30,180,180,180)
+
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('TICKET',38,126)
+    doc.text('CLIENTE',38,142)
+    doc.text('CELULAR',38,158)
+    doc.text('PROBLEMA',38,174)
+    doc.text('DETALLE',38,190)
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(14)
+
+    doc.text(String(numero),92,126)
+    doc.text(String(nombre),92,142)
+    doc.text(String(telefono),92,158)
+
+    const problemaTexto =
+    doc.splitTextToSize(
+      problema || '',
+      85
+    )
+
+    doc.text(
+      problemaTexto,
+      92,
+      174
+    )
+
+    const detalleTexto =
+    doc.splitTextToSize(
+      detalle || '',
+      85
+    )
+
+    doc.text(
+      detalleTexto,
+      92,
+      190
+    )
+
+    doc.setFillColor(248,250,252)
+
+    doc.roundedRect(
+      20,
+      220,
+      170,
+      38,
+      4,
+      4,
+      'F'
+    )
+
+    doc.setDrawColor(160,175,195)
+
+    doc.roundedRect(
+      20,
+      220,
+      170,
+      38,
+      4,
+      4
+    )
+
+    doc.setTextColor(55,55,55)
+
+    doc.setFontSize(14)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text(
+      `💲 Precio: $${precio || 0}`,
+      35,
+      235
+    )
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','normal')
+
+    doc.text(
+      'Transferencia bancaria BROU:',
+      35,
+      246
+    )
+
+    doc.text(
+      'CA 001120656-00002',
+      35,
+      254
+    )
+
+    doc.text(
+      'También podés pagar al momento de retirar el equipo.',
+      35,
+      264
+    )
+
+    doc.setFillColor(118,136,161)
+
+    doc.rect(0,285,210,12,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(14)
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio.',
+      105,
+      293,
+      { align:'center' }
+    )
+
+    doc.save(
+      `factura-${nombre}.pdf`
+    )
+  }
+}
 async function cargar(){
 
   try{
@@ -937,7 +1151,20 @@ async function cargar(){
             </div>
 
           </div>
+<button
+class="btn-success"
+onclick="generarFactura(
+'${t.numero}',
+'${nombre}',
+'${t.telefono}',
+`${t.problema || ''}`,
+this.closest('.ticket').querySelector('textarea').value,
+this.closest('.ticket').querySelector('.precio').value
+)">
 
+📄 Factura PDF
+
+</button>
           <div class="fila-inferior">
 
             <div class="campo-box">

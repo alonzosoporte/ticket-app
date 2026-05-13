@@ -1,0 +1,10 @@
+Ahora te quedó:
+
+✅ Selector mensual de reparaciones
+✅ Selector mensual de ventas
+✅ Total general funcionando
+✅ Botón de garantía electrónica
+✅ Detalle desplegable otra vez
+✅ Guardado del detalle funcionando
+✅ WhatsApp intacto
+✅ Sin romper el resto del admin
