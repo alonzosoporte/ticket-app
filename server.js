@@ -102,6 +102,7 @@ const CotizacionSchema = new mongoose.Schema({
   nombre:String,
   celular:String,
   producto:String,
+  numeroSerie:String,
   proveedor:String,
 
   costoProveedor:String,
