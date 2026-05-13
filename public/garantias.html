@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 body{
   font-family:Arial;
   background:#eef2f7;
@@ -86,7 +87,6 @@ button{
   transform:scale(1.1);
 }
 
-/* MODAL */
 .modal{
   display:none;
   position:fixed;
@@ -105,17 +105,20 @@ button{
   max-height:90%;
   border-radius:10px;
 }
+
 </style>
 </head>
 
 <body>
 
 <script>
+
 const TOKEN = localStorage.getItem('token')
 
 if(!TOKEN){
   location.href='login.html'
 }
+
 </script>
 
 <h2>🛡️ Garantías</h2>
@@ -132,9 +135,19 @@ if(!TOKEN){
   oninput="cargar()">
 
   <select id="filtroEstado" onchange="cargar()">
-    <option value="vigentes">🟢 Vigentes</option>
-    <option value="vencidas">🔴 Vencidas</option>
-    <option value="todas">📋 Todas</option>
+
+    <option value="vigentes">
+    🟢 Vigentes
+    </option>
+
+    <option value="vencidas">
+    🔴 Vencidas
+    </option>
+
+    <option value="todas">
+    📋 Todas
+    </option>
+
   </select>
 
 </div>
@@ -142,19 +155,25 @@ if(!TOKEN){
 <div id="lista"></div>
 
 <!-- MODAL -->
-<div id="modal" class="modal" onclick="cerrarModal()">
+<div id="modal"
+class="modal"
+onclick="cerrarModal()">
+
   <img id="imgGrande">
+
 </div>
 
 <script>
 
 const API='https://ticket-pro-xmhs.onrender.com'
 
-// FETCH AUTH
+// ===== FETCH AUTH =====
 function fetchAuth(url,options={}){
 
   return fetch(API+url,{
+
     ...options,
+
     headers:{
       'Content-Type':'application/json',
       'Authorization':'Bearer '+TOKEN,
@@ -166,13 +185,17 @@ function fetchAuth(url,options={}){
 // ===== MODAL =====
 function abrirModal(src){
 
-  document.getElementById('modal').style.display='flex'
-  document.getElementById('imgGrande').src=src
+  document.getElementById('modal')
+  .style.display='flex'
+
+  document.getElementById('imgGrande')
+  .src=src
 }
 
 function cerrarModal(){
 
-  document.getElementById('modal').style.display='none'
+  document.getElementById('modal')
+  .style.display='none'
 }
 
 // ===== FOTO GARANTIA =====
@@ -180,12 +203,14 @@ async function subirFoto(id,file){
 
   if(!file) return
 
-  const r=new FileReader()
+  const r = new FileReader()
 
-  r.onload=async()=>{
+  r.onload = async()=>{
 
     await fetchAuth('/garantia/'+id,{
+
       method:'PUT',
+
       body:JSON.stringify({
         fotoGarantia:r.result
       })
@@ -201,20 +226,27 @@ async function subirFoto(id,file){
 async function guardarFecha(id,valor){
 
   if(!valor){
+
     alert('⚠️ Seleccioná una fecha')
+
     return
   }
 
   try{
 
-    const res=await fetchAuth('/garantia/'+id,{
+    const res =
+    await fetchAuth('/garantia/'+id,{
+
       method:'PUT',
+
       body:JSON.stringify({
         garantiaHasta:valor
       })
     })
 
-    if(!res.ok) throw new Error()
+    if(!res.ok){
+      throw new Error()
+    }
 
     alert('✅ Garantía actualizada')
 
@@ -227,11 +259,14 @@ async function guardarFecha(id,valor){
     alert('❌ Error guardando fecha')
   }
 }
+
+// ===== GUARDAR NUMERO SERIE =====
 async function guardarNumeroSerie(id,valor){
 
   try{
 
-    const res = await fetchAuth('/garantia/'+id,{
+    const res =
+    await fetchAuth('/garantia/'+id,{
 
       method:'PUT',
 
@@ -251,52 +286,35 @@ async function guardarNumeroSerie(id,valor){
     alert('❌ Error guardando número de serie')
   }
 }
-async function guardarSerie(id,valor){
 
-  try{
-
-    await fetchAuth('/garantia/'+id,{
-
-      method:'PUT',
-
-      body:JSON.stringify({
-        numeroSerie:valor
-      })
-    })
-
-  }catch(err){
-
-    console.error(err)
-
-    alert('❌ Error guardando número de serie')
-  }
-}
 // ===== CARGAR =====
 async function cargar(){
 
   try{
 
-    const res=await fetchAuth('/garantias')
+    const res =
+    await fetchAuth('/garantias')
 
-    const text=await res.text()
+    const text =
+    await res.text()
 
-    console.log(text)
+    let data =
+    JSON.parse(text)
 
-    let data=JSON.parse(text)
-
-    const filtroTexto=
+    const filtroTexto =
     document.getElementById('buscar')
     .value
     .toLowerCase()
 
-    const estado=
+    const estado =
     document.getElementById('filtroEstado')
     .value
 
-    const hoy=new Date()
+    const hoy =
+    new Date()
 
-    // BUSCADOR
-    data=data.filter(g=>
+    // ===== BUSCADOR =====
+    data = data.filter(g=>
 
       (g.nombre||'')
       .toLowerCase()
@@ -312,109 +330,123 @@ async function cargar(){
       (g.producto||'')
       .toLowerCase()
       .includes(filtroTexto)
+
+      ||
+
+      (g.numeroSerie||'')
+      .toLowerCase()
+      .includes(filtroTexto)
     )
 
-    // FILTRO ESTADO
-    data=data.filter(g=>{
+    // ===== FILTRO ESTADO =====
+    data = data.filter(g=>{
 
       if(!g.garantiaHasta){
-        return estado!=='vencidas'
+
+        return estado !== 'vencidas'
       }
 
-      const f=new Date(g.garantiaHasta)
+      const f =
+      new Date(g.garantiaHasta)
 
       if(estado==='vigentes'){
-        return f>=hoy
+        return f >= hoy
       }
 
       if(estado==='vencidas'){
-        return f<hoy
+        return f < hoy
       }
 
       return true
     })
 
-    const lista=document.getElementById('lista')
+    const lista =
+    document.getElementById('lista')
 
     lista.innerHTML=''
 
     data.forEach(g=>{
 
-      const fechaGarantia=g.garantiaHasta
+      const fechaGarantia =
+      g.garantiaHasta
 
-      const vencida=
+      const vencida =
       fechaGarantia &&
-      new Date(fechaGarantia)<hoy
+      new Date(fechaGarantia) < hoy
 
-      const fotos=
+      const fotos =
       g.fotos ||
       (g.foto ? [g.foto] : [])
 
-      lista.innerHTML+=`
+      lista.innerHTML += `
 
       <div class="card">
 
         📅 ${
           g.fecha
-          ? new Date(g.fecha).toLocaleString('es-UY')
+          ? new Date(g.fecha)
+          .toLocaleString('es-UY')
           : ''
-        }<br><br>
+        }
 
-        <b>${g.producto}</b><br>
-          🔢 Serie:
-<b>${g.numeroSerie || 'Sin serie'}</b>
+        <br><br>
 
-<br><br>
+        <b>${g.producto || ''}</b>
 
-<input
-type="text"
-value="${g.numeroSerie || ''}"
-placeholder="Ingresar número de serie"
-onblur="guardarSerie('${g._id}',this.value)"
-style="
-width:100%;
-max-width:300px;
-border:2px solid #7688A1;
-padding:8px;
-border-radius:8px;
-">
-<br><br>
+        <br><br>
 
-        🏢 ${g.proveedor || ''}<br>
+        📦 <b>Número de serie:</b>
 
-        👤 ${g.nombre} (${g.celular})<br><br>
+        <br><br>
 
-📦 Número de serie:<br><br>
+        <input
+        type="text"
 
-<input
-type="text"
-value="${g.numeroSerie || ''}"
-placeholder="Número de serie"
+        value="${g.numeroSerie || ''}"
 
-onblur="guardarNumeroSerie('${g._id}',this.value)"
+        placeholder="Ingresar número de serie"
 
-style="
-width:100%;
-padding:10px;
-border-radius:10px;
-border:1px solid #ccc;
-margin-bottom:15px;
-">
+        onblur="guardarNumeroSerie('${g._id}',this.value)"
 
-<br>
+        style="
+        width:100%;
+        max-width:320px;
+        padding:10px;
+        border-radius:10px;
+        border:2px solid #7688A1;
+        margin-bottom:15px;
+        ">
 
+        <br>
+
+        🏢 ${g.proveedor || ''}
+
+        <br>
+
+        👤 ${g.nombre || ''}
+        (${g.celular || ''})
+
+        <br><br>
 
         💸 $${g.costoProveedor || 0}
+
         →
-        💰 $${g.precioCliente || 0}<br>
+
+        💰 $${g.precioCliente || 0}
+
+        <br>
 
         🧾 Ganancia
         $${g.ganancia || ((g.precioCliente||0)-(g.costoProveedor||0))}
+
         <br><br>
 
-        🛡️ <b>Garantía hasta:</b><br><br>
+        🛡️ <b>Garantía hasta:</b>
 
-        <input type="date"
+        <br><br>
+
+        <input
+        type="date"
 
         value="${
           g.garantiaHasta
@@ -427,7 +459,9 @@ margin-bottom:15px;
         style="border:2px solid #007bff">
 
         <span class="${
-          vencida ? 'vencida' : 'vigente'
+          vencida
+          ? 'vencida'
+          : 'vigente'
         }">
 
           ${
@@ -446,22 +480,30 @@ margin-bottom:15px;
           ?
 
           `
-          <b>📦 Producto:</b><br><br>
+          <b>📦 Producto:</b>
+
+          <br><br>
 
           ${fotos.map(f=>`
+
             <img
             src="${f}"
             class="thumb"
             onclick="abrirModal('${f}')">
+
           `).join('')}
 
           <br><br>
           `
 
-          : ''
+          :
+
+          ''
         }
 
-        <b>📸 Garantía:</b><br><br>
+        <b>📸 Garantía:</b>
+
+        <br><br>
 
         ${
           g.fotoGarantia
@@ -473,6 +515,7 @@ margin-bottom:15px;
           src="${g.fotoGarantia}"
           class="thumb"
           onclick="abrirModal('${g.fotoGarantia}')">
+
           <br><br>
           `
 
@@ -481,13 +524,25 @@ margin-bottom:15px;
           `
           <span style="color:#888">
           Sin foto
-          </span><br><br>
+          </span>
+
+          <br><br>
           `
         }
 
-        <input
-        type="file"
-        onchange="subirFoto('${g._id}',this.files[0])">
+       <input
+type="file"
+onchange="subirFoto('${g._id}',this.files[0])">
+
+<br><br>
+
+<button
+class="btn-danger"
+onclick="eliminarGarantia('${g._id}')">
+
+❌ Eliminar
+
+</button>
 
       </div>
       `
