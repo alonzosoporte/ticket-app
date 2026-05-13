@@ -445,6 +445,71 @@ Gracias por confiar en nuestro servicio.`
   )
 }
 
+async function generarGarantia(
+  numero,
+  nombre,
+  telefono,
+  garantia
+){
+
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF('p','mm','a4')
+
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
+
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,18,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(17)
+  doc.setFont('helvetica','bold')
+
+  doc.text(
+    'GARANTÍA ELECTRÓNICA',
+    105,
+    11,
+    { align:'center' }
+  )
+
+  const logo = new Image()
+
+  logo.src = 'logo.png'
+
+  logo.onload = () => {
+
+    doc.addImage(
+      logo,
+      'PNG',
+      55,
+      22,
+      100,
+      45
+    )
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(28)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'GARANTÍA ELECTRÓNICA',
+      105,
+      92,
+      { align:'center' }
+    )
+
+    doc.save(
+      `garantia-${nombre}.pdf`
+    )
+  }
+}
+
 async function cargar(){
 
   try{
@@ -475,18 +540,9 @@ async function cargar(){
     }
 
     const mesesTexto = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre'
+      'Enero','Febrero','Marzo','Abril',
+      'Mayo','Junio','Julio','Agosto',
+      'Septiembre','Octubre','Noviembre','Diciembre'
     ]
 
     const ahora = new Date()
@@ -555,52 +611,18 @@ async function cargar(){
     let rep = 0
     let ven = 0
 
-    const filtroRep =
-    selectRep.value
-
-    const filtroVen =
-    selectVen.value
-
     tickets.forEach(t=>{
 
-      if(t.entregado !== 'si') return
-
-      if(!t.fecha) return
-
-      const f = new Date(t.fecha)
-
-      const mesTicket =
-      `${f.getFullYear()}-${f.getMonth()}`
-
-      if(
-        filtroRep !== 'todos' &&
-        filtroRep !== mesTicket
-      ){
-        return
+      if(t.entregado==='si'){
+        rep += parseFloat(t.ganancia)||0
       }
-
-      rep += parseFloat(t.ganancia)||0
     })
 
     cotizaciones.forEach(c=>{
 
-      if(c.confirmada !== 'si') return
-
-      if(!c.fecha) return
-
-      const f = new Date(c.fecha)
-
-      const mesVenta =
-      `${f.getFullYear()}-${f.getMonth()}`
-
-      if(
-        filtroVen !== 'todos' &&
-        filtroVen !== mesVenta
-      ){
-        return
+      if(c.confirmada==='si'){
+        ven += Number(c.ganancia||0)
       }
-
-      ven += Number(c.ganancia||0)
     })
 
     document.getElementById('totalRep')
@@ -708,73 +730,24 @@ async function cargar(){
               </select>
             </div>
 
-          </div>
-
-          <div class="fila-inferior">
-
             <div class="campo-box">
-              💲 Precio<br>
 
-              <input
-              class="precio"
-              type="number"
-              value="${t.precio||''}"
-              onblur="guardar('${t.numero}','precio',this.value)">
-            </div>
+              <button
+              class="btn-pdf"
+              onclick="generarGarantia(
+              '${t.numero}',
+              '${nombre}',
+              '${t.telefono}',
+              '${t.garantiaServicio || ''}'
+              )">
 
-            <div class="campo-box">
-              💰 Ganancia<br>
+              📄 Garantía electrónica
 
-              <input
-              type="number"
-              value="${t.ganancia||''}"
-              onblur="guardar('${t.numero}','ganancia',this.value)">
+              </button>
+
             </div>
 
           </div>
-
-        </div>
-
-        <div
-        class="toggle-detalle"
-        onclick="toggleDetalle('${t.numero}')">
-
-        📝 Detalle
-
-        </div>
-
-        <div
-        class="detalle-box"
-        id="detalle-${t.numero}">
-
-          <textarea
-          onblur="guardar('${t.numero}','detalle',this.value)">
-${t.detalle||''}</textarea>
-
-        </div>
-
-        <div class="acciones-ticket">
-
-          <button class="btn-secondary"
-          onclick="marcarEntregado('${t.numero}')">
-          ✔ Entregado
-          </button>
-
-          <button class="btn-success"
-          onclick="listoWhatsApp(
-          '${t.numero}',
-          '${nombre}',
-          '${t.telefono}',
-          this.closest('.ticket').querySelector('.precio').value,
-          this.closest('.ticket').querySelector('textarea').value
-          )">
-          📲 WhatsApp
-          </button>
-
-          <button class="btn-danger"
-          onclick="borrar('${t.numero}','${nombre}')">
-          ❌ Eliminar
-          </button>
 
         </div>
 
@@ -801,4 +774,3 @@ cargar()
 
 </body>
 </html>
-
