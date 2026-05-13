@@ -461,6 +461,30 @@ app.delete('/cotizacion/:id', auth, async (req, res) => {
   })
 })
 
+// ELIMINAR GARANTIA
+app.delete('/garantia/:id',auth,async(req,res)=>{
+
+  try{
+
+    await Cotizacion.findByIdAndDelete(
+      req.params.id
+    )
+
+    io.emit('actualizar')
+
+    res.json({
+      ok:true
+    })
+
+  }catch(err){
+
+    console.log(err)
+
+    res.status(500).json({
+      error:'Error eliminando garantía'
+    })
+  }
+})
 // ======================================================
 // PROVEEDORES
 // ======================================================
