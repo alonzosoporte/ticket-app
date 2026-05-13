@@ -227,6 +227,30 @@ async function guardarFecha(id,valor){
     alert('❌ Error guardando fecha')
   }
 }
+async function guardarNumeroSerie(id,valor){
+
+  try{
+
+    const res = await fetchAuth('/garantia/'+id,{
+
+      method:'PUT',
+
+      body:JSON.stringify({
+        numeroSerie:valor
+      })
+    })
+
+    if(!res.ok){
+      throw new Error()
+    }
+
+  }catch(err){
+
+    console.error(err)
+
+    alert('❌ Error guardando número de serie')
+  }
+}
 async function guardarSerie(id,valor){
 
   try{
@@ -359,6 +383,26 @@ border-radius:8px;
         🏢 ${g.proveedor || ''}<br>
 
         👤 ${g.nombre} (${g.celular})<br><br>
+
+📦 Número de serie:<br><br>
+
+<input
+type="text"
+value="${g.numeroSerie || ''}"
+placeholder="Número de serie"
+
+onblur="guardarNumeroSerie('${g._id}',this.value)"
+
+style="
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px solid #ccc;
+margin-bottom:15px;
+">
+
+<br>
+
 
         💸 $${g.costoProveedor || 0}
         →
