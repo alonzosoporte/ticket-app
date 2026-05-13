@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -223,7 +224,52 @@ textarea{
 
 </div>
 
-<div id="resumen"></div>
+<div id="resumen">
+
+  <div class="panel">
+
+    <div class="card">
+
+      🔧 Reparaciones<br><br>
+
+      <select id="mesRep" onchange="cargar()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <div id="totalRep" style="margin-top:10px">
+      $0
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      🛒 Ventas<br><br>
+
+      <select id="mesVen" onchange="cargar()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <div id="totalVen" style="margin-top:10px">
+      $0
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      💰 TOTAL GENERAL<br><br>
+
+      <div id="totalGeneral"
+      style="font-size:22px">
+      $0
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
 <div id="lista"></div>
 
@@ -332,7 +378,6 @@ async function guardar(id,campo,valor){
 
   },1200)
 }
-  
 
 async function marcarEntregado(id){
 
@@ -380,7 +425,7 @@ function listoWhatsApp(
     tel='598'+tel
   }
 
- const msg=`Hola ${nombre} 👋
+const msg=`Hola ${nombre} 👋
 
 El servicio con número de Ticket ${id} ha sido realizado ✅
 
@@ -399,221 +444,6 @@ Gracias por confiar en nuestro servicio.`
   window.open(
     `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`
   )
-}
-
-async function generarGarantia(
-  numero,
-  nombre,
-  telefono,
-  garantia
-){
-
-  const { jsPDF } = window.jspdf
-
-  const doc = new jsPDF('p','mm','a4')
-
-  doc.setFillColor(245,247,250)
-  doc.rect(0,0,210,297,'F')
-
-  doc.setFillColor(118,136,161)
-  doc.rect(0,0,210,18,'F')
-
-  doc.setTextColor(255,255,255)
-  doc.setFontSize(17)
-  doc.setFont('helvetica','bold')
-
-  doc.text(
-    'GARANTÍA ELECTRÓNICA',
-    105,
-    11,
-    { align:'center' }
-  )
-
-  const logo = new Image()
-
-  logo.src = 'logo.png'
-
-  logo.onload = () => {
-
-    doc.addImage(
-      logo,
-      'PNG',
-      55,
-      22,
-      100,
-      45
-    )
-
-    doc.setTextColor(15,25,45)
-
-    doc.setFontSize(28)
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    )
-
-    doc.text(
-      'GARANTÍA ELECTRÓNICA',
-      105,
-      92,
-      { align:'center' }
-    )
-
-    doc.setDrawColor(118,136,161)
-    doc.line(15,102,195,102)
-
-    doc.setFillColor(255,255,255)
-
-    doc.roundedRect(
-      20,
-      112,
-      170,
-      78,
-      5,
-      5,
-      'F'
-    )
-
-    doc.setDrawColor(220,220,220)
-
-    doc.roundedRect(
-      20,
-      112,
-      170,
-      78,
-      5,
-      5
-    )
-
-    doc.setDrawColor(230,230,230)
-
-    doc.line(30,136,180,136)
-    doc.line(30,154,180,154)
-    doc.line(30,172,180,172)
-
-    doc.setTextColor(40,40,40)
-
-    doc.setFontSize(11)
-
-    doc.setFont('helvetica','bold')
-
-    doc.text('TICKET',38,128)
-    doc.text('CLIENTE',38,146)
-    doc.text('CELULAR',38,164)
-    doc.text('GARANTÍA',38,182)
-
-    doc.setTextColor(15,25,45)
-
-    doc.setFontSize(18)
-
-    doc.text(String(numero),92,128)
-    doc.text(String(nombre),92,146)
-    doc.text(String(telefono),92,164)
-    doc.text(garantia || 'Sin garantía',92,182)
-
-    doc.setFillColor(248,250,252)
-
-    doc.roundedRect(
-      20,
-      200,
-      170,
-      32,
-      4,
-      4,
-      'F'
-    )
-
-    doc.setDrawColor(160,175,195)
-
-    doc.roundedRect(
-      20,
-      200,
-      170,
-      32,
-      4,
-      4
-    )
-
-    doc.setTextColor(55,55,55)
-
-    doc.setFontSize(12)
-
-    doc.setFont('helvetica','normal')
-
-    doc.text(
-      'Esta garantía cubre fallas técnicas relacionadas',
-      38,
-      211
-    )
-
-    doc.text(
-      'con el servicio brindado durante el período',
-      38,
-      219
-    )
-
-    doc.text(
-      'indicado a partir de la fecha de reparación.',
-      38,
-      227
-    )
-
-    doc.setDrawColor(118,136,161)
-
-    doc.line(12,245,198,245)
-
-    doc.setTextColor(40,40,40)
-
-    doc.setFontSize(9)
-
-    doc.setFont('helvetica','bold')
-
-    doc.text('FECHA DE EMISIÓN',42,258)
-
-    doc.setFont('helvetica','normal')
-
-    doc.setFontSize(11)
-
-    doc.text(
-      new Date().toLocaleDateString('es-UY'),
-      42,
-      268
-    )
-
-    doc.line(105,252,105,272)
-
-    doc.setFontSize(9)
-
-    doc.setFont('helvetica','bold')
-
-    doc.text('SOPORTE TÉCNICO',135,258)
-
-    doc.setFont('helvetica','normal')
-
-    doc.setFontSize(11)
-
-    doc.text('098555861',137,268)
-
-    doc.setFillColor(118,136,161)
-
-    doc.rect(0,285,210,12,'F')
-
-    doc.setTextColor(255,255,255)
-
-    doc.setFontSize(14)
-
-    doc.text(
-      'Gracias por confiar en nuestro servicio.',
-      105,
-      293,
-      { align:'center' }
-    )
-
-    doc.save(
-      `garantia-${nombre}.pdf`
-    )
-  }
 }
 
 async function cargar(){
@@ -645,45 +475,143 @@ async function cargar(){
       console.log(err)
     }
 
-    let rep=0
-    let ven=0
+    const mesesTexto = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ]
+
+    const ahora = new Date()
+
+    const mesActual =
+    `${ahora.getFullYear()}-${ahora.getMonth()}`
+
+    const selectRep =
+    document.getElementById('mesRep')
+
+    const selectVen =
+    document.getElementById('mesVen')
+
+    if(selectRep.options.length <= 1){
+
+      const meses = new Set()
+
+      tickets.forEach(t=>{
+
+        if(!t.fecha) return
+
+        const f = new Date(t.fecha)
+
+        meses.add(
+          `${f.getFullYear()}-${f.getMonth()}`
+        )
+      })
+
+      cotizaciones.forEach(c=>{
+
+        if(!c.fecha) return
+
+        const f = new Date(c.fecha)
+
+        meses.add(
+          `${f.getFullYear()}-${f.getMonth()}`
+        )
+      })
+
+      const ordenados =
+      [...meses].sort().reverse()
+
+      ordenados.forEach(valor=>{
+
+        const [anio,mes] =
+        valor.split('-')
+
+        const texto =
+        `${mesesTexto[mes]} ${anio}`
+
+        selectRep.innerHTML +=
+        `<option value="${valor}">
+        ${texto}
+        </option>`
+
+        selectVen.innerHTML +=
+        `<option value="${valor}">
+        ${texto}
+        </option>`
+      })
+
+      selectRep.value = mesActual
+      selectVen.value = mesActual
+    }
+
+    let rep = 0
+    let ven = 0
+
+    const filtroRep =
+    selectRep.value
+
+    const filtroVen =
+    selectVen.value
 
     tickets.forEach(t=>{
 
-      if(t.entregado==='si'){
+      if(t.entregado !== 'si') return
 
-        rep +=
-        parseFloat(t.ganancia)||0
+      if(!t.fecha) return
+
+      const f = new Date(t.fecha)
+
+      const mesTicket =
+      `${f.getFullYear()}-${f.getMonth()}`
+
+      if(
+        filtroRep !== 'todos' &&
+        filtroRep !== mesTicket
+      ){
+        return
       }
+
+      rep += parseFloat(t.ganancia)||0
     })
 
     cotizaciones.forEach(c=>{
 
-      if(c.confirmada==='si'){
+      if(c.confirmada !== 'si') return
 
-        ven += Number(c.ganancia||0)
+      if(!c.fecha) return
+
+      const f = new Date(c.fecha)
+
+      const mesVenta =
+      `${f.getFullYear()}-${f.getMonth()}`
+
+      if(
+        filtroVen !== 'todos' &&
+        filtroVen !== mesVenta
+      ){
+        return
       }
+
+      ven += Number(c.ganancia||0)
     })
 
-    document.getElementById('resumen')
-    .innerHTML=`
+    document.getElementById('totalRep')
+    .innerHTML = `$${rep}`
 
-    <div class="panel">
+    document.getElementById('totalVen')
+    .innerHTML = `$${ven}`
 
-      <div class="card">
-      🔧 Reparaciones $${rep}
-      </div>
-
-      <div class="card">
-      🛒 Ventas $${ven}
-      </div>
-
-      <div class="card">
-      💰 Total $${rep+ven}
-      </div>
-
-    </div>
-    `
+    document.getElementById('totalGeneral')
+    .innerHTML = `$${rep + ven}`
 
     let filtrados=[...tickets]
 
@@ -695,194 +623,171 @@ async function cargar(){
       )
     }
 
-    lista.innerHTML=''
-
     const htmlTickets = filtrados.map(t=>{
 
       const nombre=
-  (t.nombre||'')
-  .replace(/'/g,'')
+      (t.nombre||'')
+      .replace(/'/g,'')
 
-  const detalle=
-  (t.detalle||'')
-  .replace(/'/g,"")
-  .replace(/\n/g," ")
+      const fecha=
+      new Date(t.fecha)
+      .toLocaleDateString('es-UY')
 
-  const fecha=
-  new Date(t.fecha)
-  .toLocaleDateString('es-UY')
+      return `
 
-  return `
+      <div class="ticket">
 
-  <div class="ticket">
+        <div class="ticket-top">
 
-    <div class="ticket-top">
+          📅 ${fecha}<br>
 
-      📅 ${fecha}<br>
+          🧾 <b>
+          Ticket ${t.numero}
+          </b><br>
 
-      🧾 <b>
-      Ticket ${t.numero}
-      </b><br>
+          👤 ${nombre}<br>
 
-      👤 ${nombre}<br>
+          📱 ${t.telefono}<br><br>
 
-      📱 ${t.telefono}<br><br>
+          🔧 ${t.problema}
 
-      🔧 ${t.problema}
-
-    </div>
-
-    <div class="datos-ticket">
-
-      <div class="fila-superior">
-
-        <div class="campo-box">
-          👨 Técnico<br>
-
-          <select
-          onchange="guardar('${t.numero}','tecnico',this.value)">
-
-            <option value="">Sin seleccionar</option>
-
-            <option value="PCR"
-            ${t.tecnico==='PCR'?'selected':''}>
-            PCR
-            </option>
-
-            <option value="Javier"
-            ${t.tecnico==='Javier'?'selected':''}>
-            Javier
-            </option>
-
-            <option value="Mauricio"
-            ${t.tecnico==='Mauricio'?'selected':''}>
-            Mauricio
-            </option>
-
-            <option value="Electroshop"
-            ${t.tecnico==='Electroshop'?'selected':''}>
-            Electroshop
-            </option>
-
-          </select>
         </div>
 
-        <div class="campo-box">
-          🛡️ Garantía<br>
+        <div class="datos-ticket">
 
-          <select
-          onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+          <div class="fila-superior">
 
-            <option value="">Sin garantía</option>
+            <div class="campo-box">
+              👨 Técnico<br>
 
-            <option value="3 meses"
-            ${t.garantiaServicio==='3 meses'?'selected':''}>
-            3 meses
-            </option>
+              <select
+              onchange="guardar('${t.numero}','tecnico',this.value)">
 
-            <option value="6 meses"
-            ${t.garantiaServicio==='6 meses'?'selected':''}>
-            6 meses
-            </option>
+                <option value="">Sin seleccionar</option>
 
-          </select>
+                <option value="PCR"
+                ${t.tecnico==='PCR'?'selected':''}>
+                PCR
+                </option>
+
+                <option value="Javier"
+                ${t.tecnico==='Javier'?'selected':''}>
+                Javier
+                </option>
+
+                <option value="Mauricio"
+                ${t.tecnico==='Mauricio'?'selected':''}>
+                Mauricio
+                </option>
+
+                <option value="Electroshop"
+                ${t.tecnico==='Electroshop'?'selected':''}>
+                Electroshop
+                </option>
+
+              </select>
+            </div>
+
+            <div class="campo-box">
+              🛡️ Garantía<br>
+
+              <select
+              onchange="guardar('${t.numero}','garantiaServicio',this.value)">
+
+                <option value="">Sin garantía</option>
+
+                <option value="3 meses"
+                ${t.garantiaServicio==='3 meses'?'selected':''}>
+                3 meses
+                </option>
+
+                <option value="6 meses"
+                ${t.garantiaServicio==='6 meses'?'selected':''}>
+                6 meses
+                </option>
+
+              </select>
+            </div>
+
+          </div>
+
+          <div class="fila-inferior">
+
+            <div class="campo-box">
+              💲 Precio<br>
+
+              <input
+              class="precio"
+              type="number"
+              value="${t.precio||''}"
+              onblur="guardar('${t.numero}','precio',this.value)">
+            </div>
+
+            <div class="campo-box">
+              💰 Ganancia<br>
+
+              <input
+              type="number"
+              value="${t.ganancia||''}"
+              onblur="guardar('${t.numero}','ganancia',this.value)">
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="campo-box">
+        <div
+        class="toggle-detalle"
+        onclick="toggleDetalle('${t.numero}')">
 
-          <button
-          class="btn-pdf"
-          onclick="generarGarantia(
+        📝 Detalle
+
+        </div>
+
+        <div
+        class="detalle-box"
+        id="detalle-${t.numero}">
+
+          <textarea
+          onblur="guardar('${t.numero}','detalle',this.value)">
+${t.detalle||''}</textarea>
+
+        </div>
+
+        <div class="acciones-ticket">
+
+          <button class="btn-secondary"
+          onclick="marcarEntregado('${t.numero}')">
+          ✔ Entregado
+          </button>
+
+          <button class="btn-success"
+          onclick="listoWhatsApp(
           '${t.numero}',
           '${nombre}',
           '${t.telefono}',
-          '${t.garantiaServicio || ''}'
+          this.closest('.ticket').querySelector('.precio').value,
+          this.closest('.ticket').querySelector('textarea').value
           )">
+          📲 WhatsApp
+          </button>
 
-          📄 Garantía electrónica
-
+          <button class="btn-danger"
+          onclick="borrar('${t.numero}','${nombre}')">
+          ❌ Eliminar
           </button>
 
         </div>
 
       </div>
+      `
+    }).join('')
 
-      <div class="fila-inferior">
+    if(lista.innerHTML !== htmlTickets){
 
-        <div class="campo-box">
-          💲 Precio<br>
+      lista.innerHTML = htmlTickets
+    }
 
-          <input
-          class="precio"
-          type="number"
-          value="${t.precio||''}"
-          onblur="guardar('${t.numero}','precio',this.value)">
-        </div>
-
-        <div class="campo-box">
-          💰 Ganancia<br>
-
-          <input
-          type="number"
-          value="${t.ganancia||''}"
-          onblur="guardar('${t.numero}','ganancia',this.value)">
-        </div>
-
-      </div>
-
-    </div>
-
-    <div
-    class="toggle-detalle"
-    onclick="toggleDetalle('${t.numero}')">
-
-    📝 Detalle
-
-    </div>
-
-    <div
-    class="detalle-box"
-    id="detalle-${t.numero}">
-
-      <textarea
-      onblur="guardar('${t.numero}','detalle',this.value)">
-${t.detalle||''}</textarea>
-
-    </div>
-
-    <div class="acciones-ticket">
-
-      <button class="btn-secondary"
-      onclick="marcarEntregado('${t.numero}')">
-      ✔ Entregado
-      </button>
-
-    <button class="btn-success"
-    onclick="listoWhatsApp(
-    '${t.numero}',
-    '${nombre}',
-    '${t.telefono}',
-    this.closest('.ticket').querySelector('.precio').value,
-    this.closest('.ticket').querySelector('textarea').value
-    )">
-    📲 WhatsApp
-    </button>
-
-      <button class="btn-danger"
-      onclick="borrar('${t.numero}','${nombre}')">
-      ❌ Eliminar
-      </button>
-
-    </div>
-
-  </div>
-  `
-}).join('')
-
-if(lista.innerHTML !== htmlTickets){
-
-  lista.innerHTML = htmlTickets
-}
   }catch(e){
 
     console.error(e)
@@ -897,3 +802,4 @@ cargar()
 
 </body>
 </html>
+```
