@@ -510,9 +510,20 @@ async function editar(id){
 }
 
 // ===== BORRAR =====
-async function borrar(id){
+async function borrar(id,nombre,producto){
 
-  if(!confirm('Eliminar?')) return
+  const confirmar = confirm(
+
+`¿Eliminar cotización?
+
+Cliente: ${nombre}
+
+Producto: ${producto}`
+  )
+
+  if(!confirmar){
+    return
+  }
 
   await fetchAuth('/cotizacion/'+id,{
 
@@ -700,7 +711,11 @@ async function cargar(){
       </button>
 
       <button class="btn-danger"
-      onclick="borrar('${c._id}')">
+      onclick="borrar(
+      '${c._id}',
+      '${c.nombre}',
+      '${c.producto}'
+      )"
       ❌ Eliminar
       </button>
 
