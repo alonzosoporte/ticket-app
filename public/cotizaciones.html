@@ -273,7 +273,7 @@ async function generarPDF(c){
   doc.setFont('helvetica','bold')
 
   doc.text(
-    'COTIZACIÓN ELECTRÓNICA',
+    'COTIZACIÓN',
     105,
     11,
     { align:'center' }
@@ -306,12 +306,6 @@ async function generarPDF(c){
       'bold'
     )
 
-    doc.text(
-      'COTIZACIÓN',
-      105,
-      88,
-      { align:'center' }
-    )
 
     // LINEA
     doc.setDrawColor(118,136,161)
