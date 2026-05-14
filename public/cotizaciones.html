@@ -258,7 +258,7 @@ async function generarPDF(c){
   const doc = new jsPDF()
 
 const logo =
-  'https://ticket-pro-xmhs.onrender.com/logo.png'
+'data:image/png;base64,AQUI_PEGA_EL_BASE64'
   // COLORES
   const azul = [0,51,102]
   const gris = [245,245,245]
@@ -285,13 +285,13 @@ try{
   })
 
   doc.addImage(
-    base64,
-    'PNG',
-    15,
-    5,
-    22,
-    22
-  )
+  logo,
+  'PNG',
+  15,
+  5,
+  22,
+  22
+)
 
 }catch(err){
 
