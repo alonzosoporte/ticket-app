@@ -271,21 +271,31 @@ doc.rect(0,0,210,32,'F')
   // ===== LOGO =====
 try{
 
-  const img = new Image()
+  const response = await fetch(logo)
 
-  img.crossOrigin = 'Anonymous'
+  const blob = await response.blob()
 
-  img.src = logo
+  const reader = new FileReader()
 
-  await new Promise(resolve=>{
+  const base64 = await new Promise(resolve => {
 
-    img.onload = resolve
-    img.onerror = resolve
+    reader.onloadend = () => resolve(reader.result)
+
+    reader.readAsDataURL(blob)
   })
+
+  doc.addImage(
+    base64,
+    'PNG',
+    15,
+    5,
+    22,
+    22
+  )
 
 }catch(err){
 
-  console.log('Logo no cargó')
+  console.log('Logo no cargó', err)
 }
 
 // ===== HEADER =====
