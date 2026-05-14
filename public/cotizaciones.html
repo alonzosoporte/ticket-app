@@ -265,6 +265,51 @@ const logo =
   const verde = [40,167,69]
 
   // HEADER
+  // ===== HEADER =====
+doc.setFillColor(...azul)
+doc.rect(0,0,210,32,'F')
+
+// ===== LOGO =====
+try{
+
+  const img = new Image()
+
+  img.crossOrigin = 'Anonymous'
+
+  img.src = logo
+
+  await new Promise(resolve=>{
+
+    img.onload = resolve
+    img.onerror = resolve
+  })
+
+  doc.addImage(
+    img,
+    'PNG',
+    15,
+    5,
+    22,
+    22
+  )
+
+}catch(err){
+
+  console.log('Logo no cargó')
+}
+
+doc.setTextColor(255,255,255)
+
+doc.setFontSize(22)
+
+doc.setFont(undefined,'bold')
+
+doc.text(
+  'COTIZACIÓN ELECTRÓNICA',
+  115,
+  20,
+  {align:'center'}
+)
   // ===== LOGO =====
 try{
 
