@@ -5,6 +5,7 @@
 <title>Cotizaciones PRO</title>
 
 <script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{
@@ -248,7 +249,68 @@ socket.on('actualizar',()=>{
 
   cargar()
 })
+async function generarPDF(c){
+  doc.setFont(undefined,'normal')
+  doc.text(c.nombre || '',55,y)
 
+  y += 15
+
+  doc.setFont(undefined,'bold')
+  doc.text('Producto:',20,y)
+
+  doc.setFont(undefined,'normal')
+  doc.text(c.producto || '',55,y)
+
+  y += 15
+
+  doc.setFont(undefined,'bold')
+  doc.text('Precio:',20,y)
+
+  doc.setFont(undefined,'normal')
+  doc.text(`$${c.precioCliente || 0}`,55,y)
+
+  y += 15
+
+  doc.setFont(undefined,'bold')
+  doc.text('Descripción:',20,y)
+
+  y += 10
+
+  doc.setFont(undefined,'normal')
+
+  const descripcion = doc.splitTextToSize(
+    c.descripcion || '',
+    160
+  )
+
+  doc.text(descripcion,20,y)
+
+  // ===== TRANSFERENCIA =====
+  doc.setFillColor(...verde)
+  doc.roundedRect(15,180,180,35,4,4,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(14)
+
+  doc.text('Transferencia bancaria BROU:',20,195)
+  doc.text('CA 001120656-00002',20,207)
+
+  // ===== FOOTER =====
+  doc.setTextColor(120)
+  doc.setFontSize(10)
+
+  doc.text(
+    'Gracias por confiar en nuestro servicio',
+    105,
+    285,
+    {align:'center'}
+  )
+
+  // ===== DESCARGA =====
+  doc.save(
+    `Cotizacion-${c.nombre || 'cliente'}.pdf`
+  )
+}
 // FETCH AUTH
 function fetchAuth(url,options={}){
 
@@ -709,7 +771,12 @@ async function cargar(){
       onclick="editar('${c._id}')">
       ✏️ Editar
       </button>
-
+         
+<button
+class="btn"
+onclick='generarPDF(${JSON.stringify(c)})'>
+📄 PDF
+</button>
       <button
 class="btn-danger"
 style="
