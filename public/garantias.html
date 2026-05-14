@@ -572,12 +572,18 @@ onchange="subirFoto('${g._id}',this.files[0])">
 
 <button
 class="btn-danger"
+style="
+padding:10px 14px;
+display:inline-flex;
+align-items:center;
+gap:6px;
+font-size:14px;
+"
 onclick="eliminarGarantia(
 '${g._id}',
 '${g.nombre}',
 '${g.producto}'
-)"
-
+)">
 ❌ Eliminar
 
 </button>
