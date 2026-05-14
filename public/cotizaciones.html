@@ -257,86 +257,116 @@ async function generarPDF(c){
 
   const doc = new jsPDF()
 
+  // COLORES
   const azul = [0,51,102]
+  const gris = [245,245,245]
   const verde = [40,167,69]
 
   // HEADER
   doc.setFillColor(...azul)
-  doc.rect(0,0,210,35,'F')
+  doc.rect(0,0,210,32,'F')
 
   doc.setTextColor(255,255,255)
   doc.setFontSize(22)
+  doc.setFont(undefined,'bold')
 
-  doc.text('COTIZACIÓN',105,22,{
-    align:'center'
-  })
+  doc.text(
+    'COTIZACIÓN ELECTRÓNICA',
+    105,
+    20,
+    {align:'center'}
+  )
 
-  // CUERPO
-  let y = 55
+  // CAJA PRINCIPAL
+  doc.setFillColor(...gris)
+
+  doc.roundedRect(
+    15,
+    45,
+    180,
+    90,
+    4,
+    4,
+    'F'
+  )
+
+  let y = 60
 
   doc.setTextColor(0,0,0)
-  doc.setFontSize(13)
 
+  doc.setFontSize(12)
+
+  // CLIENTE
   doc.setFont(undefined,'bold')
-  doc.text('Cliente:',20,y)
+  doc.text('CLIENTE',20,y)
 
   doc.setFont(undefined,'normal')
-  doc.text(c.nombre || '',55,y)
+  doc.text(c.nombre || '',70,y)
 
-  y += 15
+  y += 14
 
+  // CELULAR
   doc.setFont(undefined,'bold')
-  doc.text('Producto:',20,y)
+  doc.text('CELULAR',20,y)
 
   doc.setFont(undefined,'normal')
-  doc.text(c.producto || '',55,y)
+  doc.text(c.celular || '',70,y)
 
-  y += 15
+  y += 14
 
+  // PRODUCTO
   doc.setFont(undefined,'bold')
-  doc.text('Precio:',20,y)
+  doc.text('PRODUCTO',20,y)
 
   doc.setFont(undefined,'normal')
-  doc.text(`$${c.precioCliente || 0}`,55,y)
+  doc.text(c.producto || '',70,y)
 
-  y += 15
+  y += 14
 
+  // PRECIO
   doc.setFont(undefined,'bold')
-  doc.text('Descripción:',20,y)
+  doc.text('PRECIO',20,y)
 
-  y += 10
+  doc.setFont(undefined,'normal')
+  doc.text(`$${c.precioCliente || 0}`,70,y)
+
+  y += 14
+
+  // DESCRIPCION
+  doc.setFont(undefined,'bold')
+  doc.text('DESCRIPCIÓN',20,y)
+
+  y += 8
 
   doc.setFont(undefined,'normal')
 
-  const descripcion = doc.splitTextToSize(
+  const descripcion =
+  doc.splitTextToSize(
     c.descripcion || '',
-    160
+    155
   )
 
   doc.text(descripcion,20,y)
 
-  y += descripcion.length * 7 + 15
-
   // TEXTO VALIDEZ
   doc.setTextColor(220,53,69)
+
   doc.setFontSize(11)
 
   doc.text(
     'Las cotizaciones son válidas por un período de 30 días.',
     20,
-    y
+    155
   )
-
-  y += 20
 
   // TRANSFERENCIA
   doc.setFillColor(...verde)
 
   doc.roundedRect(
     15,
-    y,
+    170,
     180,
-    35,
+    30,
     4,
     4,
     'F'
@@ -344,18 +374,18 @@ async function generarPDF(c){
 
   doc.setTextColor(255,255,255)
 
-  doc.setFontSize(14)
+  doc.setFontSize(13)
 
   doc.text(
     'Transferencia bancaria BROU:',
     20,
-    y + 13
+    183
   )
 
   doc.text(
     'CA 001120656-00002',
     20,
-    y + 25
+    194
   )
 
   // FOOTER
@@ -364,13 +394,13 @@ async function generarPDF(c){
   doc.setFontSize(10)
 
   doc.text(
-    'Gracias por confiar en nuestro servicio',
+    'Gracias por confiar en nuestro servicio.',
     105,
     285,
-    { align:'center' }
+    {align:'center'}
   )
 
-  // DESCARGA
+  // DESCARGAR
   doc.save(
     `Cotizacion-${c.nombre || 'cliente'}.pdf`
   )
