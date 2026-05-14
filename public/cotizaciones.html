@@ -249,7 +249,37 @@ socket.on('actualizar',()=>{
 
   cargar()
 })
+
+// ===== PDF =====
 async function generarPDF(c){
+
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF()
+
+  const azul = [0,51,102]
+  const verde = [40,167,69]
+
+  // HEADER
+  doc.setFillColor(...azul)
+  doc.rect(0,0,210,35,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(22)
+
+  doc.text('COTIZACIÓN',105,22,{
+    align:'center'
+  })
+
+  // CUERPO
+  let y = 55
+
+  doc.setTextColor(0,0,0)
+  doc.setFontSize(13)
+
+  doc.setFont(undefined,'bold')
+  doc.text('Cliente:',20,y)
+
   doc.setFont(undefined,'normal')
   doc.text(c.nombre || '',55,y)
 
@@ -285,32 +315,67 @@ async function generarPDF(c){
 
   doc.text(descripcion,20,y)
 
-  // ===== TRANSFERENCIA =====
+  y += descripcion.length * 7 + 15
+
+  // TEXTO VALIDEZ
+  doc.setTextColor(220,53,69)
+  doc.setFontSize(11)
+
+  doc.text(
+    'Las cotizaciones son válidas por un período de 30 días.',
+    20,
+    y
+  )
+
+  y += 20
+
+  // TRANSFERENCIA
   doc.setFillColor(...verde)
-  doc.roundedRect(15,180,180,35,4,4,'F')
+
+  doc.roundedRect(
+    15,
+    y,
+    180,
+    35,
+    4,
+    4,
+    'F'
+  )
 
   doc.setTextColor(255,255,255)
+
   doc.setFontSize(14)
 
-  doc.text('Transferencia bancaria BROU:',20,195)
-  doc.text('CA 001120656-00002',20,207)
+  doc.text(
+    'Transferencia bancaria BROU:',
+    20,
+    y + 13
+  )
 
-  // ===== FOOTER =====
+  doc.text(
+    'CA 001120656-00002',
+    20,
+    y + 25
+  )
+
+  // FOOTER
   doc.setTextColor(120)
+
   doc.setFontSize(10)
 
   doc.text(
     'Gracias por confiar en nuestro servicio',
     105,
     285,
-    {align:'center'}
+    { align:'center' }
   )
 
-  // ===== DESCARGA =====
+  // DESCARGA
   doc.save(
     `Cotizacion-${c.nombre || 'cliente'}.pdf`
   )
 }
+
 // FETCH AUTH
 function fetchAuth(url,options={}){
 
@@ -326,7 +391,7 @@ function fetchAuth(url,options={}){
   })
 }
 
-// ===== MODAL =====
+// MODAL
 function abrirModal(src){
 
   document.getElementById('modal')
@@ -342,7 +407,7 @@ function cerrarModal(){
   .style.display='none'
 }
 
-// ===== LEER MULTI FOTO =====
+// LEER FOTOS
 function leerFotos(input){
 
   return new Promise(resolve=>{
@@ -377,28 +442,16 @@ function leerFotos(input){
   })
 }
 
-// ===== PROVEEDORES =====
+// PROVEEDORES
 async function cargarProveedores(){
 
   const res =
   await fetchAuth('/proveedores')
 
-  if(!res.ok){
-
-    console.log(
-      'Error proveedores:',
-      res.status
-    )
-
-    return
-  }
-
   const data = await res.json()
 
   proveedor.innerHTML=
   `<option value="">-- Seleccionar proveedor --</option>`
-
-  if(!Array.isArray(data)) return
 
   data.forEach(p=>{
 
@@ -451,7 +504,7 @@ async function eliminarProveedor(){
   cargarProveedores()
 }
 
-// ===== GANANCIA =====
+// GANANCIA
 function calcularGanancia(){
 
   const c =
@@ -469,7 +522,7 @@ calcularGanancia
 precioCliente.oninput =
 calcularGanancia
 
-// ===== GUARDAR =====
+// GUARDAR
 async function guardar(){
 
   const fotos =
@@ -480,17 +533,11 @@ async function guardar(){
   const data = {
 
     nombre:nombre.value,
-
     celular:celular.value,
-
     producto:producto.value,
-
     proveedor:proveedor.value,
-
     costoProveedor:costoProveedor.value,
-
     precioCliente:precioCliente.value,
-
     descripcion:descripcion.value
   }
 
@@ -498,7 +545,6 @@ async function guardar(){
     data.fotos = fotos
   }
 
-  // EDITAR
   if(window.editandoId){
 
     await fetchAuth(
@@ -512,7 +558,6 @@ async function guardar(){
     window.editandoId = null
   }
 
-  // NUEVA
   else{
 
     await fetchAuth('/cotizacion',{
@@ -528,7 +573,7 @@ async function guardar(){
   cargar()
 }
 
-// ===== CONFIRMAR =====
+// CONFIRMAR
 async function confirmar(id){
 
   await fetchAuth('/cotizacion/'+id,{
@@ -543,7 +588,7 @@ async function confirmar(id){
   cargar()
 }
 
-// ===== EDITAR =====
+// EDITAR
 async function editar(id){
 
   const res =
@@ -571,7 +616,7 @@ async function editar(id){
   window.editandoId = id
 }
 
-// ===== BORRAR =====
+// BORRAR
 async function borrar(id,nombre,producto){
 
   const confirmar = confirm(
@@ -595,40 +640,19 @@ Producto: ${producto}`
   cargar()
 }
 
-// ===== CARGAR =====
+// CARGAR
 async function cargar(){
 
   const res =
   await fetchAuth('/cotizaciones')
 
-  if(!res.ok){
-
-    console.log(
-      'ERROR:',
-      res.status
-    )
-
-    return
-  }
-
   const data = await res.json()
-
-  if(!Array.isArray(data)){
-
-    console.log(
-      'NO ES ARRAY:',
-      data
-    )
-
-    return
-  }
 
   lista.innerHTML=''
 
   const filtro =
   buscar.value.toLowerCase()
 
-  // ===== FILTRO ESTADO =====
   const estado =
   document.getElementById('filtroEstado').value
 
@@ -668,9 +692,6 @@ async function cargar(){
 
     const confirmado =
     c.confirmada === 'si'
-
-    const costo =
-    parseFloat(c.costoProveedor)||0
 
     const precio =
     parseFloat(c.precioCliente)||0
@@ -771,28 +792,29 @@ async function cargar(){
       onclick="editar('${c._id}')">
       ✏️ Editar
       </button>
-         
-<button
-class="btn"
-onclick='generarPDF(${JSON.stringify(c)})'>
-📄 PDF
-</button>
+
       <button
-class="btn-danger"
-style="
-display:inline-flex;
-align-items:center;
-gap:6px;
-padding:10px 14px;
-font-size:14px;
-"
-onclick="borrar(
-'${c._id}',
-'${c.nombre}',
-'${c.producto}'
-)">
-❌ Eliminar
-</button>
+      class="btn"
+      onclick='generarPDF(${JSON.stringify(c)})'>
+      📄 PDF
+      </button>
+
+      <button
+      class="btn-danger"
+      style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:10px 14px;
+      font-size:14px;
+      "
+      onclick="borrar(
+      '${c._id}',
+      '${c.nombre}',
+      '${c.producto}'
+      )">
+      ❌ Eliminar
+      </button>
 
       ${
         !confirmado
@@ -814,7 +836,7 @@ onclick="borrar(
   })
 }
 
-// ===== UI =====
+// UI
 function mostrarForm(){
 
   form.style.display='block'
