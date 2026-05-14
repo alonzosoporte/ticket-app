@@ -288,18 +288,31 @@ async function guardarNumeroSerie(id,valor){
 }
 // ===== ELIMINAR =====
 
-async function eliminarGarantia(id){
+async function eliminarGarantia(id,nombre,producto){
 
-  if(!confirm('¿Eliminar garantía?')){
+  const confirmar = confirm(
+
+`¿Eliminar garantía?
+
+Cliente: ${nombre}
+
+Producto: ${producto}`
+  )
+
+  if(!confirmar){
     return
   }
 
   try{
 
-    await fetchAuth('/garantia/'+id,{
+    const res = await fetchAuth('/garantia/'+id,{
 
       method:'DELETE'
     })
+
+    if(!res.ok){
+      throw new Error()
+    }
 
     cargar()
 
@@ -559,7 +572,11 @@ onchange="subirFoto('${g._id}',this.files[0])">
 
 <button
 class="btn-danger"
-onclick="eliminarGarantia('${g._id}')">
+onclick="eliminarGarantia(
+'${g._id}',
+'${g.nombre}',
+'${g.producto}'
+)"
 
 ❌ Eliminar
 
