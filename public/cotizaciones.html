@@ -257,25 +257,61 @@ async function generarPDF(c){
 
   const doc = new jsPDF()
 
+const logo =
+  'https://ticket-pro-xmhs.onrender.com/logo.png'
   // COLORES
   const azul = [0,51,102]
   const gris = [245,245,245]
   const verde = [40,167,69]
 
   // HEADER
-  doc.setFillColor(...azul)
-  doc.rect(0,0,210,32,'F')
+  // ===== LOGO =====
+try{
 
-  doc.setTextColor(255,255,255)
-  doc.setFontSize(22)
-  doc.setFont(undefined,'bold')
+  const img = new Image()
 
-  doc.text(
-    'COTIZACIÓN ELECTRÓNICA',
-    105,
-    20,
-    {align:'center'}
-  )
+  img.crossOrigin = 'Anonymous'
+
+  img.src = logo
+
+  await new Promise(resolve=>{
+
+    img.onload = resolve
+    img.onerror = resolve
+  })
+
+}catch(err){
+
+  console.log('Logo no cargó')
+}
+
+// ===== HEADER =====
+doc.setFillColor(...azul)
+
+doc.rect(0,0,210,32,'F')
+
+// LOGO
+doc.addImage(
+  img,
+  'PNG',
+  15,
+  5,
+  22,
+  22
+)
+
+doc.setTextColor(255,255,255)
+
+doc.setFontSize(22)
+
+doc.setFont(undefined,'bold')
+
+doc.text(
+  'COTIZACIÓN ELECTRÓNICA',
+  115,
+  20,
+  {align:'center'}
+)
 
   // CAJA PRINCIPAL
   doc.setFillColor(...gris)
@@ -826,6 +862,7 @@ async function cargar(){
       <button
       class="btn"
       onclick='generarPDF(${JSON.stringify(c)})'>
+
       📄 PDF
       </button>
 
