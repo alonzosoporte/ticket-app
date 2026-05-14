@@ -880,44 +880,49 @@ async function cargar(){
       ✏️ Editar
       </button>
 
-      <button
-      class="btn"
-      onclick='generarPDF(${JSON.stringify(c)})'>
+      <button class="btn-secondary"
+onclick="editar('${c._id}')">
+✏️ Editar
+</button>
 
-      📄 PDF
-      </button>
+<button
+class="btn-danger"
+style="
+display:inline-flex;
+align-items:center;
+gap:6px;
+padding:10px 14px;
+font-size:14px;
+"
+onclick="borrar(
+'${c._id}',
+'${c.nombre}',
+'${c.producto}'
+)">
+❌ Eliminar
+</button>
 
-      <button
-      class="btn-danger"
-      style="
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:10px 14px;
-      font-size:14px;
-      "
-      onclick="borrar(
-      '${c._id}',
-      '${c.nombre}',
-      '${c.producto}'
-      )">
-      ❌ Eliminar
-      </button>
+${
+  !confirmado
 
-      ${
-        !confirmado
+  ?
 
-        ?
+  `<button class="btn-success"
+  onclick="confirmar('${c._id}')">
+  ✔️ Confirmar
+  </button>`
 
-        `<button class="btn-success"
-        onclick="confirmar('${c._id}')">
-        ✔️ Confirmar
-        </button>`
+  :
 
-        :
+  ''
+}
 
-        ''
-      }
+<button
+class="btn"
+onclick='generarPDF(${JSON.stringify(c)})'>
+
+📄 PDF
+</button>
 
     </div>
     `
