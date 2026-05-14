@@ -598,13 +598,17 @@ app.get('/garantias', auth, async (req, res) => {
 })
 
 // ACTUALIZAR GARANTIA
+// ======================================================
+// ACTUALIZAR GARANTIA
+// ======================================================
 app.put('/garantia/:id', auth, async (req, res) => {
 
   try{
 
     const {
       garantiaHasta,
-      fotoGarantia
+      fotoGarantia,
+      numeroSerie
     } = req.body
 
     const update = {}
@@ -617,6 +621,12 @@ app.put('/garantia/:id', auth, async (req, res) => {
     if(fotoGarantia !== undefined){
       update.fotoGarantia =
       fotoGarantia
+    }
+
+    // ✅ NUEVO
+    if(numeroSerie !== undefined){
+      update.numeroSerie =
+      numeroSerie
     }
 
     await Cotizacion.findByIdAndUpdate(
