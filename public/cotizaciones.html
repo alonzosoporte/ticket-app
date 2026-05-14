@@ -710,14 +710,22 @@ async function cargar(){
       ✏️ Editar
       </button>
 
-      <button class="btn-danger"
-      onclick="borrar(
-      '${c._id}',
-      '${c.nombre}',
-      '${c.producto}'
-      )"
-      ❌ Eliminar
-      </button>
+      <button
+class="btn-danger"
+style="
+display:inline-flex;
+align-items:center;
+gap:6px;
+padding:10px 14px;
+font-size:14px;
+"
+onclick="borrar(
+'${c._id}',
+'${c.nombre}',
+'${c.producto}'
+)">
+❌ Eliminar
+</button>
 
       ${
         !confirmado
