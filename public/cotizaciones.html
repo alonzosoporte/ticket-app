@@ -251,199 +251,222 @@ socket.on('actualizar',()=>{
 })
 
 // ===== PDF =====
+// ===== PDF =====
 async function generarPDF(c){
 
   const { jsPDF } = window.jspdf
 
-  const doc = new jsPDF()
+  const doc = new jsPDF('p','mm','a4')
 
-const logo =
-'data:image/png;base64,AQUI_PEGA_EL_BASE64'
-  // COLORES
-  const azul = [0,51,102]
-  const gris = [245,245,245]
-  const verde = [40,167,69]
+  // FONDO
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
 
-  // ===== HEADER =====
-doc.setFillColor(...azul)
-doc.rect(0,0,210,32,'F')
-
-  // ===== LOGO =====
-try{
-
-  const response = await fetch(logo)
-
-  const blob = await response.blob()
-
-  const reader = new FileReader()
-
-  const base64 = await new Promise(resolve => {
-
-    reader.onloadend = () => resolve(reader.result)
-
-    reader.readAsDataURL(blob)
-  })
-
-  doc.addImage(
-  logo,
-  'PNG',
-  15,
-  5,
-  22,
-  22
-)
-
-}catch(err){
-
-  console.log('Logo no cargó', err)
-}
-
-// ===== HEADER =====
-doc.setFillColor(...azul)
-
-doc.rect(0,0,210,32,'F')
-
-
-doc.setTextColor(255,255,255)
-
-doc.setFontSize(22)
-
-doc.setFont(undefined,'bold')
-
-doc.text(
-  'COTIZACIÓN ELECTRÓNICA',
-  115,
-  20,
-  {align:'center'}
-)
-
-  // CAJA PRINCIPAL
-  doc.setFillColor(...gris)
-
-  doc.roundedRect(
-    15,
-    45,
-    180,
-    90,
-    4,
-    4,
-    'F'
-  )
-
-  let y = 60
-
-  doc.setTextColor(0,0,0)
-
-  doc.setFontSize(12)
-
-  // CLIENTE
-  doc.setFont(undefined,'bold')
-  doc.text('CLIENTE',20,y)
-
-  doc.setFont(undefined,'normal')
-  doc.text(c.nombre || '',70,y)
-
-  y += 14
-
-  // CELULAR
-  doc.setFont(undefined,'bold')
-  doc.text('CELULAR',20,y)
-
-  doc.setFont(undefined,'normal')
-  doc.text(c.celular || '',70,y)
-
-  y += 14
-
-  // PRODUCTO
-  doc.setFont(undefined,'bold')
-  doc.text('PRODUCTO',20,y)
-
-  doc.setFont(undefined,'normal')
-  doc.text(c.producto || '',70,y)
-
-  y += 14
-
-  // PRECIO
-  doc.setFont(undefined,'bold')
-  doc.text('PRECIO',20,y)
-
-  doc.setFont(undefined,'normal')
-  doc.text(`$${c.precioCliente || 0}`,70,y)
-
-  y += 14
-
-  // DESCRIPCION
-  doc.setFont(undefined,'bold')
-  doc.text('DESCRIPCIÓN',20,y)
-
-  y += 8
-
-  doc.setFont(undefined,'normal')
-
-  const descripcion =
-  doc.splitTextToSize(
-    c.descripcion || '',
-    155
-  )
-
-  doc.text(descripcion,20,y)
-
-  // TEXTO VALIDEZ
-  doc.setTextColor(220,53,69)
-
-  doc.setFontSize(11)
-
-  doc.text(
-    'Las cotizaciones son válidas por un período de 30 días.',
-    20,
-    155
-  )
-
-  // TRANSFERENCIA
-  doc.setFillColor(...verde)
-
-  doc.roundedRect(
-    15,
-    170,
-    180,
-    30,
-    4,
-    4,
-    'F'
-  )
+  // HEADER
+  doc.setFillColor(0,51,102)
+  doc.rect(0,0,210,18,'F')
 
   doc.setTextColor(255,255,255)
 
-  doc.setFontSize(13)
+  doc.setFontSize(17)
+
+  doc.setFont('helvetica','bold')
 
   doc.text(
-    'Transferencia bancaria BROU:',
-    20,
-    183
-  )
-
-  doc.text(
-    'CA 001120656-00002',
-    20,
-    194
-  )
-
-  // FOOTER
-  doc.setTextColor(120)
-
-  doc.setFontSize(10)
-
-  doc.text(
-    'Gracias por confiar en nuestro servicio.',
+    'COTIZACIÓN ELECTRÓNICA',
     105,
-    285,
-    {align:'center'}
+    11,
+    { align:'center' }
   )
 
-  // DESCARGAR
-  doc.save(
-    `Cotizacion-${c.nombre || 'cliente'}.pdf`
-  )
+  // ===== LOGO =====
+  const logo = new Image()
+
+  logo.src = 'logo.png'
+
+  logo.onload = () => {
+
+    // LOGO
+    doc.addImage(
+      logo,
+      'PNG',
+      55,
+      22,
+      100,
+      45
+    )
+
+    // TITULO
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(26)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'COTIZACIÓN',
+      105,
+      88,
+      { align:'center' }
+    )
+
+    // LINEA
+    doc.setDrawColor(118,136,161)
+
+    doc.line(15,98,195,98)
+
+    // CAJA
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      20,
+      108,
+      170,
+      82,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      20,
+      108,
+      170,
+      82,
+      5,
+      5
+    )
+
+    // LINEAS INTERNAS
+    doc.setDrawColor(230,230,230)
+
+    doc.line(30,128,180,128)
+    doc.line(30,146,180,146)
+    doc.line(30,164,180,164)
+
+    // LABELS
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('CLIENTE',38,121)
+    doc.text('PRODUCTO',38,139)
+    doc.text('PRECIO',38,157)
+    doc.text('DESCRIPCIÓN',38,175)
+
+    // DATOS
+    doc.setTextColor(15,25,45)
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(15)
+
+    doc.text(
+      String(c.nombre || ''),
+      92,
+      121
+    )
+
+    doc.text(
+      String(c.producto || ''),
+      92,
+      139
+    )
+
+    doc.text(
+      `$${c.precioCliente || 0}`,
+      92,
+      157
+    )
+
+    // DESCRIPCION
+    doc.setFontSize(11)
+
+    const descripcion =
+    doc.splitTextToSize(
+      c.descripcion || '',
+      80
+    )
+
+    doc.text(
+      descripcion,
+      92,
+      175
+    )
+
+    // TEXTO VALIDEZ
+    doc.setTextColor(220,53,69)
+
+    doc.setFontSize(11)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'Las cotizaciones son válidas por un período de 30 días.',
+      20,
+      205
+    )
+
+    // TRANSFERENCIA
+    doc.setFillColor(40,167,69)
+
+    doc.roundedRect(
+      20,
+      218,
+      170,
+      28,
+      4,
+      4,
+      'F'
+    )
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(13)
+
+    doc.text(
+      'Transferencia bancaria BROU:',
+      30,
+      231
+    )
+
+    doc.text(
+      'CA 001120656-00002',
+      30,
+      240
+    )
+
+    // FOOTER
+    doc.setFillColor(0,51,102)
+
+    doc.rect(0,285,210,12,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(13)
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio.',
+      105,
+      293,
+      { align:'center' }
+    )
+
+    // DESCARGAR
+    doc.save(
+      `Cotizacion-${c.nombre || 'cliente'}.pdf`
+    )
+  }
 }
 
 // FETCH AUTH
