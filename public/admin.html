@@ -480,13 +480,18 @@ async function generarGarantia(
 
   logo.onload = () => {
 
-    doc.addImage(
+ const anchoLogo = 80
+
+const altoLogo =
+(logo.height * anchoLogo) / logo.width
+
+doc.addImage(
   logo,
   'PNG',
   65,
   22,
-  80,
-  28
+  anchoLogo,
+  altoLogo
 )
 
     doc.setTextColor(15,25,45)
@@ -696,13 +701,18 @@ async function generarFactura(
 
   logo.onload = () => {
 
- doc.addImage(
+const anchoLogo = 80
+
+const altoLogo =
+(logo.height * anchoLogo) / logo.width
+
+doc.addImage(
   logo,
   'PNG',
   65,
   22,
-  80,
-  28
+  anchoLogo,
+  altoLogo
 )
 
     doc.setTextColor(15,25,45)
