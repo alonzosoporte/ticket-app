@@ -83,6 +83,7 @@ const TicketSchema = new mongoose.Schema({
   detalle:String,
   tecnico:String,
   garantiaServicio:String,
+  reparacionHasta:String,
   precio:String,
   ganancia:String,
   estado:String,
@@ -597,8 +598,7 @@ app.get('/garantias', auth, async (req, res) => {
   }
 })
 
-// ACTUALIZAR GARANTIA
-// ======================================================
+
 // ACTUALIZAR GARANTIA
 // ======================================================
 app.put('/garantia/:id', auth, async (req, res) => {

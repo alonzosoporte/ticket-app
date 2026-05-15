@@ -1133,6 +1133,19 @@ async function cargar(){
               </select>
             </div>
 
+        <div class="campo-box">
+        🛠️ Reparación<br>
+
+  <input
+  type="date"
+  value="${t.reparacionHasta || ''}"
+  onblur="guardar(
+  '${t.numero}',
+  'reparacionHasta',
+  this.value
+  )">
+</div>
+
             <div class="campo-box">
 
   <div style="
