@@ -221,6 +221,11 @@ textarea{
   Todos
   </button>
 
+<button class="btn-pdf"
+onclick="modo='finalizados';cargar()">
+Finalizados
+</button>
+
   <button class="btn-danger"
   onclick="logout()">
   Salir
@@ -1050,13 +1055,21 @@ async function cargar(){
 
     let filtrados=[...tickets]
 
-    if(modo==='pendientes'){
+   if(modo==='pendientes'){
 
-      filtrados=
-      filtrados.filter(
-        t=>t.entregado!=='si'
-      )
-    }
+  filtrados =
+  filtrados.filter(
+    t => t.entregado !== 'si'
+  )
+}
+
+if(modo==='finalizados'){
+
+  filtrados =
+  filtrados.filter(
+    t => t.entregado === 'si'
+  )
+}
 
 const textoBusqueda =
 document.getElementById('busqueda')
