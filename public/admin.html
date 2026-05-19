@@ -204,7 +204,7 @@ textarea{
   <input 
   id="busqueda"
   placeholder="🔍 Buscar..."
-  onblur="cargar()">
+  oninput="cargar()">
 
   <button class="btn"
   onclick="modo='pendientes';cargar()">
@@ -1053,6 +1053,41 @@ async function cargar(){
       )
     }
 
+const textoBusqueda =
+document.getElementById('busqueda')
+.value
+.toLowerCase()
+.trim()
+
+if(textoBusqueda){
+
+  filtrados = filtrados.filter(t => {
+
+    return (
+      String(t.numero || '')
+      .toLowerCase()
+      .includes(textoBusqueda)
+
+      ||
+
+      String(t.nombre || '')
+      .toLowerCase()
+      .includes(textoBusqueda)
+
+      ||
+
+      String(t.telefono || '')
+      .toLowerCase()
+      .includes(textoBusqueda)
+
+      ||
+
+      String(t.problema || '')
+      .toLowerCase()
+      .includes(textoBusqueda)
+    )
+  })
+}
     const htmlTickets = filtrados.map(t=>{
 
       const nombre=
