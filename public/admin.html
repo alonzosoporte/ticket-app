@@ -275,7 +275,23 @@ Finalizados
       </div>
 
     </div>
+    <div class="card">
 
+      📦 REPARACIONES<br><br>
+
+      <select id="mesCantidad" onchange="cargar()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <div id="cantidadRep"
+      style="
+        margin-top:10px;
+        font-size:22px;
+      ">
+      0
+  </div>
+
+</div>
   </div>
 
 </div>
@@ -941,6 +957,9 @@ async function cargar(){
     const selectVen =
     document.getElementById('mesVen')
 
+    const selectCantidad =
+    document.getElementById('mesCantidad')
+
     if(selectRep.options.length <= 1){
 
       const meses = new Set()
@@ -987,14 +1006,21 @@ async function cargar(){
         `<option value="${valor}">
         ${texto}
         </option>`
+
+        selectCantidad.innerHTML +=
+        `<option value="${valor}">
+        ${texto}
+        </option>`
       })
 
       selectRep.value = mesActual
       selectVen.value = mesActual
+      selectCantidad.value = mesActual
     }
 
     let rep = 0
     let ven = 0
+    let cantidadRep = 0
 
     const filtroRep =
     selectRep.value
@@ -1002,17 +1028,26 @@ async function cargar(){
     const filtroVen =
     selectVen.value
 
+    const filtroCantidad =
+    selectCantidad.value
+
     tickets.forEach(t=>{
 
-      if(t.entregado !== 'si') return
-
-      if(!t.fecha) return
+  if(!t.fecha) return
 
       const f = new Date(t.fecha)
 
       const mesTicket =
       `${f.getFullYear()}-${f.getMonth()}`
 
+       if(
+        filtroCantidad === 'todos' ||
+        filtroCantidad === mesTicket
+      ){
+        cantidadRep++
+      }
+    })
+    
       if(
         filtroRep !== 'todos' &&
         filtroRep !== mesTicket
@@ -1021,7 +1056,7 @@ async function cargar(){
       }
 
       rep += parseFloat(t.ganancia)||0
-    })
+     
 
     cotizaciones.forEach(c=>{
 
@@ -1052,6 +1087,9 @@ async function cargar(){
 
     document.getElementById('totalGeneral')
     .innerHTML = `$${rep + ven}`
+
+    document.getElementById('cantidadRep')
+    .innerHTML = cantidadRep
 
     let filtrados=[...tickets]
 
