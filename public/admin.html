@@ -1031,31 +1031,36 @@ async function cargar(){
     const filtroCantidad =
     selectCantidad.value
 
-    tickets.forEach(t=>{
+  tickets.forEach(t=>{
 
   if(!t.fecha) return
 
-      const f = new Date(t.fecha)
+  const f = new Date(t.fecha)
 
-      const mesTicket =
-      `${f.getFullYear()}-${f.getMonth()}`
+  const mesTicket =
+  `${f.getFullYear()}-${f.getMonth()}`
 
-       if(
-        filtroCantidad === 'todos' ||
-        filtroCantidad === mesTicket
-      ){
-        cantidadRep++
-      }
-    })
-    
-      if(
-        filtroRep !== 'todos' &&
-        filtroRep !== mesTicket
-      ){
-        return
-      }
+  // CONTADOR REPARACIONES
+  if(
+    filtroCantidad === 'todos' ||
+    filtroCantidad === mesTicket
+  ){
+    cantidadRep++
+  }
 
-      rep += parseFloat(t.ganancia)||0
+  // TOTAL REPARACIONES $
+  if(t.entregado !== 'si') return
+
+  if(
+    filtroRep !== 'todos' &&
+    filtroRep !== mesTicket
+  ){
+    return
+  }
+
+  rep += parseFloat(t.ganancia) || 0
+
+})
      
 
     cotizaciones.forEach(c=>{
