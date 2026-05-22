@@ -1182,6 +1182,73 @@ if(textoBusqueda){
 
           🔧 ${t.problema}
 
+${(() => {
+
+const historial = tickets
+.filter(h => 
+  h.telefono === t.telefono &&
+  h.numero !== t.numero
+)
+.sort((a,b)=>
+  new Date(b.fecha) - new Date(a.fecha)
+)
+.slice(0,5)
+
+if(historial.length === 0){
+  return ''
+}
+
+return `
+
+<div style="
+margin-top:12px;
+background:#f8f9fc;
+padding:12px;
+border-radius:10px;
+border-left:4px solid #003366;
+">
+
+<b>🕘 Historial del cliente</b>
+
+${historial.map(h => `
+
+<div style="
+margin-top:10px;
+padding:10px;
+background:white;
+border-radius:8px;
+border:1px solid #e1e5ee;
+">
+
+<div>
+<b>Ticket:</b> ${h.numero}
+</div>
+
+<div>
+<b>Fecha:</b>
+${new Date(h.fecha)
+.toLocaleDateString('es-UY')}
+</div>
+
+<div>
+<b>Problema:</b>
+${h.problema || '-'}
+</div>
+
+<div>
+<b>Detalle realizado:</b><br>
+${h.detalle || 'Sin detalle'}
+</div>
+
+</div>
+
+`).join('')}
+
+</div>
+`
+
+})()}
+
         </div>
 
         <div class="datos-ticket">

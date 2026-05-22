@@ -216,7 +216,12 @@ textarea{
   Pendientes
   </button>
 
-  <button class="btn-success"
+<button class="btn-pdf"
+onclick="modo='finalizados';cargar()">
+Finalizados
+</button>
+
+<button class="btn-success"
   onclick="modo='todos';cargar()">
   Todos
   </button>
@@ -270,7 +275,23 @@ textarea{
       </div>
 
     </div>
+    <div class="card">
 
+      🧾 Cantidad de Tickets<br><br>
+
+      <select id="mesCantidad" onchange="cargar()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <div id="cantidadRep"
+      style="
+        margin-top:10px;
+        font-size:22px;
+      ">
+      0
+  </div>
+
+</div>
   </div>
 
 </div>
@@ -936,6 +957,9 @@ async function cargar(){
     const selectVen =
     document.getElementById('mesVen')
 
+    const selectCantidad =
+    document.getElementById('mesCantidad')
+
     if(selectRep.options.length <= 1){
 
       const meses = new Set()
@@ -982,14 +1006,21 @@ async function cargar(){
         `<option value="${valor}">
         ${texto}
         </option>`
+
+        selectCantidad.innerHTML +=
+        `<option value="${valor}">
+        ${texto}
+        </option>`
       })
 
       selectRep.value = mesActual
       selectVen.value = mesActual
+      selectCantidad.value = mesActual
     }
 
     let rep = 0
     let ven = 0
+    let cantidadRep = 0
 
     const filtroRep =
     selectRep.value
@@ -997,26 +1028,40 @@ async function cargar(){
     const filtroVen =
     selectVen.value
 
-    tickets.forEach(t=>{
+    const filtroCantidad =
+    selectCantidad.value
 
-      if(t.entregado !== 'si') return
+  tickets.forEach(t=>{
 
-      if(!t.fecha) return
+  if(!t.fecha) return
 
-      const f = new Date(t.fecha)
+  const f = new Date(t.fecha)
 
-      const mesTicket =
-      `${f.getFullYear()}-${f.getMonth()}`
+  const mesTicket =
+  `${f.getFullYear()}-${f.getMonth()}`
 
-      if(
-        filtroRep !== 'todos' &&
-        filtroRep !== mesTicket
-      ){
-        return
-      }
+  // CONTADOR REPARACIONES
+  if(
+    filtroCantidad === 'todos' ||
+    filtroCantidad === mesTicket
+  ){
+    cantidadRep++
+  }
 
-      rep += parseFloat(t.ganancia)||0
-    })
+  // TOTAL REPARACIONES $
+  if(t.entregado !== 'si') return
+
+  if(
+    filtroRep !== 'todos' &&
+    filtroRep !== mesTicket
+  ){
+    return
+  }
+
+  rep += parseFloat(t.ganancia) || 0
+
+})
+     
 
     cotizaciones.forEach(c=>{
 
@@ -1048,15 +1093,26 @@ async function cargar(){
     document.getElementById('totalGeneral')
     .innerHTML = `$${rep + ven}`
 
+    document.getElementById('cantidadRep')
+    .innerHTML = cantidadRep
+
     let filtrados=[...tickets]
 
-    if(modo==='pendientes'){
+   if(modo==='pendientes'){
 
-      filtrados=
-      filtrados.filter(
-        t=>t.entregado!=='si'
-      )
-    }
+  filtrados =
+  filtrados.filter(
+    t => t.entregado !== 'si'
+  )
+}
+
+if(modo==='finalizados'){
+
+  filtrados =
+  filtrados.filter(
+    t => t.entregado === 'si'
+  )
+}
 
 const textoBusqueda =
 document.getElementById('busqueda')
