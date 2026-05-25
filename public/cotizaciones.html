@@ -665,14 +665,15 @@ async function confirmar(id){
 
   await fetchAuth('/cotizacion/'+id,{
 
-    method:'PUT',
+  method:'PUT',
 
-    body:JSON.stringify({
-      confirmada:'si'
-    })
+  body:JSON.stringify({
+    confirmada:'si'
   })
+})
 
-  cargar()
+// REDIRECCIONAR A GARANTIAS
+window.location.href = 'garantias.html'
 }
 
 // EDITAR
