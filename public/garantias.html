@@ -216,8 +216,19 @@ async function subirFoto(id,files){
     const garantia =
     garantias.find(g => g._id === id)
 
-    let fotosActuales =
-    garantia.fotosGarantia || []
+    let fotosActuales = []
+
+if(
+garantia.fotosGarantia &&
+Array.isArray(garantia.fotosGarantia)
+){
+  fotosActuales = garantia.fotosGarantia
+}
+
+else if(garantia.fotoGarantia){
+
+  fotosActuales = [garantia.fotoGarantia]
+}
 
     for(let i = 0; i < files.length; i++){
 
@@ -247,8 +258,7 @@ async function subirFoto(id,files){
       body:JSON.stringify({
 
         fotoGarantia:fotosActuales[0],
-
-        fotosGarantia:fotosActuales
+fotosGarantia:[...fotosActuales]
       })
     })
 
@@ -628,11 +638,6 @@ multiple
 accept="image/*"
 onchange="subirFoto('${g._id}',this.files)">  
 
-<input
-type="file"
-multiple
-accept="image/*"
-onchange="subirFoto('${g._id}',this.files)">
 
 <br><br>
 
