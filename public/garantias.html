@@ -224,13 +224,15 @@ async function subirFoto(id,files){
       const file = files[i]
 
       const base64 =
-      await new Promise(resolve => {
+      await new Promise(resolve=>{
 
         const reader =
         new FileReader()
 
-        reader.onload = () =>
-        resolve(reader.result)
+        reader.onload = ()=>{
+
+          resolve(reader.result)
+        }
 
         reader.readAsDataURL(file)
       })
@@ -243,6 +245,9 @@ async function subirFoto(id,files){
       method:'PUT',
 
       body:JSON.stringify({
+
+        fotoGarantia:fotosActuales[0],
+
         fotosGarantia:fotosActuales
       })
     })
@@ -251,9 +256,9 @@ async function subirFoto(id,files){
 
   }catch(err){
 
-    console.error(err)
+    console.log(err)
 
-    alert('❌ Error subiendo fotos')
+    alert('Error subiendo fotos')
   }
 }
 // ===== GUARDAR FECHA =====
@@ -569,12 +574,12 @@ await res.json()
           ''
         }
 
-        <b>📸 Garantía:</b>
+   <b>📸 Garantía:</b>
 
-        <br><br>
+<br><br>
 
-        ${
-         (g.fotosGarantia || []).length
+${
+(g.fotosGarantia && g.fotosGarantia.length)
 
 ?
 
@@ -593,6 +598,21 @@ onclick="abrirModal('${f}')">
 
 :
 
+g.fotoGarantia
+
+?
+
+`
+<img
+src="${g.fotoGarantia}"
+class="thumb"
+onclick="abrirModal('${g.fotoGarantia}')">
+
+<br><br>
+`
+
+:
+
 `
 <span style="color:#888">
 Sin foto
@@ -600,28 +620,13 @@ Sin foto
 
 <br><br>
 `
+}
 
-          ?
-
-          `
-          <img
-          src="${g.fotoGarantia}"
-          class="thumb"
-          onclick="abrirModal('${g.fotoGarantia}')">
-
-          <br><br>
-          `
-
-          :
-
-          `
-          <span style="color:#888">
-          Sin foto
-          </span>
-
-          <br><br>
-          `
-        }
+<input
+type="file"
+multiple
+accept="image/*"
+onchange="subirFoto('${g._id}',this.files)">  
 
 <input
 type="file"
