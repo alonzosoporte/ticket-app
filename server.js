@@ -121,6 +121,7 @@ const CotizacionSchema = new mongoose.Schema({
 
   garantiaHasta:String,
   fotoGarantia:String,
+  fotosGarantia:[String],
 
   confirmada:{
     type:String,
@@ -608,23 +609,36 @@ app.put('/garantia/:id', auth, async (req, res) => {
     const {
       garantiaHasta,
       fotoGarantia,
+      fotosGarantia,
       numeroSerie
     } = req.body
 
     const update = {}
 
+    // FECHA GARANTÍA
     if(garantiaHasta !== undefined){
+
       update.garantiaHasta =
       garantiaHasta
     }
 
+    // FOTO VIEJA (compatibilidad)
     if(fotoGarantia !== undefined){
+
       update.fotoGarantia =
       fotoGarantia
     }
 
-    // ✅ NUEVO
+    // NUEVAS MULTI FOTOS
+    if(fotosGarantia !== undefined){
+
+      update.fotosGarantia =
+      fotosGarantia
+    }
+
+    // NÚMERO DE SERIE
     if(numeroSerie !== undefined){
+
       update.numeroSerie =
       numeroSerie
     }
@@ -633,7 +647,9 @@ app.put('/garantia/:id', auth, async (req, res) => {
 
       req.params.id,
 
-      { $set:update }
+      {
+        $set:update
+      }
     )
 
     io.emit('actualizar')
