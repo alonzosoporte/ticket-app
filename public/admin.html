@@ -275,6 +275,7 @@ Finalizados
       </div>
 
     </div>
+
     <div class="card">
 
       🧾 Cantidad de Tickets<br><br>
@@ -289,9 +290,28 @@ Finalizados
         font-size:22px;
       ">
       0
-  </div>
+      </div>
 
-</div>
+    </div>
+
+    <div class="card">
+
+      🛒 Cantidad de Ventas<br><br>
+
+      <select id="mesCantidadVentas" onchange="cargar()">
+        <option value="todos">Todos los meses</option>
+      </select>
+
+      <div id="cantidadVentas"
+      style="
+        margin-top:10px;
+        font-size:22px;
+      ">
+      0
+      </div>
+
+    </div>
+
   </div>
 
 </div>
@@ -1008,6 +1028,11 @@ async function cargar(){
         </option>`
 
         selectCantidad.innerHTML +=
+        document.getElementById('mesCantidadVentas').innerHTML +=
+        `<option value="${valor}">
+        ${texto}
+        </option>`
+
         `<option value="${valor}">
         ${texto}
         </option>`
@@ -1018,20 +1043,24 @@ async function cargar(){
       selectCantidad.value = mesActual
     }
 
-    let rep = 0
-    let ven = 0
-    let cantidadRep = 0
+ let rep = 0
+let ven = 0
+let cantidadRep = 0
+let cantidadVentas = 0
 
-    const filtroRep =
-    selectRep.value
+const filtroRep =
+selectRep.value
 
-    const filtroVen =
-    selectVen.value
+const filtroVen =
+selectVen.value
 
-    const filtroCantidad =
-    selectCantidad.value
+const filtroCantidad =
+selectCantidad.value
 
-  tickets.forEach(t=>{
+const filtroCantidadVentas =
+document.getElementById('mesCantidadVentas').value
+
+tickets.forEach(t=>{
 
   if(!t.fecha) return
 
@@ -1061,40 +1090,52 @@ async function cargar(){
   rep += parseFloat(t.ganancia) || 0
 
 })
-     
 
-    cotizaciones.forEach(c=>{
+cotizaciones.forEach(c=>{
 
-      if(c.confirmada !== 'si') return
+  if(c.confirmada !== 'si') return
 
-      if(!c.fecha) return
+  if(!c.fecha) return
 
-      const f = new Date(c.fecha)
+  const f = new Date(c.fecha)
 
-      const mesVenta =
-      `${f.getFullYear()}-${f.getMonth()}`
+  const mesVenta =
+  `${f.getFullYear()}-${f.getMonth()}`
 
-      if(
-        filtroVen !== 'todos' &&
-        filtroVen !== mesVenta
-      ){
-        return
-      }
+  // CONTADOR VENTAS
+  if(
+    filtroCantidadVentas === 'todos' ||
+    filtroCantidadVentas === mesVenta
+  ){
+    cantidadVentas++
+  }
 
-      ven += Number(c.ganancia||0)
-    })
+  // TOTAL VENTAS $
+  if(
+    filtroVen !== 'todos' &&
+    filtroVen !== mesVenta
+  ){
+    return
+  }
 
-    document.getElementById('totalRep')
-    .innerHTML = `$${rep}`
+  ven += Number(c.ganancia||0)
 
-    document.getElementById('totalVen')
-    .innerHTML = `$${ven}`
+})
 
-    document.getElementById('totalGeneral')
-    .innerHTML = `$${rep + ven}`
+document.getElementById('totalRep')
+.innerHTML = `$${rep}`
 
-    document.getElementById('cantidadRep')
-    .innerHTML = cantidadRep
+document.getElementById('totalVen')
+.innerHTML = `$${ven}`
+
+document.getElementById('totalGeneral')
+.innerHTML = `$${rep + ven}`
+
+document.getElementById('cantidadRep')
+.innerHTML = cantidadRep
+
+document.getElementById('cantidadVentas')
+.innerHTML = cantidadVentas
 
     let filtrados=[...tickets]
 
