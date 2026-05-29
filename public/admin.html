@@ -1028,15 +1028,15 @@ async function cargar(){
         </option>`
 
         selectCantidad.innerHTML +=
-        document.getElementById('mesCantidadVentas').innerHTML +=
         `<option value="${valor}">
         ${texto}
         </option>`
 
+        document.getElementById('mesCantidadVentas').innerHTML +=
         `<option value="${valor}">
         ${texto}
         </option>`
-      })
+        })
 
       selectRep.value = mesActual
       selectVen.value = mesActual
