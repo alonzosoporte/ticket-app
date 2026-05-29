@@ -722,11 +722,19 @@ Producto: ${producto}`
 
   await fetchAuth('/cotizacion/'+id,{
 
-    method:'DELETE'
-  })
+  method:'PUT',
 
-  cargar()
-}
+  body:JSON.stringify({
+    confirmada:'si'
+  })
+})
+
+// ESPERAR UN POCO
+setTimeout(()=>{
+
+  window.location.href='garantias.html'
+
+},500)
 
 // CARGAR
 async function cargar(){
