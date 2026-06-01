@@ -373,7 +373,131 @@ async function generarGarantia(
       { align:'center' }
     )
 
-    doc.setDrawColor(118,136,161)
+  doc.setDrawColor(118,136,161)
+doc.line(15,102,195,102)
+
+doc.setFillColor(255,255,255)
+
+doc.roundedRect(
+  20,
+  112,
+  170,
+  78,
+  5,
+  5,
+  'F'
+)
+
+doc.setDrawColor(220,220,220)
+
+doc.roundedRect(
+  20,
+  112,
+  170,
+  78,
+  5,
+  5
+)
+
+doc.setDrawColor(230,230,230)
+
+doc.line(30,140,180,140)
+doc.line(30,158,180,158)
+
+doc.setTextColor(40,40,40)
+
+doc.setFontSize(11)
+
+doc.setFont('helvetica','bold')
+
+doc.text('CLIENTE',38,132)
+
+doc.text('PRODUCTO',38,150)
+
+doc.text('GARANTÍA',38,168)
+
+doc.setTextColor(15,25,45)
+
+doc.setFontSize(16)
+
+doc.setFont('helvetica','normal')
+
+doc.text(
+  String(nombre || ''),
+  92,
+  132
+)
+
+doc.text(
+  String(producto || ''),
+  92,
+  150
+)
+
+doc.text(
+  garantia || 'Sin garantía',
+  92,
+  168
+)
+
+doc.setFillColor(248,250,252)
+
+doc.roundedRect(
+  20,
+  200,
+  170,
+  40,
+  4,
+  4,
+  'F'
+)
+
+doc.setDrawColor(160,175,195)
+
+doc.roundedRect(
+  20,
+  200,
+  170,
+  40,
+  4,
+  4
+)
+
+doc.setTextColor(55,55,55)
+
+doc.setFontSize(11)
+
+doc.setFont('helvetica','normal')
+
+doc.text(
+  'La garantía cubre únicamente fallas de funcionamiento',
+  26,
+  212
+)
+
+doc.text(
+  'por defectos técnicos. No cubre daños ocasionados',
+  26,
+  220
+)
+
+doc.text(
+  'por golpes, caídas, humedad, manipulación indebida,',
+  26,
+  228
+)
+
+doc.text(
+  'variaciones eléctricas, uso incorrecto o reparaciones',
+  26,
+  236
+)
+
+doc.text(
+  'realizadas por terceros.',
+  26,
+  244
+)
 
 doc.line(20,252,190,252)
 
