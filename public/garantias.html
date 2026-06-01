@@ -430,7 +430,7 @@ async function generarGarantia(
       20,
       200,
       170,
-      40,
+      32,
       4,
       4,
       'F'
@@ -442,7 +442,7 @@ async function generarGarantia(
       20,
       200,
       170,
-      40,
+      32,
       4,
       4
     )
@@ -487,6 +487,10 @@ async function generarGarantia(
 
     doc.line(20,255,190,255)
 
+doc.setDrawColor(210,210,210)
+
+doc.line(105,260,105,288)
+
 doc.setTextColor(35,35,35)
 
 doc.setFont('helvetica','bold')
@@ -495,42 +499,43 @@ doc.setFontSize(10)
 doc.text(
   'FECHA DE VENTA CONFIRMADA',
   28,
-  266
+  267
 )
 
 doc.text(
   'SOPORTE TÉCNICO',
   128,
-  266
+  267
 )
 
 doc.setFont('helvetica','normal')
-doc.setFontSize(12)
+
+doc.setFontSize(13)
 
 doc.text(
   fechaVenta || new Date().toLocaleDateString('es-UY'),
-  45,
-  276
+  42,
+  278
 )
 
 doc.text(
   'Julian Alonzo',
-  142,
-  276
+  138,
+  277
 )
 
 doc.setFontSize(10)
 
 doc.text(
   '098555861',
-  147,
-  283
+  145,
+  284
 )
 
 doc.text(
   'alonzosoporte@gmail.com',
   122,
-  289
+  290
 )
 
 doc.setDrawColor(200,200,200)
