@@ -485,57 +485,57 @@ async function generarGarantia(
 
     doc.setDrawColor(118,136,161)
 
-    doc.line(12,255,198,255)
+    doc.line(20,255,190,255)
 
-    doc.setTextColor(40,40,40)
+doc.setTextColor(35,35,35)
 
-    doc.setFontSize(9)
+doc.setFont('helvetica','bold')
+doc.setFontSize(10)
 
-    doc.setFont('helvetica','bold')
+doc.text(
+  'FECHA DE VENTA CONFIRMADA',
+  28,
+  266
+)
 
-    doc.text(
-      'FECHA DE VENTA CONFIRMADA',
-      30,
-      268
-    )
+doc.text(
+  'SOPORTE TÉCNICO',
+  128,
+  266
+)
 
-    doc.setFont('helvetica','normal')
+doc.setFont('helvetica','normal')
+doc.setFontSize(12)
 
-    doc.setFontSize(11)
+doc.text(
+  fechaVenta || new Date().toLocaleDateString('es-UY'),
+  45,
+  276
+)
 
-    doc.text(
-      fechaVenta || new Date().toLocaleDateString('es-UY'),
-      40,
-      278
-    )
+doc.text(
+  'Julian Alonzo',
+  142,
+  276
+)
 
-    doc.line(105,262,105,282)
+doc.setFontSize(10)
 
-    doc.setFontSize(9)
+doc.text(
+  '098555861',
+  147,
+  283
+)
 
-    doc.setFont('helvetica','bold')
+doc.text(
+  'alonzosoporte@gmail.com',
+  122,
+  289
+)
 
-    doc.text(
-      'SOPORTE TÉCNICO JULIAN ALONZO',
-      125,
-      268
-    )
+doc.setDrawColor(200,200,200)
 
-    doc.setFont('helvetica','normal')
-
-    doc.setFontSize(10)
-
-    doc.text(
-      '098555861',
-      137,
-      276
-    )
-
-    doc.text(
-      'alonzosoporte@gmail.com',
-      116,
-      282
-    )
+doc.line(105,260,105,290)
 
     doc.setFillColor(118,136,161)
 
