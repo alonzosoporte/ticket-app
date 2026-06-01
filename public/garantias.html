@@ -374,122 +374,12 @@ async function generarGarantia(
     )
 
     doc.setDrawColor(118,136,161)
-    doc.line(15,102,195,102)
 
-    doc.setFillColor(255,255,255)
-
-    doc.roundedRect(
-      20,
-      112,
-      170,
-      78,
-      5,
-      5,
-      'F'
-    )
-
-    doc.setDrawColor(220,220,220)
-
-    doc.roundedRect(
-      20,
-      112,
-      170,
-      78,
-      5,
-      5
-    )
-
-    doc.setDrawColor(230,230,230)
-
-    doc.line(30,136,180,136)
-    doc.line(30,154,180,154)
-    doc.line(30,172,180,172)
-
-    doc.setTextColor(40,40,40)
-
-    doc.setFontSize(11)
-
-    doc.setFont('helvetica','bold')
-
-    
-    doc.text('CLIENTE',38,132)
-    doc.text('PRODUCTO',38,150)
-    doc.text('GARANTÍA',38,168)
-
-    doc.setTextColor(15,25,45)
-
-    doc.setFontSize(18)
-
-    doc.text(String(nombre),92,132)
-    doc.text(String(producto),92,150)
-    doc.text(garantia || 'Sin garantía',92,168)
-
-    doc.setFillColor(248,250,252)
-
-    doc.roundedRect(
-      20,
-      200,
-      170,
-      40,
-      4,
-      4,
-      'F'
-    )
-
-    doc.setDrawColor(160,175,195)
-
-    doc.roundedRect(
-      20,
-      200,
-      170,
-      40,
-      4,
-      4
-    )
-
-    doc.setTextColor(55,55,55)
-
-    doc.setFontSize(11)
-
-    doc.setFont('helvetica','normal')
-
-    doc.text(
-      'La garantía cubre únicamente fallas de funcionamiento',
-      26,
-      212
-    )
-
-    doc.text(
-      'por defectos técnicos. No cubre daños ocasionados',
-      26,
-      220
-    )
-
-    doc.text(
-      'por golpes, caídas, humedad, manipulación indebida,',
-      26,
-      228
-    )
-
-    doc.text(
-      'variaciones eléctricas, uso incorrecto o reparaciones',
-      26,
-      236
-    )
-
-    doc.text(
-      'realizadas por terceros.',
-      26,
-      244
-    )
-
-    doc.setDrawColor(118,136,161)
-
- doc.line(20,262,190,262)
+doc.line(20,252,190,252)
 
 doc.setDrawColor(210,210,210)
 
-doc.line(105,267,105,292)
+doc.line(105,257,105,281)
 
 doc.setTextColor(35,35,35)
 
@@ -499,28 +389,28 @@ doc.setFontSize(10)
 doc.text(
   'FECHA DE VENTA CONFIRMADA',
   28,
-  275
+  267
 )
 
 doc.text(
   'SOPORTE TÉCNICO',
-  128,
+  130,
   267
 )
 
 doc.setFont('helvetica','normal')
 
-doc.setFontSize(13)
+doc.setFontSize(12)
 
 doc.text(
   fechaVenta || new Date().toLocaleDateString('es-UY'),
-  42,
-  286
+  45,
+  278
 )
 
 doc.text(
   'Julian Alonzo',
-  138,
+  136,
   277
 )
 
@@ -529,13 +419,13 @@ doc.setFontSize(10)
 doc.text(
   '098555861',
   145,
-  292
+  284
 )
 
 doc.text(
   'alonzosoporte@gmail.com',
-  122,
-  287
+  121,
+  290
 )
 
 doc.setDrawColor(200,200,200)
