@@ -308,6 +308,256 @@ async function guardarFecha(id,valor){
     alert('❌ Error guardando fecha')
   }
 }
+async function generarGarantia(
+  numero,
+  nombre,
+  producto,
+  garantia,
+  fechaVenta
+){
+
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF('p','mm','a4')
+
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
+
+  doc.setFillColor(118,136,161)
+  doc.rect(0,0,210,18,'F')
+
+  doc.setTextColor(255,255,255)
+  doc.setFontSize(17)
+  doc.setFont('helvetica','bold')
+
+  doc.text(
+    'GARANTÍA DE VENTA',
+    105,
+    11,
+    { align:'center' }
+  )
+
+  const logo = new Image()
+
+  logo.src = 'logo.png'
+
+  logo.onload = () => {
+
+    const anchoLogo = 80
+
+    const altoLogo =
+    (logo.height * anchoLogo) / logo.width
+
+    doc.addImage(
+      logo,
+      'PNG',
+      65,
+      22,
+      anchoLogo,
+      altoLogo
+    )
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(28)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'GARANTÍA DE VENTA',
+      105,
+      92,
+      { align:'center' }
+    )
+
+    doc.setDrawColor(118,136,161)
+    doc.line(15,102,195,102)
+
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      78,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      20,
+      112,
+      170,
+      78,
+      5,
+      5
+    )
+
+    doc.setDrawColor(230,230,230)
+
+    doc.line(30,136,180,136)
+    doc.line(30,154,180,154)
+    doc.line(30,172,180,172)
+
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('TICKET',38,128)
+    doc.text('CLIENTE',38,146)
+    doc.text('PRODUCTO',38,164)
+    doc.text('GARANTÍA',38,182)
+
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(18)
+
+    doc.text(String(numero),92,128)
+    doc.text(String(nombre),92,146)
+    doc.text(String(producto),92,164)
+    doc.text(garantia || 'Sin garantía',92,182)
+
+    doc.setFillColor(248,250,252)
+
+    doc.roundedRect(
+      20,
+      200,
+      170,
+      40,
+      4,
+      4,
+      'F'
+    )
+
+    doc.setDrawColor(160,175,195)
+
+    doc.roundedRect(
+      20,
+      200,
+      170,
+      40,
+      4,
+      4
+    )
+
+    doc.setTextColor(55,55,55)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','normal')
+
+    doc.text(
+      'La garantía cubre únicamente fallas de funcionamiento',
+      26,
+      212
+    )
+
+    doc.text(
+      'por defectos técnicos. No cubre daños ocasionados',
+      26,
+      220
+    )
+
+    doc.text(
+      'por golpes, caídas, humedad, manipulación indebida,',
+      26,
+      228
+    )
+
+    doc.text(
+      'variaciones eléctricas, uso incorrecto o reparaciones',
+      26,
+      236
+    )
+
+    doc.text(
+      'realizadas por terceros.',
+      26,
+      244
+    )
+
+    doc.setDrawColor(118,136,161)
+
+    doc.line(12,255,198,255)
+
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(9)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text(
+      'FECHA DE VENTA CONFIRMADA',
+      30,
+      268
+    )
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(11)
+
+    doc.text(
+      fechaVenta || new Date().toLocaleDateString('es-UY'),
+      40,
+      278
+    )
+
+    doc.line(105,262,105,282)
+
+    doc.setFontSize(9)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text(
+      'SOPORTE TÉCNICO JULIAN ALONZO',
+      125,
+      268
+    )
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(10)
+
+    doc.text(
+      '098555861',
+      137,
+      276
+    )
+
+    doc.text(
+      'alonzosoporte@gmail.com',
+      116,
+      282
+    )
+
+    doc.setFillColor(118,136,161)
+
+    doc.rect(0,285,210,12,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(14)
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio.',
+      105,
+      293,
+      { align:'center' }
+    )
+
+    doc.save(
+      `garantia-${nombre}.pdf`
+    )
+  }
+}
 
 // ===== GUARDAR NUMERO SERIE =====
 async function guardarNumeroSerie(id,valor){
@@ -640,6 +890,34 @@ onchange="subirFoto('${g._id}',this.files)">
 
 
 <br><br>
+<button
+class="btn-success"
+style="
+padding:10px 14px;
+display:inline-flex;
+align-items:center;
+gap:6px;
+font-size:14px;
+margin-right:8px;
+"
+onclick="generarGarantia(
+  '${g._id}',
+  '${g.nombre}',
+  '${g.producto}',
+  '${
+    g.garantiaHasta
+    ? g.garantiaHasta.split('T')[0]
+    : 'Sin garantía'
+  }',
+  '${
+    g.fecha
+    ? new Date(g.fecha)
+      .toLocaleDateString('es-UY')
+    : ''
+  }'
+)">
+📄 Descargar PDF
+</button>
 
 <button
 class="btn-danger"

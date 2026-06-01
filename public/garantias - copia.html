@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 body{
   font-family:Arial;
   background:#eef2f7;
@@ -86,7 +87,6 @@ button{
   transform:scale(1.1);
 }
 
-/* MODAL */
 .modal{
   display:none;
   position:fixed;
@@ -105,17 +105,20 @@ button{
   max-height:90%;
   border-radius:10px;
 }
+
 </style>
 </head>
 
 <body>
 
 <script>
+
 const TOKEN = localStorage.getItem('token')
 
 if(!TOKEN){
   location.href='login.html'
 }
+
 </script>
 
 <h2>🛡️ Garantías</h2>
@@ -132,9 +135,19 @@ if(!TOKEN){
   oninput="cargar()">
 
   <select id="filtroEstado" onchange="cargar()">
-    <option value="vigentes">🟢 Vigentes</option>
-    <option value="vencidas">🔴 Vencidas</option>
-    <option value="todas">📋 Todas</option>
+
+    <option value="vigentes">
+    🟢 Vigentes
+    </option>
+
+    <option value="vencidas">
+    🔴 Vencidas
+    </option>
+
+    <option value="todas">
+    📋 Todas
+    </option>
+
   </select>
 
 </div>
@@ -142,19 +155,25 @@ if(!TOKEN){
 <div id="lista"></div>
 
 <!-- MODAL -->
-<div id="modal" class="modal" onclick="cerrarModal()">
+<div id="modal"
+class="modal"
+onclick="cerrarModal()">
+
   <img id="imgGrande">
+
 </div>
 
 <script>
 
 const API='https://ticket-pro-xmhs.onrender.com'
 
-// FETCH AUTH
+// ===== FETCH AUTH =====
 function fetchAuth(url,options={}){
 
   return fetch(API+url,{
+
     ...options,
+
     headers:{
       'Content-Type':'application/json',
       'Authorization':'Bearer '+TOKEN,
@@ -166,55 +185,117 @@ function fetchAuth(url,options={}){
 // ===== MODAL =====
 function abrirModal(src){
 
-  document.getElementById('modal').style.display='flex'
-  document.getElementById('imgGrande').src=src
+  document.getElementById('modal')
+  .style.display='flex'
+
+  document.getElementById('imgGrande')
+  .src=src
 }
 
 function cerrarModal(){
 
-  document.getElementById('modal').style.display='none'
+  document.getElementById('modal')
+  .style.display='none'
 }
 
 // ===== FOTO GARANTIA =====
-async function subirFoto(id,file){
+async function subirFoto(id,files){
 
-  if(!file) return
-
-  const r=new FileReader()
-
-  r.onload=async()=>{
-
-    await fetchAuth('/garantia/'+id,{
-      method:'PUT',
-      body:JSON.stringify({
-        fotoGarantia:r.result
-      })
-    })
-
-    cargar()
-  }
-
-  r.readAsDataURL(file)
-}
-
-// ===== GUARDAR FECHA =====
-async function guardarFecha(id,valor){
-
-  if(!valor){
-    alert('⚠️ Seleccioná una fecha')
+  if(!files || files.length === 0){
     return
   }
 
   try{
 
-    const res=await fetchAuth('/garantia/'+id,{
+    const res =
+    await fetchAuth('/garantias')
+
+    const garantias =
+    await res.json()
+
+    const garantia =
+    garantias.find(g => g._id === id)
+
+    let fotosActuales = []
+
+if(
+garantia.fotosGarantia &&
+Array.isArray(garantia.fotosGarantia)
+){
+  fotosActuales = garantia.fotosGarantia
+}
+
+else if(garantia.fotoGarantia){
+
+  fotosActuales = [garantia.fotoGarantia]
+}
+
+    for(let i = 0; i < files.length; i++){
+
+      const file = files[i]
+
+      const base64 =
+      await new Promise(resolve=>{
+
+        const reader =
+        new FileReader()
+
+        reader.onload = ()=>{
+
+          resolve(reader.result)
+        }
+
+        reader.readAsDataURL(file)
+      })
+
+      fotosActuales.push(base64)
+    }
+
+    await fetchAuth('/garantia/'+id,{
+
       method:'PUT',
+
+      body:JSON.stringify({
+
+        fotoGarantia:fotosActuales[0],
+fotosGarantia:[...fotosActuales]
+      })
+    })
+
+    cargar()
+
+  }catch(err){
+
+    console.log(err)
+
+    alert('Error subiendo fotos')
+  }
+}
+// ===== GUARDAR FECHA =====
+async function guardarFecha(id,valor){
+
+  if(!valor){
+
+    alert('⚠️ Seleccioná una fecha')
+
+    return
+  }
+
+  try{
+
+    const res =
+    await fetchAuth('/garantia/'+id,{
+
+      method:'PUT',
+
       body:JSON.stringify({
         garantiaHasta:valor
       })
     })
 
-    if(!res.ok) throw new Error()
+    if(!res.ok){
+      throw new Error()
+    }
 
     alert('✅ Garantía actualizada')
 
@@ -228,32 +309,95 @@ async function guardarFecha(id,valor){
   }
 }
 
+// ===== GUARDAR NUMERO SERIE =====
+async function guardarNumeroSerie(id,valor){
+
+  try{
+
+    const res =
+    await fetchAuth('/garantia/'+id,{
+
+      method:'PUT',
+
+      body:JSON.stringify({
+        numeroSerie:valor
+      })
+    })
+
+    if(!res.ok){
+      throw new Error()
+    }
+
+  }catch(err){
+
+    console.error(err)
+
+    alert('❌ Error guardando número de serie')
+  }
+}
+// ===== ELIMINAR =====
+
+async function eliminarGarantia(id,nombre,producto){
+
+  const confirmar = confirm(
+
+`¿Eliminar garantía?
+
+Cliente: ${nombre}
+
+Producto: ${producto}`
+  )
+
+  if(!confirmar){
+    return
+  }
+
+  try{
+
+    const res = await fetchAuth('/garantia/'+id,{
+
+      method:'DELETE'
+    })
+
+    if(!res.ok){
+      throw new Error()
+    }
+
+    cargar()
+
+  }catch(err){
+
+    console.error(err)
+
+    alert('❌ Error eliminando garantía')
+  }
+}
 // ===== CARGAR =====
 async function cargar(){
 
   try{
 
-    const res=await fetchAuth('/garantias')
+    const res =
+    await fetchAuth('/garantias')
 
-    const text=await res.text()
 
-    console.log(text)
+  let data =
+await res.json()
 
-    let data=JSON.parse(text)
-
-    const filtroTexto=
+    const filtroTexto =
     document.getElementById('buscar')
     .value
     .toLowerCase()
 
-    const estado=
+    const estado =
     document.getElementById('filtroEstado')
     .value
 
-    const hoy=new Date()
+    const hoy =
+    new Date()
 
-    // BUSCADOR
-    data=data.filter(g=>
+    // ===== BUSCADOR =====
+    data = data.filter(g=>
 
       (g.nombre||'')
       .toLowerCase()
@@ -269,71 +413,123 @@ async function cargar(){
       (g.producto||'')
       .toLowerCase()
       .includes(filtroTexto)
+
+      ||
+
+      (g.numeroSerie||'')
+      .toLowerCase()
+      .includes(filtroTexto)
     )
 
-    // FILTRO ESTADO
-    data=data.filter(g=>{
+    // ===== FILTRO ESTADO =====
+    data = data.filter(g=>{
 
       if(!g.garantiaHasta){
-        return estado!=='vencidas'
+
+        return estado !== 'vencidas'
       }
 
-      const f=new Date(g.garantiaHasta)
+      const f =
+      new Date(g.garantiaHasta)
 
       if(estado==='vigentes'){
-        return f>=hoy
+        return f >= hoy
       }
 
       if(estado==='vencidas'){
-        return f<hoy
+        return f < hoy
       }
 
       return true
     })
 
-    const lista=document.getElementById('lista')
+    const lista =
+    document.getElementById('lista')
 
     lista.innerHTML=''
 
     data.forEach(g=>{
 
-      const fechaGarantia=g.garantiaHasta
+      const fechaGarantia =
+      g.garantiaHasta
 
-      const vencida=
+      const vencida =
       fechaGarantia &&
-      new Date(fechaGarantia)<hoy
+      new Date(fechaGarantia) < hoy
 
-      const fotos=
+      const fotos =
       g.fotos ||
       (g.foto ? [g.foto] : [])
 
-      lista.innerHTML+=`
+      lista.innerHTML += `
 
       <div class="card">
 
         📅 ${
           g.fecha
-          ? new Date(g.fecha).toLocaleString('es-UY')
+          ? new Date(g.fecha)
+          .toLocaleString('es-UY')
           : ''
-        }<br><br>
+        }
 
-        <b>${g.producto}</b><br>
+        <br><br>
 
-        🏢 ${g.proveedor || ''}<br>
+        <b>${g.producto || ''}</b>
 
-        👤 ${g.nombre} (${g.celular})<br><br>
+        <br><br>
+
+        📦 <b>Número de serie:</b>
+
+        <br><br>
+
+        <input
+        type="text"
+
+        value="${g.numeroSerie || ''}"
+
+        placeholder="Ingresar número de serie"
+
+        onblur="guardarNumeroSerie('${g._id}',this.value)"
+
+        style="
+        width:100%;
+        max-width:320px;
+        padding:10px;
+        border-radius:10px;
+        border:2px solid #7688A1;
+        margin-bottom:15px;
+        ">
+
+        <br>
+
+        🏢 ${g.proveedor || ''}
+
+        <br>
+
+        👤 ${g.nombre || ''}
+        (${g.celular || ''})
+
+        <br><br>
 
         💸 $${g.costoProveedor || 0}
+
         →
-        💰 $${g.precioCliente || 0}<br>
+
+        💰 $${g.precioCliente || 0}
+
+        <br>
 
         🧾 Ganancia
         $${g.ganancia || ((g.precioCliente||0)-(g.costoProveedor||0))}
+
         <br><br>
 
-        🛡️ <b>Garantía hasta:</b><br><br>
+        🛡️ <b>Garantía hasta:</b>
 
-        <input type="date"
+        <br><br>
+
+        <input
+        type="date"
 
         value="${
           g.garantiaHasta
@@ -346,7 +542,9 @@ async function cargar(){
         style="border:2px solid #007bff">
 
         <span class="${
-          vencida ? 'vencida' : 'vigente'
+          vencida
+          ? 'vencida'
+          : 'vigente'
         }">
 
           ${
@@ -365,48 +563,101 @@ async function cargar(){
           ?
 
           `
-          <b>📦 Producto:</b><br><br>
+          <b>📦 Producto:</b>
+
+          <br><br>
 
           ${fotos.map(f=>`
+
             <img
             src="${f}"
             class="thumb"
             onclick="abrirModal('${f}')">
+
           `).join('')}
 
           <br><br>
           `
 
-          : ''
-        }
-
-        <b>📸 Garantía:</b><br><br>
-
-        ${
-          g.fotoGarantia
-
-          ?
-
-          `
-          <img
-          src="${g.fotoGarantia}"
-          class="thumb"
-          onclick="abrirModal('${g.fotoGarantia}')">
-          <br><br>
-          `
-
           :
 
-          `
-          <span style="color:#888">
-          Sin foto
-          </span><br><br>
-          `
+          ''
         }
 
-        <input
-        type="file"
-        onchange="subirFoto('${g._id}',this.files[0])">
+   <b>📸 Garantía:</b>
+
+<br><br>
+
+${
+(g.fotosGarantia && g.fotosGarantia.length)
+
+?
+
+`
+${g.fotosGarantia.map(f=>`
+
+<img
+src="${f}"
+class="thumb"
+onclick="abrirModal('${f}')">
+
+`).join('')}
+
+<br><br>
+`
+
+:
+
+g.fotoGarantia
+
+?
+
+`
+<img
+src="${g.fotoGarantia}"
+class="thumb"
+onclick="abrirModal('${g.fotoGarantia}')">
+
+<br><br>
+`
+
+:
+
+`
+<span style="color:#888">
+Sin foto
+</span>
+
+<br><br>
+`
+}
+
+<input
+type="file"
+multiple
+accept="image/*"
+onchange="subirFoto('${g._id}',this.files)">  
+
+
+<br><br>
+
+<button
+class="btn-danger"
+style="
+padding:10px 14px;
+display:inline-flex;
+align-items:center;
+gap:6px;
+font-size:14px;
+"
+onclick="eliminarGarantia(
+'${g._id}',
+'${g.nombre}',
+'${g.producto}'
+)">
+❌ Eliminar
+
+</button>
 
       </div>
       `
