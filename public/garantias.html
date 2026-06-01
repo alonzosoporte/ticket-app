@@ -309,7 +309,7 @@ async function guardarFecha(id,valor){
   }
 }
 async function generarGarantia(
-  numero,
+
   nombre,
   producto,
   garantia,
@@ -411,19 +411,18 @@ async function generarGarantia(
 
     doc.setFont('helvetica','bold')
 
-    doc.text('TICKET',38,128)
-    doc.text('CLIENTE',38,146)
-    doc.text('PRODUCTO',38,164)
-    doc.text('GARANTÍA',38,182)
+    
+    doc.text('CLIENTE',38,132)
+    doc.text('PRODUCTO',38,150)
+    doc.text('GARANTÍA',38,168)
 
     doc.setTextColor(15,25,45)
 
     doc.setFontSize(18)
 
-    doc.text(String(numero),92,128)
-    doc.text(String(nombre),92,146)
-    doc.text(String(producto),92,164)
-    doc.text(garantia || 'Sin garantía',92,182)
+    doc.text(String(nombre),92,132)
+    doc.text(String(producto),92,150)
+    doc.text(garantia || 'Sin garantía',92,168)
 
     doc.setFillColor(248,250,252)
 
@@ -902,7 +901,7 @@ font-size:14px;
 margin-right:8px;
 "
 onclick="generarGarantia(
-  '${g.numero || ""}',
+  
   '${g.nombre}',
   '${g.producto}',
   '${
