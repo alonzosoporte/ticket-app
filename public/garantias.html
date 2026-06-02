@@ -557,7 +557,7 @@ doc.setDrawColor(200,200,200)
 
 doc.line(105,260,105,290)
 
-    doc.setFillColor(118,136,161)
+        doc.setFillColor(118,136,161)
 
     doc.rect(0,288,210,9,'F')
 
@@ -575,8 +575,10 @@ doc.line(105,260,105,290)
     doc.save(
       `garantia-${nombre}.pdf`
     )
-  }
-}
+
+  } // ← cierra logo.onload
+
+} // ← cierra generarGarantia
 
 // ===== GUARDAR NUMERO SERIE =====
 async function guardarNumeroSerie(id,valor){
