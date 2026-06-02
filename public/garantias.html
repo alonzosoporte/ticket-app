@@ -938,18 +938,14 @@ font-size:14px;
 margin-right:8px;
 "
 onclick='generarGarantia(
-  ${JSON.stringify(g.nombre || "")},
-  ${JSON.stringify(g.producto || "")},
-  ${JSON.stringify(
-    g.garantiaHasta
-      ? g.garantiaHasta.split("T")[0]
-      : "Sin garantía"
-  )},
-  ${JSON.stringify(
-    g.fecha
-      ? new Date(g.fecha).toLocaleDateString("es-UY")
-      : ""
-  )}
+"${(g.nombre || '').replace(/"/g, '&quot;')}",
+"${(g.producto || '').replace(/"/g, '&quot;')}",
+"${g.garantiaHasta
+  ? g.garantiaHasta.split("T")[0]
+  : "Sin garantía"}",
+"${g.fecha
+  ? new Date(g.fecha).toLocaleDateString("es-UY")
+  : ""}"
 )'
 >
 📄 Descargar PDF
