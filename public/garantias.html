@@ -927,59 +927,6 @@ font-size:14px;
 margin-right:8px;
 "
 
-<button
-class="btn-success"
-style="
-padding:10px 14px;
-display:inline-flex;
-align-items:center;
-gap:6px;
-font-size:14px;
-margin-right:8px;
-"
-onclick='generarGarantia(
-"${(g.nombre || '').replace(/"/g, '&quot;')}",
-"${(g.producto || '').replace(/"/g, '&quot;')}",
-"${g.garantiaHasta
-  ? g.garantiaHasta.split("T")[0]
-  : "Sin garantía"}",
-"${g.fecha
-  ? new Date(g.fecha).toLocaleDateString("es-UY")
-  : ""}"
-)'
->
-📄 Descargar PDF
-</button>
-
-<button
-class="btn-danger"
-style="
-padding:10px 14px;
-display:inline-flex;
-align-items:center;
-gap:6px;
-font-size:14px;
-"
-onclick="eliminarGarantia(
-'${g._id}',
-'${g.nombre}',
-'${g.producto}'
-)">
-❌ Eliminar
-
-</button>
-
-      </div>
-      `
-    })
-
-  }catch(err){
-
-    console.error(err)
-
-    alert('❌ Error cargando garantías')
-  }
-}
 
 // INIT
 cargar()
