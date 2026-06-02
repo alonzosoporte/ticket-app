@@ -584,6 +584,8 @@ app.get('/garantias', auth, async (req, res) => {
     await Cotizacion.find({
 
       confirmada:'si'
+        fotoGarantia:'',
+        fotosGarantia:[]
 
     }).sort({ _id:-1 })
 
