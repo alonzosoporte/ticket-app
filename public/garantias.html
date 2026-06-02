@@ -926,23 +926,34 @@ gap:6px;
 font-size:14px;
 margin-right:8px;
 "
-onclick="generarGarantia(
-  
-  '${g.nombre}',
-  '${g.producto}',
-  '${
+
+<button
+class="btn-success"
+style="
+padding:10px 14px;
+display:inline-flex;
+align-items:center;
+gap:6px;
+font-size:14px;
+margin-right:8px;
+"
+onclick='generarGarantia(
+  ${JSON.stringify(g.nombre || "")},
+  ${JSON.stringify(g.producto || "")},
+  ${JSON.stringify(
     g.garantiaHasta
-    ? g.garantiaHasta.split('T')[0]
-    : 'Sin garantía'
-  }',
-  '${
+    ? g.garantiaHasta.split("T")[0]
+    : "Sin garantía"
+  )},
+  ${JSON.stringify(
     g.fecha
-    ? new Date(g.fecha)
-      .toLocaleDateString('es-UY')
-    : ''
-  }'
-)">
+    ? new Date(g.fecha).toLocaleDateString("es-UY")
+    : ""
+  )}
+)'
+>
 📄 Descargar PDF
+
 </button>
 
 <button
