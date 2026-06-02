@@ -219,17 +219,17 @@ async function subirFoto(id,files){
 
     let fotosActuales = []
 
-if(
-garantia.fotosGarantia &&
-Array.isArray(garantia.fotosGarantia)
-){
-  fotosActuales = garantia.fotosGarantia
-}
+    if(
+      garantia.fotosGarantia &&
+      Array.isArray(garantia.fotosGarantia)
+    ){
+      fotosActuales = garantia.fotosGarantia
+    }
 
-else if(garantia.fotoGarantia){
+    else if(garantia.fotoGarantia){
 
-  fotosActuales = [garantia.fotoGarantia]
-}
+      fotosActuales = [garantia.fotoGarantia]
+    }
 
     for(let i = 0; i < files.length; i++){
 
@@ -252,17 +252,17 @@ else if(garantia.fotoGarantia){
       fotosActuales.push(base64)
     }
 
-  await fetchAuth('/garantia/'+id,{
+    await fetchAuth('/garantia/'+id,{
 
-  method:'PUT',
+      method:'PUT',
 
-  body:JSON.stringify({
+      body:JSON.stringify({
 
-    fotoGarantia:fotosActuales[0],
-    fotosGarantia:[...fotosActuales]
+        fotoGarantia:fotosActuales[0],
+        fotosGarantia:[...fotosActuales]
 
-  })
-})
+      })
+    })
 
     cargar()
 
@@ -273,6 +273,7 @@ else if(garantia.fotoGarantia){
     alert('Error subiendo fotos')
   }
 }
+
 // ===== GUARDAR FECHA =====
 async function guardarFecha(id,valor){
 
