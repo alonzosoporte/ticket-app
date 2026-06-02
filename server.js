@@ -582,9 +582,7 @@ app.get('/garantias', auth, async (req, res) => {
 
 const data =
 await Cotizacion.find({
-
   confirmada:'si'
-
 }).sort({ _id:-1 })
 
     res.json(data)
