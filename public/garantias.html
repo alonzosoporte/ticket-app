@@ -918,24 +918,26 @@ onchange="subirFoto('${g._id}',this.files)">
 <br><br>
 <br><br>
 
+<br><br>
+
 <button
 class="btn-success"
-onclick='generarGarantia(
-`${g.nombre || ""}`,
-`${g.producto || ""}`,
-`${g.garantiaHasta ? g.garantiaHasta.split("T")[0] : "Sin garantía"}`,
-`${g.fecha ? new Date(g.fecha).toLocaleDateString("es-UY") : ""}`
-)'>
+onclick="generarGarantia(
+'${(g.nombre || '').replace(/'/g,'')}',
+'${(g.producto || '').replace(/'/g,'')}',
+'${g.garantiaHasta ? g.garantiaHasta.split('T')[0] : 'Sin garantía'}',
+'${g.fecha ? new Date(g.fecha).toLocaleDateString('es-UY') : ''}'
+)">
 📄 Descargar PDF
 </button>
 
 <button
 class="btn-danger"
-onclick='eliminarGarantia(
-`${g._id}`,
-`${g.nombre || ""}`,
-`${g.producto || ""}`
-)'>
+onclick="eliminarGarantia(
+'${g._id}',
+'${(g.nombre || '').replace(/'/g,'')}',
+'${(g.producto || '').replace(/'/g,'')}'
+)">
 ❌ Eliminar
 </button>
 
