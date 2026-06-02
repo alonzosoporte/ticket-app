@@ -251,7 +251,8 @@ else if(garantia.fotoGarantia){
 
       fotosActuales.push(base64)
     }
-await fetchAuth('/garantia/'+id,{
+
+  await fetchAuth('/garantia/'+id,{
 
   method:'PUT',
 
@@ -591,9 +592,11 @@ async function guardarNumeroSerie(id,valor){
       method:'PUT',
 
       body:JSON.stringify({
-        numeroSerie:valor
-      })
-    })
+
+      fotoGarantia:fotosActuales[0],
+      fotosGarantia:[...fotosActuales]
+
+})
 
     if(!res.ok){
       throw new Error()
