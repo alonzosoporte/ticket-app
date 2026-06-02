@@ -583,6 +583,7 @@ doc.line(105,260,105,290)
 } // ← cierra generarGarantia
 
 // ===== GUARDAR NUMERO SERIE =====
+// ===== GUARDAR NUMERO SERIE =====
 async function guardarNumeroSerie(id,valor){
 
   try{
@@ -593,11 +594,10 @@ async function guardarNumeroSerie(id,valor){
       method:'PUT',
 
       body:JSON.stringify({
+        numeroSerie:valor
+      })
 
-      fotoGarantia:fotosActuales[0],
-      fotosGarantia:[...fotosActuales]
-
-})
+    })
 
     if(!res.ok){
       throw new Error()
