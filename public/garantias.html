@@ -823,11 +823,12 @@ await res.json()
           : 'vigente'
         }">
 
-          ${
-            fechaGarantia
-            ? fechaGarantia.split('T')[0]
-            : 'Sin fecha'
-          }
+        ${
+        fechaGarantia
+        ? new Date(fechaGarantia)
+            .toLocaleDateString('en-US')
+        : 'Sin fecha'
+}
 
         </span>
 
@@ -925,7 +926,9 @@ class="btn-success"
 onclick="generarGarantia(
 '${(g.nombre || '').replace(/'/g,'')}',
 '${(g.producto || '').replace(/'/g,'')}',
-'${g.garantiaHasta ? g.garantiaHasta.split('T')[0] : 'Sin garantía'}',
+'${g.garantiaHasta 
+? new Date(g.garantiaHasta).toLocaleDateString("en-US")
+: "Sin garantía"}',
 '${g.fecha ? new Date(g.fecha).toLocaleDateString('es-UY') : ''}'
 )">
 📄 Descargar PDF
