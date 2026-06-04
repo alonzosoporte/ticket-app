@@ -5,6 +5,7 @@
 <title>Cotizaciones PRO</title>
 
 <script src="https://ticket-pro-xmhs.onrender.com/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{
@@ -249,6 +250,219 @@ socket.on('actualizar',()=>{
   cargar()
 })
 
+// ===== PDF =====
+// ===== PDF =====
+async function generarPDF(c){
+
+  const { jsPDF } = window.jspdf
+
+  const doc = new jsPDF('p','mm','a4')
+
+  // FONDO
+  doc.setFillColor(245,247,250)
+  doc.rect(0,0,210,297,'F')
+
+  // HEADER
+  doc.setFillColor(0,51,102)
+  doc.rect(0,0,210,18,'F')
+
+  doc.setTextColor(255,255,255)
+
+  doc.setFontSize(17)
+
+  doc.setFont('helvetica','bold')
+
+  doc.text(
+    'COTIZACIÓN',
+    105,
+    11,
+    { align:'center' }
+  )
+
+  // ===== LOGO =====
+  const logo = new Image()
+
+  logo.src = 'logo.png'
+
+  logo.onload = () => {
+
+    // LOGO
+    doc.addImage(
+      logo,
+      'PNG',
+      55,
+      22,
+      100,
+      45
+    )
+
+    // TITULO
+    doc.setTextColor(15,25,45)
+
+    doc.setFontSize(26)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+
+    // LINEA
+    doc.setDrawColor(118,136,161)
+
+    doc.line(15,98,195,98)
+
+    // CAJA
+    doc.setFillColor(255,255,255)
+
+    doc.roundedRect(
+      20,
+      108,
+      170,
+      82,
+      5,
+      5,
+      'F'
+    )
+
+    doc.setDrawColor(220,220,220)
+
+    doc.roundedRect(
+      20,
+      108,
+      170,
+      82,
+      5,
+      5
+    )
+
+    // LINEAS INTERNAS
+    doc.setDrawColor(230,230,230)
+
+    doc.line(30,128,180,128)
+    doc.line(30,146,180,146)
+    doc.line(30,164,180,164)
+
+    // LABELS
+    doc.setTextColor(40,40,40)
+
+    doc.setFontSize(11)
+
+    doc.setFont('helvetica','bold')
+
+    doc.text('CLIENTE',38,121)
+    doc.text('PRODUCTO',38,139)
+    doc.text('PRECIO',38,157)
+    doc.text('DESCRIPCIÓN',38,175)
+
+    // DATOS
+    doc.setTextColor(15,25,45)
+
+    doc.setFont('helvetica','normal')
+
+    doc.setFontSize(15)
+
+    doc.text(
+      String(c.nombre || ''),
+      92,
+      121
+    )
+
+    doc.text(
+      String(c.producto || ''),
+      92,
+      139
+    )
+
+    doc.text(
+      `$${c.precioCliente || 0}`,
+      92,
+      157
+    )
+
+    // DESCRIPCION
+    doc.setFontSize(11)
+
+    const descripcion =
+    doc.splitTextToSize(
+      c.descripcion || '',
+      80
+    )
+
+    doc.text(
+      descripcion,
+      92,
+      175
+    )
+
+    // TEXTO VALIDEZ
+    doc.setTextColor(220,53,69)
+
+    doc.setFontSize(11)
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    )
+
+    doc.text(
+      'Las cotizaciones son válidas por un período de 30 días.',
+      20,
+      205
+    )
+
+    // TRANSFERENCIA
+    doc.setFillColor(40,167,69)
+
+    doc.roundedRect(
+      20,
+      218,
+      170,
+      28,
+      4,
+      4,
+      'F'
+    )
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(13)
+
+    doc.text(
+      'Transferencia bancaria BROU:',
+      30,
+      231
+    )
+
+    doc.text(
+      'CA 001120656-00002',
+      30,
+      240
+    )
+
+    // FOOTER
+    doc.setFillColor(0,51,102)
+
+    doc.rect(0,285,210,12,'F')
+
+    doc.setTextColor(255,255,255)
+
+    doc.setFontSize(13)
+
+    doc.text(
+      'Gracias por confiar en nuestro servicio.',
+      105,
+      293,
+      { align:'center' }
+    )
+
+    // DESCARGAR
+    doc.save(
+      `Cotizacion-${c.nombre || 'cliente'}.pdf`
+    )
+  }
+}
+
 // FETCH AUTH
 function fetchAuth(url,options={}){
 
@@ -264,7 +478,7 @@ function fetchAuth(url,options={}){
   })
 }
 
-// ===== MODAL =====
+// MODAL
 function abrirModal(src){
 
   document.getElementById('modal')
@@ -280,7 +494,7 @@ function cerrarModal(){
   .style.display='none'
 }
 
-// ===== LEER MULTI FOTO =====
+// LEER FOTOS
 function leerFotos(input){
 
   return new Promise(resolve=>{
@@ -315,28 +529,16 @@ function leerFotos(input){
   })
 }
 
-// ===== PROVEEDORES =====
+// PROVEEDORES
 async function cargarProveedores(){
 
   const res =
   await fetchAuth('/proveedores')
 
-  if(!res.ok){
-
-    console.log(
-      'Error proveedores:',
-      res.status
-    )
-
-    return
-  }
-
   const data = await res.json()
 
   proveedor.innerHTML=
   `<option value="">-- Seleccionar proveedor --</option>`
-
-  if(!Array.isArray(data)) return
 
   data.forEach(p=>{
 
@@ -389,7 +591,7 @@ async function eliminarProveedor(){
   cargarProveedores()
 }
 
-// ===== GANANCIA =====
+// GANANCIA
 function calcularGanancia(){
 
   const c =
@@ -407,7 +609,7 @@ calcularGanancia
 precioCliente.oninput =
 calcularGanancia
 
-// ===== GUARDAR =====
+// GUARDAR
 async function guardar(){
 
   const fotos =
@@ -418,17 +620,11 @@ async function guardar(){
   const data = {
 
     nombre:nombre.value,
-
     celular:celular.value,
-
     producto:producto.value,
-
     proveedor:proveedor.value,
-
     costoProveedor:costoProveedor.value,
-
     precioCliente:precioCliente.value,
-
     descripcion:descripcion.value
   }
 
@@ -436,7 +632,6 @@ async function guardar(){
     data.fotos = fotos
   }
 
-  // EDITAR
   if(window.editandoId){
 
     await fetchAuth(
@@ -450,7 +645,6 @@ async function guardar(){
     window.editandoId = null
   }
 
-  // NUEVA
   else{
 
     await fetchAuth('/cotizacion',{
@@ -466,22 +660,23 @@ async function guardar(){
   cargar()
 }
 
-// ===== CONFIRMAR =====
+// CONFIRMAR
 async function confirmar(id){
 
   await fetchAuth('/cotizacion/'+id,{
 
-    method:'PUT',
+  method:'PUT',
 
-    body:JSON.stringify({
-      confirmada:'si'
-    })
+  body:JSON.stringify({
+    confirmada:'si'
   })
+})
 
-  cargar()
+// REDIRECCIONAR A GARANTIAS
+window.location.href = 'garantias.html'
 }
 
-// ===== EDITAR =====
+// EDITAR
 async function editar(id){
 
   const res =
@@ -509,53 +704,52 @@ async function editar(id){
   window.editandoId = id
 }
 
-// ===== BORRAR =====
-async function borrar(id){
+// BORRAR
+async function borrar(id,nombre,producto){
 
-  if(!confirm('Eliminar?')) return
+  const confirmar = confirm(
+
+`¿Eliminar cotización?
+
+Cliente: ${nombre}
+
+Producto: ${producto}`
+  )
+
+  if(!confirmar){
+    return
+  }
 
   await fetchAuth('/cotizacion/'+id,{
 
-    method:'DELETE'
-  })
+  method:'PUT',
 
-  cargar()
+  body:JSON.stringify({
+    confirmada:'si'
+  })
+})
+
+// ESPERAR UN POCO
+setTimeout(()=>{
+
+  window.location.href='garantias.html'
+
+},500)
 }
 
-// ===== CARGAR =====
+// CARGAR
 async function cargar(){
 
   const res =
   await fetchAuth('/cotizaciones')
 
-  if(!res.ok){
-
-    console.log(
-      'ERROR:',
-      res.status
-    )
-
-    return
-  }
-
   const data = await res.json()
-
-  if(!Array.isArray(data)){
-
-    console.log(
-      'NO ES ARRAY:',
-      data
-    )
-
-    return
-  }
 
   lista.innerHTML=''
 
   const filtro =
   buscar.value.toLowerCase()
 
-  // ===== FILTRO ESTADO =====
   const estado =
   document.getElementById('filtroEstado').value
 
@@ -595,9 +789,6 @@ async function cargar(){
 
     const confirmado =
     c.confirmada === 'si'
-
-    const costo =
-    parseFloat(c.costoProveedor)||0
 
     const precio =
     parseFloat(c.precioCliente)||0
@@ -695,36 +886,55 @@ async function cargar(){
       <br><br>
 
       <button class="btn-secondary"
-      onclick="editar('${c._id}')">
-      ✏️ Editar
-      </button>
+onclick="editar('${c._id}')">
+✏️ Editar
+</button>
 
-      <button class="btn-danger"
-      onclick="borrar('${c._id}')">
-      ❌ Eliminar
-      </button>
+<button
+class="btn-danger"
+style="
+display:inline-flex;
+align-items:center;
+gap:6px;
+padding:10px 14px;
+font-size:14px;
+"
+onclick="borrar(
+'${c._id}',
+'${c.nombre}',
+'${c.producto}'
+)">
+❌ Eliminar
+</button>
 
-      ${
-        !confirmado
+${
+  !confirmado
 
-        ?
+  ?
 
-        `<button class="btn-success"
-        onclick="confirmar('${c._id}')">
-        ✔️ Confirmar
-        </button>`
+  `<button class="btn-success"
+  onclick="confirmar('${c._id}')">
+  ✔️ Confirmar
+  </button>`
 
-        :
+  :
 
-        ''
-      }
+  ''
+}
+
+<button
+class="btn"
+onclick='generarPDF(${JSON.stringify(c)})'>
+
+📄 PDF
+</button>
 
     </div>
     `
   })
 }
 
-// ===== UI =====
+// UI
 function mostrarForm(){
 
   form.style.display='block'
