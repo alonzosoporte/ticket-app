@@ -359,7 +359,7 @@ async function generarPDF(c){
     // DATOS
     doc.setTextColor(15,25,45)
 
-    doc.setFont('helvetica','normal')
+    doc.setFont('helvetica','bold')
 
     doc.setFontSize(15)
 
@@ -425,7 +425,7 @@ doc.text(
 
 doc.setFont(
   'helvetica',
-  'normal'
+  'bold'
 )
 
 const descripcion =
@@ -464,6 +464,7 @@ doc.text(
 )
 
 doc.text(
+  doc.setFont('helvetica','bold')
   'CA 001120656-00002',
   30,
   262
@@ -474,6 +475,7 @@ doc.text(
     doc.rect(0,285,210,12,'F')
 
     doc.setTextColor(255,255,255)
+    doc.setFont('helvetica','bold')
 
     doc.setFontSize(13)
 
