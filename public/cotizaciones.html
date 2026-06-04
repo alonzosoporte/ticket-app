@@ -353,8 +353,7 @@ async function generarPDF(c){
     doc.text('CLIENTE',38,121)
     doc.text('PRODUCTO',38,139)
     doc.text('FECHA COTIZACIÓN',38,157)
-    doc.text('PRECIO',38,175)
-    doc.text('DESCRIPCIÓN',38,193)
+    doc.text('PRECIO',38,170)
 
     // DATOS
     doc.setTextColor(15,25,45)
@@ -387,23 +386,8 @@ doc.text(
 doc.text(
   `$${c.precioCliente || 0}`,
   92,
-  175
+  170
 )
-
-    // DESCRIPCION
-    doc.setFontSize(11)
-
-    const descripcion =
-    doc.splitTextToSize(
-      c.descripcion || '',
-      80
-    )
-
-    doc.text(
-      descripcion,
-      92,
-      193
-    )
 
     // TEXTO VALIDEZ
     doc.setTextColor(220,53,69)
@@ -417,9 +401,43 @@ doc.text(
 
     doc.text(
       'Las cotizaciones son válidas por un período de 30 días.',
-      20,
-      205
+      25,
+      230
     )
+
+// ===== DESCRIPCION ABAJO =====
+
+doc.setTextColor(40,40,40)
+
+doc.setFontSize(11)
+
+doc.setFont(
+  'helvetica',
+  'bold'
+)
+
+doc.text(
+  'DESCRIPCIÓN',
+  25,
+  248
+)
+
+doc.setFont(
+  'helvetica',
+  'normal'
+)
+
+const descripcion =
+doc.splitTextToSize(
+  c.descripcion || '',
+  150
+)
+
+doc.text(
+  descripcion,
+  25,
+  258
+)
 
     // TRANSFERENCIA
     doc.setFillColor(40,167,69)
